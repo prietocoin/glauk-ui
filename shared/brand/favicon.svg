@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="FUNDABLOCK">
+  <rect width="64" height="64" rx="14" fill="#030611"/>
+  <rect x="4" y="4" width="56" height="56" rx="11" fill="#091333" stroke="#06b6d4" stroke-width="2"/>
+  <path d="M20 17h27v9H31v8h13v9H31v15H20z" fill="#e8eefc"/>
+  <circle cx="46" cy="46" r="5" fill="#10b981"/>
+</svg>

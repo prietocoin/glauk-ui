@@ -1,0 +1,17 @@
+@media print {
+  @page { size: A4 portrait; margin: 12mm; }
+  body { background: #fff !important; color: #000 !important; }
+  body * { visibility: hidden !important; }
+  .reporte-sheet, .reporte-sheet * { visibility: visible !important; }
+  .reporte-sheet {
+    position: absolute; left: 0; top: 0; width: 100%; height: auto;
+    padding: 0; box-shadow: none; border: 0;
+  }
+  .no-print, .topbar, .footer, .tabs, .btn, .toast-host, .modal { display: none !important; }
+  .card { border-color: #cbd5e1 !important; box-shadow: none !important; background: #fff !important; color: #000 !important; }
+  .table-wrap { overflow: visible; border-color: #cbd5e1; }
+  table { min-width: 0; }
+  th { background: #e2e8f0 !important; color: #000 !important; position: static; }
+  th, td { border-color: #cbd5e1 !important; color: #000 !important; }
+  a { color: #000 !important; text-decoration: none; }
+}

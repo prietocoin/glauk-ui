@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>TasasHub Engine - Control Global &amp; Socios</title>
+  <link rel="icon" type="image/png" href="./icon-512.png"><link rel="shortcut icon" type="image/png" href="./icon-512.png"><link rel="apple-touch-icon" href="./icon-512.png">
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#0b1326">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TasasHub">
+  <link rel="stylesheet" href="./css/theme.css">
+  <link rel="stylesheet" href="./css/layout.css">
+  <link rel="stylesheet" href="./css/dashboard.css">
+  <link rel="stylesheet" href="./css/controls.css">
+  <link rel="stylesheet" href="./css/cards.css">
+  <link rel="stylesheet" href="./css/feedback.css">
+  <link rel="stylesheet" href="./css/overlays.css">
+</head>
+<body class="tasas-app">
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">⚡</div>
+        <div>
+          <h1>TasasHub Engine</h1>
+          <p>Control Global &amp; Socios</p>
+        </div>
+      </div>
+      <div class="header-actions"><a class="back-link" href="/comprobantes/" aria-label="Volver a Comprobantes" title="Volver a Comprobantes"><span aria-hidden="true">&#8592;</span><span class="hide-sm">Comprobantes</span></a>
+        <button id="btnInstallPWA" class="install-btn hidden" type="button">
+          📲 <span>Instalar App</span>
+        </button></div>
+    </div>
+  </header>
+  <main class="app-main">
+    <div class="tabs" role="tablist" aria-label="Secciones de Tasas">
+      <button id="btnTab1" class="tab active" type="button" data-tab="1" role="tab" aria-selected="true">📊 Monitor Global</button>
+      <button id="btnTab2" class="tab" type="button" data-tab="2" role="tab" aria-selected="false">👤 Checklist Socio</button>
+    </div>
+    <section id="tab1" class="tab-panel" aria-labelledby="btnTab1">
+      <div class="panel">
+        <div class="monitor-top">
+          <span class="monitor-title">
+            <span class="live-dot" aria-hidden="true"></span>
+            MONITOR DE VARIACIÓN &amp; PUBLICACIÓN
+          </span>
+          <div class="monitor-actions">
+            <span id="lblLoteActual" class="lote-badge">Lote en Prod: --</span>
+            <button id="btnBorrarLote" class="soft-btn danger-soft" type="button">
+              🗑️ <span class="hide-sm">Borrar Lote</span>
+            </button>
+            <button id="btnRemesas" class="btn btn-green" type="button">
+              🚀 Enviar Tasa Remesas
+            </button>
+          </div>
+        </div>
+        <div id="gridMonitor" class="monitor-grid"></div>
+        <div class="monitor-footer">
+          <button id="btnGuardarLote" class="btn btn-save" type="button">
+            💾 <span>Guardar en tasas_glaukov</span>
+          </button>
+          <div class="monitor-footer-actions">
+            <label class="switch-label">
+              <span>Prueba Lote:</span>
+              <input type="checkbox" id="globalTestSwitch" class="sr-only" checked>
+              <span class="switch" aria-hidden="true"></span>
+            </label>
+            <button id="btnPublicar" class="btn btn-publish" type="button">
+              ⚡ <span>Publicar Lote a Socios ON</span>
+            </button>
+            <button id="btnHoo" class="btn btn-purple" type="button">
+              📑 <span>Traer Borrador Hoo</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section id="tab2" class="tab-panel hidden" aria-labelledby="btnTab2">
+      <div class="partner-bar">
+        <button id="btnOpenPartner" class="partner-select" type="button">
+          <span class="partner-select-main">
+            <span class="partner-avatar" aria-hidden="true">👤</span>
+            <span>
+              <strong id="lblSelectedPartner">Seleccionar Socio...</strong>
+              <small id="lblPartnerBase">Toque para cambiar (70 disponibles)</small>
+            </span>
+          </span>
+          <span class="partner-chevron" aria-hidden="true">▼</span>
+        </button>
+        <button id="btnTogglePerfil" class="profile-toggle on" type="button">ON</button>
+      </div>
+      <div id="bannerSocioOff" class="alert hidden">
+        ⚠️ Perfil inactivo. Actívalo con el botón "ON" para modificar monedas.
+      </div>
+      <div class="checklist-controls">
+        <div class="active-count">
+          Activos: <strong id="lblActiveCount">0</strong> / <span id="lblTotalCount">0</span>
+        </div>
+        <div class="checklist-actions">
+          <button type="button" data-check-all="true">☑️ Todos</button>
+          <button type="button" data-check-all="false">🔳 Ninguno</button>
+        </div>
+      </div>
+      <div id="checklistGrid" class="checklist-grid"></div>
+    </section>
+  </main>
+  <div id="modalDeleteBatch" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="tituloBorrarLote">
+    <div class="modal-card modal-sm">
+      <div class="modal-head">
+        <h3 id="tituloBorrarLote">🗑️ Borrar Lote Publicado</h3>
+        <button type="button" class="close-btn close-btn-plain" data-close-modal="modalDeleteBatch" aria-label="Cerrar">✕</button>
+      </div>
+      <p class="modal-copy">
+        Ingresa el número de lote a eliminar de la base de datos (Ejemplo:
+        <strong class="text-cyan">T068</strong>):
+      </p>
+      <input type="text" id="txtBatchIdToDelete" placeholder="T000" autocomplete="off"
+        class="text-input modal-input">
+      <div class="modal-actions">
+        <button id="btnConfirmarBorrar" type="button" class="btn btn-danger">Borrar Lote</button>
+        <button type="button" class="btn btn-secondary" data-close-modal="modalDeleteBatch">Cancelar</button>
+      </div>
+    </div>
+  </div>
+  <div id="stickyFooter" class="sticky-footer hidden">
+    <div class="sticky-footer-inner">
+      <button id="btnVerPrevia" type="button" class="soft-btn">👁️ <span>Ver Previa</span></button>
+      <button id="btnGuardarSocio" type="button" class="btn btn-purple-solid">💾 Guardar Cambios</button>
+    </div>
+  </div>
+  <div id="partnerSheet" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="tituloSocios">
+    <div class="sheet-card">
+      <div class="modal-head">
+        <h3 id="tituloSocios">Seleccionar Socio</h3>
+        <button type="button" class="close-btn close-btn-plain" data-close-modal="partnerSheet" aria-label="Cerrar">✕</button>
+      </div>
+      <input type="text" id="txtSearchPartner" placeholder="🔍 Escribe para buscar socio..."
+        autocomplete="off" class="text-input">
+      <div id="partnerListContainer" class="partner-list"></div>
+    </div>
+  </div>
+  <div id="modalPreview" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="tituloPreview">
+    <div class="modal-card preview-card">
+      <div class="modal-head preview-head">
+        <h3 id="tituloPreview">
+          👁️ Vista Previa Cartelera — <span id="lblModalPartnerName" class="text-cyan">---</span>
+        </h3>
+        <button type="button" class="close-btn" data-close-modal="modalPreview" aria-label="Cerrar">✕</button>
+      </div>
+      <div class="preview-body">
+        <div id="previewSpinner" class="preview-spinner"><span class="preview-bolt">⚡</span> Generando cartelera PNG...</div>
+        <img id="imgPreviewCartelera" class="preview-image hidden" alt="Vista Previa Cartelera">
+      </div>
+      <div class="preview-footer">
+        <div class="preview-footer-group">
+          <label class="switch-label">
+            <span>Prueba Socio</span>
+            <input type="checkbox" id="chkModalPartnerTest" class="sr-only">
+            <span class="switch switch-small" aria-hidden="true"></span>
+          </label>
+          <button id="btnResend" type="button" class="soft-btn amber-soft">
+            ⚡ <span>Reenviar Socio</span>
+          </button>
+        </div>
+        <div class="preview-footer-group">
+          <button id="btnDownload" type="button" class="soft-btn cyan-soft">
+            ⬇️ <span>Descargar</span>
+          </button>
+          <button type="button" class="btn btn-secondary" data-close-modal="modalPreview">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="toast" class="toast hidden" role="status" aria-live="polite">Mensaje</div>
+  <script src="../config.js"></script>
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>

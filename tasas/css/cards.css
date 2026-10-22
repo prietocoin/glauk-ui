@@ -1,0 +1,226 @@
+.currency-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius-xl);
+  background: rgba(15, 23, 42, .9);
+}
+
+.currency-code {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #d8b4fe;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1rem;
+}
+
+.flag {
+  width: 20px;
+  height: 14px;
+  flex: 0 0 20px;
+  border: 1px solid rgba(255, 255, 255, .2);
+  border-radius: 3px;
+  object-fit: cover;
+}
+
+.flag-fallback {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.prod-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--slate-400);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.prod-value {
+  color: var(--slate-200);
+}
+
+.rate-label {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--accent-green);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.rate-input,
+.text-input {
+  width: 100%;
+  border: 1px solid rgba(16, 185, 129, .4);
+  border-radius: 8px;
+  background: var(--brand-dark);
+  color: #6ee7b7;
+  font-size: 12px;
+  font-weight: 700;
+  outline: none;
+  user-select: text;
+}
+
+.rate-input {
+  padding: 8px;
+  line-height: 1rem;
+}
+
+.rate-input:focus {
+  border-color: var(--accent-green);
+}
+
+.text-input {
+  padding: 10px 12px;
+  border-color: var(--border-dark);
+  border-radius: var(--radius-xl);
+  color: var(--white);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.text-input:focus {
+  border-color: var(--accent-purple);
+}
+
+.profile-toggle {
+  padding: 10px 12px;
+  border-radius: var(--radius-xl);
+  font-size: 11px;
+  font-weight: 800;
+  transition: background .15s, color .15s, border-color .15s, transform .1s;
+}
+
+.profile-toggle.on {
+  border: 1px solid rgba(16, 185, 129, .4);
+  background: rgba(16, 185, 129, .2);
+  color: #34d399;
+}
+
+.profile-toggle.off {
+  border: 1px solid rgba(244, 63, 94, .4);
+  background: rgba(244, 63, 94, .2);
+  color: var(--accent-red);
+}
+
+.alert {
+  padding: 12px;
+  border: 1px solid rgba(244, 63, 94, .4);
+  border-radius: var(--radius-xl);
+  background: rgba(244, 63, 94, .1);
+  color: #fda4af;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.check-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius-xl);
+  background: var(--card-dark);
+  color: var(--slate-400);
+  text-align: left;
+  transition: border-color .15s, background .15s, transform .1s;
+}
+
+.check-card.selected {
+  border-color: rgba(6, 182, 212, .8);
+  background: rgba(6, 182, 212, .1);
+  color: var(--white);
+}
+
+.check-card-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.check-card-main span {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1rem;
+}
+
+.check-mark {
+  font-size: 12px;
+  line-height: 1rem;
+}
+
+.partner-list {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.partner-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius-xl);
+  background: var(--slate-900);
+  font-size: 12px;
+  line-height: 1rem;
+  text-align: left;
+}
+
+.partner-option:active {
+  background: rgba(88, 28, 135, .3);
+}
+
+.partner-option-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 10px;
+  border-radius: 50%;
+  background: var(--accent-red);
+}
+
+.status-dot.active {
+  background: var(--accent-green);
+}
+
+.partner-name {
+  overflow: hidden;
+  color: var(--white);
+  font-size: 12px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.partner-base {
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--slate-800);
+  color: var(--slate-400);
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
