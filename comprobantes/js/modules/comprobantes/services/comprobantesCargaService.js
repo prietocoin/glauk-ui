@@ -9,7 +9,11 @@ import {
   MAXIMO_RECUPERACION
 } from './comprobantesApiService.js';
 import { prepararEdicionComprobante } from './comprobantesMapperService.js';
-import { filtrarPorSocioEstricto, ordenarComprobantes } from './comprobantesFilterService.js';
+import {
+  aplicarRangoHash,
+  filtrarPorSocioEstricto,
+  ordenarComprobantes
+} from './comprobantesFilterService.js';
 import { normalizarSocio } from '../utils/comprobantesSocioUtils.js';
 
 function esFiltroSocioActivo(socio = '') {
@@ -20,11 +24,14 @@ function esFiltroSocioActivo(socio = '') {
     && normalizado !== 'GENERAL';
 }
 
-function mapearFiltrarYOrdenar(raw, socio, loteActivo, orden, maximo) {
+function mapearFiltrarYOrdenar(raw, socio, loteActivo, orden, maximo, desdeHash, hastaHash) {
   const lista = Array.isArray(raw) ? raw : [];
   const mapeados = lista.map(item => prepararEdicionComprobante(item, loteActivo));
   const estrictos = filtrarPorSocioEstricto(mapeados, socio);
-  return ordenarComprobantes(estrictos, orden).slice(0, maximo);
+  const ordenados = ordenarComprobantes(estrictos, orden);
+  // El rango por hash es posicional sobre el orden visible: se aplica al final.
+  const acotados = aplicarRangoHash(ordenados, desdeHash, hastaHash);
+  return acotados.slice(0, maximo);
 }
 
 /**
@@ -39,10 +46,13 @@ export async function cargarComprobantesFiltrados(params = {}, opciones = {}) {
   const loteActivo = opciones.loteActivo || 'T070';
   const socio = String(params.socio || '').trim();
   const orden = params.orden || 'fecha_desc';
+  const { desdeHash = '', hastaHash = '' } = params;
   const paramsBase = { ...params, socio };
 
   const rawPrincipal = await fetchComprobantesHasta(paramsBase, maximo);
-  let resultado = mapearFiltrarYOrdenar(rawPrincipal, socio, loteActivo, orden, maximo);
+  let resultado = mapearFiltrarYOrdenar(
+    rawPrincipal, socio, loteActivo, orden, maximo, desdeHash, hastaHash
+  );
 
   if (esFiltroSocioActivo(socio) && resultado.length === 0) {
     const topeRecuperacion = Math.max(maximo, MAXIMO_RECUPERACION);
@@ -50,7 +60,9 @@ export async function cargarComprobantesFiltrados(params = {}, opciones = {}) {
       { ...paramsBase, socio: '' },
       topeRecuperacion
     );
-    resultado = mapearFiltrarYOrdenar(rawRespaldo, socio, loteActivo, orden, maximo);
+    resultado = mapearFiltrarYOrdenar(
+      rawRespaldo, socio, loteActivo, orden, maximo, desdeHash, hastaHash
+    );
   }
 
   return resultado;

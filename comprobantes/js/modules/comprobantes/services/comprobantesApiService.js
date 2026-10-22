@@ -6,6 +6,7 @@
  */
 
 import { apiUrl } from '../../../../../shared/js/api-base.js';
+import { aplicarRangoHash } from './comprobantesFilterService.js';
 
 const API_RUTA = '/api/comprobantes';
 
@@ -36,17 +37,6 @@ function obtenerIdentificadorValido(identificador, fallbackPayload = {}) {
 function normalizarFecha(valor) {
   const fecha = new Date(valor || 0);
   return isNaN(fecha.getTime()) ? 0 : fecha.getTime();
-}
-
-function aplicarRangoHash(lista, desdeHash, hastaHash) {
-  if (!desdeHash && !hastaHash) return lista;
-  const hashes = lista.map(item => String(item.hash_largo || item.id || ''));
-  const desde = desdeHash ? hashes.indexOf(String(desdeHash)) : 0;
-  const hasta = hastaHash ? hashes.indexOf(String(hastaHash)) : hashes.length - 1;
-  if (desde === -1 || hasta === -1) return lista;
-  const inicio = Math.min(desde, hasta);
-  const fin = Math.max(desde, hasta);
-  return lista.slice(inicio, fin + 1);
 }
 
 function ordenarLista(lista, orden) {
@@ -184,8 +174,7 @@ export async function fetchComprobantesHasta(params = {}, maximo = MAXIMO_CONSUL
 
   try {
     await recolectar(params.fechaInicio || '', params.fechaFin || '');
-    const ordenada = ordenarLista(acumulado, params.orden || 'fecha_desc');
-    return aplicarRangoHash(ordenada, params.desdeHash, params.hastaHash);
+    return ordenarLista(acumulado, params.orden || 'fecha_desc');
   } catch (err) {
     console.error('[comprobantesApiService ❌ Fetch Error]:', err.message);
     return [];
@@ -200,10 +189,10 @@ export async function fetchComprobantesPaginados(params = {}) {
   try {
     const { page = 1, limit = 20, desdeHash = '', hastaHash = '', orden = 'fecha_desc' } = params;
     const respuesta = await consultarLista(params);
-    const filtrada = aplicarRangoHash(respuesta.lista, desdeHash, hastaHash);
-    const ordenada = ordenarLista(filtrada, orden);
+    const ordenada = ordenarLista(respuesta.lista, orden);
+    const filtrada = aplicarRangoHash(ordenada, desdeHash, hastaHash);
     const inicio = Math.max(0, (Number(page) - 1) * Number(limit));
-    return ordenada.slice(inicio, inicio + Number(limit));
+    return filtrada.slice(inicio, inicio + Number(limit));
   } catch (err) {
     console.error('[comprobantesApiService ❌ Fetch Error]:', err.message);
     return [];

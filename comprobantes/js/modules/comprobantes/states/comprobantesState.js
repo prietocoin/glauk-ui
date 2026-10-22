@@ -21,7 +21,7 @@ import { crearAccionesModal } from '../services/comprobantesModalActions.js';
 import { prepararEdicionComprobante, obtenerInsigniaRol } from '../services/comprobantesMapperService.js';
 import { capturarReporteEstadoCuenta } from '../services/comprobantesReporteService.js';
 import { obtenerSaldoAnteriorSocio, obtenerSujetoAuditado } from '../services/comprobantesSaldosService.js';
-import { obtenerRangoMesActualCaracas } from '../utils/comprobantesFechaUtils.js';
+import { obtenerRangoMesActualCaracas, formatearFechaLatina } from '../utils/comprobantesFechaUtils.js';
 
 export function comprobantesState() {
   const { fechaInicio: inicioMes, fechaFin: finMes } = obtenerRangoMesActualCaracas();
@@ -208,7 +208,7 @@ export function comprobantesState() {
       });
     },
 
-    async enviarReporteViaEvolution(socio = '', ancho = 1080) {
+    async enviarReporteViaEvolution(socio = '') {
       const documento = document.getElementById('reporte-html-documento');
       if (!documento) {
         alert('No se encontró el documento del reporte.');
@@ -216,12 +216,12 @@ export function comprobantesState() {
       }
 
       try {
-        const base64 = await capturarReporteEstadoCuenta(documento, { ancho });
+        const base64 = await capturarReporteEstadoCuenta(documento);
         const socioReporte = String(socio || this.reporteSocio || '').trim() || 'GENERAL';
         const pagina = Number(this.reportePaginaSegura) || 1;
         const totalPaginas = Number(this.reporteTotalPaginas) || 1;
         const rango = this.reporteFechaInicio && this.reporteFechaFin
-          ? ` | ${this.reporteFechaInicio} al ${this.reporteFechaFin}`
+          ? ` | ${formatearFechaLatina(this.reporteFechaInicio)} al ${formatearFechaLatina(this.reporteFechaFin)}`
           : '';
         const response = await fetch(apiUrl('/api/v1/reportes/imagen'), {
           method: 'POST',

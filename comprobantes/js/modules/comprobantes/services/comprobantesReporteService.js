@@ -1,17 +1,11 @@
 /**
  * @file comprobantesReporteService.js
- * @description Captura el documento de estado de cuenta con ancho 1080/800,
- * altura recortada al contenido real y un techo de 1500 px.
+ * @description Captura el documento de estado de cuenta con ancho fijo de 800 px,
+ * altura recortada al contenido real y un techo de seguridad para lotes largos.
  */
 
-const ANCHO_DEFECTO = 1080;
-const ANCHOS_VALIDOS = new Set([800, 1080]);
-const ALTO_MAXIMO = 1500;
-
-export function normalizarAnchoReporte(valor) {
-  const ancho = Math.round(Number(valor));
-  return ANCHOS_VALIDOS.has(ancho) ? ancho : ANCHO_DEFECTO;
-}
+const ANCHO_REPORTE = 800;
+const ALTO_MAXIMO = 6000;
 
 function esperarLayout() {
   return new Promise(resolve => {
@@ -25,7 +19,7 @@ export async function capturarReporteEstadoCuenta(elemento, opciones = {}) {
     throw new Error('El generador de imágenes no está disponible.');
   }
 
-  const ancho = normalizarAnchoReporte(opciones.ancho);
+  const ancho = ANCHO_REPORTE;
   const altoMaximo = Math.max(1, Number(opciones.altoMaximo) || ALTO_MAXIMO);
   const estilosPrevios = {
     width: elemento.style.width,
@@ -49,6 +43,8 @@ export async function capturarReporteEstadoCuenta(elemento, opciones = {}) {
     if (document.fonts?.ready) await document.fonts.ready;
     await esperarLayout();
 
+    // Auto-recorte: la altura se mide sobre el contenido real de la tabla y el
+    // pie, evitando franjas blancas inferiores.
     const altoReal = Math.ceil(Math.max(elemento.scrollHeight, elemento.getBoundingClientRect().height, 1));
     const alto = Math.min(altoReal, altoMaximo);
 

@@ -5,17 +5,22 @@
  */
 
 import { cargarComprobantesFiltrados } from '../services/comprobantesCargaService.js';
+import { aplicarRangoHash, resolverIndiceHash } from '../services/comprobantesFilterService.js';
 import {
   calcularMovimientoFiltradoTotal,
   obtenerMovimientoSocio
 } from '../services/saldosCalculatorService.js';
 import { obtenerSaldoAnteriorSocio } from '../services/comprobantesSaldosService.js';
 import { normalizarSocio, obtenerPosicionSocio } from '../utils/comprobantesSocioUtils.js';
-import { obtenerRangoMesActualCaracas } from '../utils/comprobantesFechaUtils.js';
+import { formatearFechaLatina, obtenerRangoMesActualCaracas } from '../utils/comprobantesFechaUtils.js';
 
 function numero(valor, fallback = 0) {
   const num = parseFloat(valor);
   return Number.isFinite(num) ? num : fallback;
+}
+
+function claveReporte(item = {}) {
+  return String(item?.hash_largo || item?.id || '').trim().toLowerCase();
 }
 
 function formatearFechaReporte(item = {}) {
@@ -41,23 +46,82 @@ export function createComprobantesReporteState() {
   return {
     modalReporteAbierto: false,
     generandoImagen: false,
-    anchoReporte: 1080,
     reporteSocio: '',
     reporteFechaInicio: inicioMes,
     reporteFechaFin: finMes,
-    reporteItems: [],
+    reporteDesdeHash: '',
+    reporteHastaHash: '',
+    reporteOrden: 'fecha_asc',
+    reporteItemsBase: [],
     reporteSaldoAnterior: 0,
     reporteCargando: false,
     reporteSolicitudActual: 0,
     reportePaginaActual: 1,
     reporteItemsPorPagina: 10,
 
+    get reporteEsDescendente() {
+      return this.reporteOrden === 'fecha_desc';
+    },
+
+    /**
+     * Listado visible del reporte: el rango de hashes se interpreta como un
+     * intervalo inclusivo posicional sobre el orden seleccionado.
+     */
+    get reporteItems() {
+      return aplicarRangoHash(
+        this.reporteItemsBase,
+        this.reporteDesdeHash,
+        this.reporteHastaHash
+      );
+    },
+
     get reporteMovimientoTotal() {
       return calcularMovimientoFiltradoTotal(this.reporteItems, this.reporteSocio);
     },
 
+    get reporteIndicesRango() {
+      const items = Array.isArray(this.reporteItemsBase) ? this.reporteItemsBase : [];
+      const claves = new Set(this.reporteItems.map(claveReporte).filter(Boolean));
+      let inicio = -1;
+      let fin = -1;
+
+      items.forEach((item, indice) => {
+        const clave = claveReporte(item);
+        if (!clave || !claves.has(clave)) return;
+        if (inicio === -1) inicio = indice;
+        fin = indice;
+      });
+
+      return { inicio, fin };
+    },
+
+    /**
+     * Saldo inmediatamente anterior al primer comprobante del intervalo
+     * filtrado. Incluye los movimientos que quedaron fuera del rango de hash.
+     */
+    get reporteSaldoInicialRango() {
+      const base = numero(this.reporteSaldoAnterior) || 0;
+      const { inicio, fin } = this.reporteIndicesRango;
+      if (inicio === -1) return base;
+
+      const items = Array.isArray(this.reporteItemsBase) ? this.reporteItemsBase : [];
+      // En ASC los anteriores están antes del inicio; en DESC, después del fin.
+      const anteriores = this.reporteEsDescendente
+        ? items.slice(fin + 1)
+        : items.slice(0, inicio);
+
+      return base + anteriores.reduce(
+        (sum, item) => sum + obtenerMovimientoSocio(item, this.reporteSocio),
+        0
+      );
+    },
+
+    get reporteSaldoFinalRango() {
+      return this.reporteSaldoInicialRango + this.reporteMovimientoTotal;
+    },
+
     get reporteSaldoFinal() {
-      return (numero(this.reporteSaldoAnterior) || 0) + this.reporteMovimientoTotal;
+      return this.reporteSaldoFinalRango;
     },
 
     get reporteTotalPaginas() {
@@ -86,16 +150,35 @@ export function createComprobantesReporteState() {
     },
 
     get reporteSaldoAnteriorPagina() {
-      return (numero(this.reporteSaldoAnterior) || 0) + this.reporteMovimientoAntesPagina;
+      // ASC: la página avanza sumando desde el saldo inicial del rango.
+      // DESC: las filas van de la más reciente a la más antigua, por lo que la
+      // apertura parte del saldo final y retrocede con lo ya mostrado.
+      return this.reporteEsDescendente
+        ? this.reporteSaldoFinalRango - this.reporteMovimientoAntesPagina
+        : this.reporteSaldoInicialRango + this.reporteMovimientoAntesPagina;
     },
 
     get reporteSaldoFinalPagina() {
-      return this.reporteSaldoAnteriorPagina + this.reporteMovimientoPagina;
+      const signo = this.reporteEsDescendente ? -1 : 1;
+      return this.reporteSaldoAnteriorPagina + (signo * this.reporteMovimientoPagina);
+    },
+
+    get reporteOpcionesHash() {
+      const items = Array.isArray(this.reporteItemsBase) ? this.reporteItemsBase : [];
+      const vistos = new Set();
+      return items.filter(item => {
+        const hash = String(item?.hash_largo || item?.id || '').trim();
+        if (!hash || vistos.has(hash)) return false;
+        vistos.add(hash);
+        return true;
+      });
     },
 
     get reporteRangoTexto() {
       if (this.reporteFechaInicio && this.reporteFechaFin) {
-        return `${this.reporteFechaInicio} al ${this.reporteFechaFin}`;
+        const desde = formatearFechaLatina(this.reporteFechaInicio);
+        const hasta = formatearFechaLatina(this.reporteFechaFin);
+        return `${desde} al ${hasta}`;
       }
       return 'Mes en curso';
     },
@@ -119,11 +202,13 @@ export function createComprobantesReporteState() {
       this.reporteSocio = socio;
       this.reporteFechaInicio = this.filtroFechaInicio || inicioMes;
       this.reporteFechaFin = this.filtroFechaFin || finMes;
+      this.reporteDesdeHash = this.filtroDesdeHash || '';
+      this.reporteHastaHash = this.filtroHastaHash || '';
+      this.reporteOrden = this.filtroOrden === 'fecha_desc' ? 'fecha_desc' : 'fecha_asc';
       this.reporteSaldoAnterior = obtenerSaldoAnteriorSocio(this.directorio, socio);
-      this.reporteItems = [];
+      this.reporteItemsBase = [];
       this.reportePaginaActual = 1;
       this.modalReporteAbierto = true;
-      this.anchoReporte = 1080;
 
       return this.cargarReporteSocio();
     },
@@ -131,20 +216,20 @@ export function createComprobantesReporteState() {
     async cargarReporteSocio() {
       const socio = String(this.reporteSocio || '').trim();
       if (!socio) {
-        this.reporteItems = [];
+        this.reporteItemsBase = [];
         return;
       }
 
       const token = ++this.reporteSolicitudActual;
       this.reporteCargando = true;
-      this.reporteItems = [];
+      this.reporteItemsBase = [];
 
       try {
         const items = await cargarComprobantesFiltrados({
           socio,
           fechaInicio: this.reporteFechaInicio,
           fechaFin: this.reporteFechaFin,
-          orden: 'fecha_asc'
+          orden: this.reporteOrden === 'fecha_desc' ? 'fecha_desc' : 'fecha_asc'
         }, {
           maximo: Number(this.capMaximoDOM) || 500,
           loteActivo: this.loteActivo
@@ -152,7 +237,8 @@ export function createComprobantesReporteState() {
 
         if (token !== this.reporteSolicitudActual) return;
 
-        this.reporteItems = Array.isArray(items) ? items : [];
+        this.reporteItemsBase = Array.isArray(items) ? items : [];
+        this.normalizarRangoHashReporte();
         this.reporteSaldoAnterior = obtenerSaldoAnteriorSocio(this.directorio, socio);
         this.reportePaginaActual = Math.min(
           Math.max(1, this.reportePaginaActual),
@@ -161,7 +247,7 @@ export function createComprobantesReporteState() {
       } catch (err) {
         if (token === this.reporteSolicitudActual) {
           console.error('[comprobantesReporte ❌ Error al cargar reporte]:', err);
-          this.reporteItems = [];
+          this.reporteItemsBase = [];
         }
       } finally {
         if (token === this.reporteSolicitudActual) this.reporteCargando = false;
@@ -171,6 +257,25 @@ export function createComprobantesReporteState() {
     recargarReporte() {
       this.reportePaginaActual = 1;
       return this.cargarReporteSocio();
+    },
+
+    reiniciarPaginaReporte() {
+      this.reportePaginaActual = 1;
+    },
+
+    /**
+     * Descarta límites de hash heredados del Dashboard que no existan en el
+     * listado del socio, evitando controles con valores fantasma.
+     */
+    normalizarRangoHashReporte() {
+      if (!this.reporteDesdeHash && !this.reporteHastaHash) return;
+      const hashes = this.reporteItemsBase.map(item => String(item?.hash_largo || item?.id || '').trim().toLowerCase());
+      if (this.reporteDesdeHash && resolverIndiceHash(hashes, this.reporteDesdeHash) === -1) {
+        this.reporteDesdeHash = '';
+      }
+      if (this.reporteHastaHash && resolverIndiceHash(hashes, this.reporteHastaHash) === -1) {
+        this.reporteHastaHash = '';
+      }
     },
 
     reportePaginaAnterior() {

@@ -1131,13 +1131,31 @@
           <span class="text-[10px] text-slate-300 font-mono" x-text="reportePaginaSegura + '/' + reporteTotalPaginas"></span>
           <button type="button" @click="reportePaginaSiguiente()" :disabled="reportePaginaSegura >= reporteTotalPaginas" class="px-1.5 text-[11px] text-cyan-300 disabled:opacity-50">▶</button>
         </div>
-        <label class="text-[9px] font-bold text-slate-400 uppercase" for="ancho-reporte">Ancho</label>
-        <select id="ancho-reporte" x-model.number="anchoReporte" class="bg-[#030611] border border-blue-900/60 rounded-lg px-1.5 py-1 text-[10px] text-slate-200 outline-none">
-          <option :value="1080">1080 px</option>
-          <option :value="800">800 px</option>
-        </select>
+        <div class="flex items-center gap-1 bg-[#030611] border border-amber-500/40 rounded-lg px-1.5 py-1">
+          <label class="text-[9px] font-bold text-amber-400 uppercase" for="reporte-desde-hash">Desde hash</label>
+          <select id="reporte-desde-hash" x-model="reporteDesdeHash" @change="reiniciarPaginaReporte()" class="bg-[#030611] text-[10px] text-amber-200 outline-none max-w-[120px]">
+            <option value="">TODOS</option>
+            <template x-for="item in reporteOpcionesHash" :key="'rdh-' + (item.hash_largo || item.id)">
+              <option :value="item.hash_largo || item.id" x-text="reporteHashItem(item)"></option>
+            </template>
+          </select>
+          <label class="text-[9px] font-bold text-amber-400 uppercase" for="reporte-hasta-hash">Hasta hash</label>
+          <select id="reporte-hasta-hash" x-model="reporteHastaHash" @change="reiniciarPaginaReporte()" class="bg-[#030611] text-[10px] text-amber-200 outline-none max-w-[120px]">
+            <option value="">TODOS</option>
+            <template x-for="item in reporteOpcionesHash" :key="'rhh-' + (item.hash_largo || item.id)">
+              <option :value="item.hash_largo || item.id" x-text="reporteHashItem(item)"></option>
+            </template>
+          </select>
+        </div>
+        <div class="flex items-center gap-1 bg-[#030611] border border-blue-900/60 rounded-lg px-1.5 py-1">
+          <label class="text-[9px] font-bold text-slate-400 uppercase" for="reporte-orden">Orden</label>
+          <select id="reporte-orden" x-model="reporteOrden" @change="recargarReporte()" class="bg-[#030611] text-[10px] text-slate-200 outline-none">
+            <option value="fecha_asc">Ascendente</option>
+            <option value="fecha_desc">Descendente</option>
+          </select>
+        </div>
         <button type="button"
-                @click="generandoImagen = true; enviarReporteViaEvolution(reporteSocio, anchoReporte).finally(() => generandoImagen = false)"
+                @click="generandoImagen = true; enviarReporteViaEvolution(reporteSocio).finally(() => generandoImagen = false)"
                 :disabled="generandoImagen || reporteCargando || reporteItems.length === 0"
                 class="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl text-xs font-black shadow-lg active:scale-95 transition-all">
           <span x-show="!generandoImagen" x-text="'🤖 Enviar Pág ' + reportePaginaSegura"></span>
@@ -1153,7 +1171,7 @@
 
     <!-- DOCUMENTO RENDERIZADO PARA CAPTURA DE IMAGEN -->
     <div class="flex-1 overflow-y-auto overflow-x-auto p-4 flex items-start bg-[#030611]" style="min-height:0">
-      <div id="reporte-html-documento" class="bg-white text-slate-900 p-6 rounded-xl shadow-2xl flex flex-col justify-between shrink-0" :style="'width:' + anchoReporte + 'px; max-width:' + anchoReporte + 'px; margin-left:auto; margin-right:auto'">
+      <div id="reporte-html-documento" class="bg-white text-slate-900 p-6 rounded-xl shadow-2xl flex flex-col shrink-0" style="width:800px; max-width:800px; margin-left:auto; margin-right:auto">
         <div>
           <div class="border-b-2 border-slate-900 pb-3 mb-4 flex justify-between items-start gap-4">
             <div>
