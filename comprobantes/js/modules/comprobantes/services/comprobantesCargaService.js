@@ -6,6 +6,7 @@
 
 import {
   fetchComprobantesHasta,
+  fetchComprobantesPagina,
   MAXIMO_RECUPERACION
 } from './comprobantesApiService.js';
 import { prepararEdicionComprobante } from './comprobantesMapperService.js';
@@ -32,6 +33,51 @@ function mapearFiltrarYOrdenar(raw, socio, loteActivo, orden, maximo, desdeHash,
   // El rango por hash es posicional sobre el orden visible: se aplica al final.
   const acotados = aplicarRangoHash(ordenados, desdeHash, hastaHash);
   return acotados.slice(0, maximo);
+}
+
+/**
+ * Carga una página real de comprobantes para la vista de auditoría.
+ *
+ * No reordena: el backend ya devuelve las filas en el orden solicitado y
+ * reordenar por bloque rompería la continuidad del scroll. El filtro estricto
+ * de socio se mantiene como cortafuegos sobre cada página.
+ */
+export async function cargarPaginaComprobantes(params = {}, opciones = {}) {
+  const limit = Math.max(1, Number(opciones.limit) || 20);
+  const offset = Math.max(0, Number(opciones.offset) || 0);
+  const loteActivo = opciones.loteActivo || 'T070';
+  const socio = String(params.socio || '').trim();
+
+  const pagina = await fetchComprobantesPagina(params, { limit, offset });
+  const mapeados = pagina.lista.map(item => prepararEdicionComprobante(item, loteActivo));
+  const estrictos = filtrarPorSocioEstricto(mapeados, socio);
+
+  // Rescate legacy: si la primera página de un socio activo llega vacía, se
+  // reintenta sin el parámetro `socio` y se filtra localmente. El resultado se
+  // entrega como bloque único (`paginado: false`) para que el estado lo revele
+  // de 20 en 20 sin repetir peticiones.
+  if (offset === 0 && esFiltroSocioActivo(socio) && pagina.lista.length === 0) {
+    const respaldo = await fetchComprobantesHasta({ ...params, socio: '' }, MAXIMO_RECUPERACION);
+    const mapeadosRespaldo = respaldo.map(item => prepararEdicionComprobante(item, loteActivo));
+    const filtrados = filtrarPorSocioEstricto(mapeadosRespaldo, socio);
+    return {
+      items: ordenarComprobantes(filtrados, params.orden || 'fecha_desc'),
+      total: filtrados.length,
+      hasMore: false,
+      paginado: false,
+      offset: 0,
+      recibidos: respaldo.length
+    };
+  }
+
+  return {
+    items: estrictos,
+    total: pagina.total,
+    hasMore: pagina.hasMore,
+    paginado: pagina.paginado,
+    offset: pagina.offset,
+    recibidos: pagina.recibidos
+  };
 }
 
 /**

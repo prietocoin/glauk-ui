@@ -130,7 +130,7 @@
     </button>
 
     <!-- Contador de ítems en pantalla -->
-    <span class="px-2.5 py-1.5 bg-purple-950/80 border border-purple-500/40 text-purple-300 rounded-xl text-[11px] md:text-xs font-bold font-mono" x-text="(items || []).length + ' / ' + (todosLosItems || []).length + ' ítems'"></span>
+    <span class="px-2.5 py-1.5 bg-purple-950/80 border border-purple-500/40 text-purple-300 rounded-xl text-[11px] md:text-xs font-bold font-mono" x-text="(items || []).length + ' / ' + (totalRegistros || (items || []).length) + ' ítems'"></span>
   </div>
 </div>
 
@@ -146,7 +146,7 @@
   <!-- 2. Ítems Operados -->
   <div class="bg-[#060c24] p-2.5 md:p-3.5 rounded-xl md:rounded-2xl border border-blue-900/50 shadow-xl">
     <p class="text-[8px] md:text-[9px] font-extrabold text-blue-400/80 uppercase">OPERADOS</p>
-    <h3 class="text-xs md:text-base font-black text-pink-400 mt-0.5" x-text="(todosLosItems || []).length + ' ítems'"></h3>
+    <h3 class="text-xs md:text-base font-black text-pink-400 mt-0.5" x-text="(totalRegistros || (todosLosItems || []).length) + ' ítems'"></h3>
   </div>
 
   <!-- 3. Saldo Anterior editable -->
@@ -160,13 +160,13 @@
 
   <!-- 4. Total Movimiento del Período -->
   <div class="bg-[#060c24] p-2.5 md:p-3.5 rounded-xl md:rounded-2xl border border-blue-900/50 shadow-xl col-span-1">
-    <p class="text-[8px] md:text-[9px] font-extrabold text-emerald-400 uppercase">MOVIMIENTO</p>
+    <p class="text-[8px] md:text-[9px] font-extrabold text-emerald-400 uppercase" x-text="'MOVIMIENTO' + (hayDatosParciales ? ' (PARCIAL)' : '')">MOVIMIENTO</p>
     <h3 class="text-xs md:text-base font-black text-emerald-400 mt-0.5 truncate" x-text="formatMonto(movimientoFiltradoTotal) + ' ' + (items[0]?.moneda_socio_1 || items[0]?.moneda || 'USDT').toUpperCase()"></h3>
   </div>
 
   <!-- 5. Saldo Actual Calculado -->
   <div class="bg-[#010a14] p-2.5 md:p-3.5 rounded-xl md:rounded-2xl border border-emerald-500/40 shadow-xl col-span-2 sm:col-span-1">
-    <p class="text-[8px] md:text-[9px] font-extrabold text-emerald-400 uppercase">SALDO ACTUAL TOTAL</p>
+    <p class="text-[8px] md:text-[9px] font-extrabold text-emerald-400 uppercase" x-text="'SALDO ACTUAL TOTAL' + (hayDatosParciales ? ' (PARCIAL)' : '')">SALDO ACTUAL TOTAL</p>
     <h3 class="text-xs md:text-base font-black text-emerald-300 mt-0.5 truncate" x-text="formatMonto(saldoActualTotal) + ' ' + (items[0]?.moneda_socio_1 || items[0]?.moneda || 'USDT').toUpperCase()"></h3>
   </div>
 
@@ -520,21 +520,21 @@
      class="w-full py-8 my-4 flex flex-col justify-center items-center gap-2 cursor-pointer relative z-50 min-h-[100px]"
      @click="cargarSiguientePagina()">
 
-  <!-- CARGANDO Siguiente Lote -->
-  <div x-show="cargando" class="flex items-center gap-2 text-cyan-400 text-xs font-mono animate-pulse bg-slate-900/90 px-5 py-2.5 rounded-full border border-cyan-500/40 shadow-xl">
+  <!-- CARGANDO Primera Página o Siguiente Lote -->
+  <div x-show="cargando || cargandoMas" class="flex items-center gap-2 text-cyan-400 text-xs font-mono animate-pulse bg-slate-900/90 px-5 py-2.5 rounded-full border border-cyan-500/40 shadow-xl">
     <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping"></span>
-    <span>Cargando más comprobantes...</span>
+    <span x-text="cargando ? 'Cargando comprobantes...' : 'Cargando más comprobantes...'"></span>
   </div>
 
   <!-- INDICADOR DE MÁS DATOS (Permite clic directo como respaldo) -->
-  <div x-show="!cargando && hayMasDatos" class="text-center py-2 px-4 rounded-xl bg-slate-900/80 border border-cyan-500/30 text-cyan-400 text-xs font-mono shadow-lg hover:bg-cyan-950/40 transition-all">
-    <span>⬇️ Mostrando <span x-text="items.length"></span> de <span x-text="todosLosItems.length"></span> comprobantes — Desliza o haz clic aquí</span>
+  <div x-show="!cargando && !cargandoMas && hayMasDatos" class="text-center py-2 px-4 rounded-xl bg-slate-900/80 border border-cyan-500/30 text-cyan-400 text-xs font-mono shadow-lg hover:bg-cyan-950/40 transition-all">
+    <span>⬇️ Mostrando <span x-text="items.length"></span> de <span x-text="totalRegistros || items.length"></span> comprobantes — Desliza o haz clic aquí</span>
   </div>
 
-  <!-- FIN DE REGISTROS O CAP DE 200 ALCANZADO -->
-  <div x-show="!cargando && !hayMasDatos && items.length > 0" class="text-center py-2.5 px-5 rounded-xl bg-slate-900/80 border border-slate-800 text-slate-400 text-xs font-mono shadow-lg">
-    <span x-text="items.length >= capMaximoDOM ? ('⚡ Límite máximo de ' + capMaximoDOM + ' tarjetas alcanzado en pantalla') : '✅ Todos los comprobantes del mes están cargados'"></span>
-    <span class="block text-[10px] text-slate-500 mt-0.5" x-text="'Total en pantalla: ' + items.length + ' de ' + todosLosItems.length"></span>
+  <!-- FIN DE REGISTROS O CAP DE 500 ALCANZADO -->
+  <div x-show="!cargando && !cargandoMas && !hayMasDatos && items.length > 0" class="text-center py-2.5 px-5 rounded-xl bg-slate-900/80 border border-slate-800 text-slate-400 text-xs font-mono shadow-lg">
+    <span x-text="items.length >= capMaximoDOM ? ('⚡ Límite máximo de ' + capMaximoDOM + ' tarjetas alcanzado en pantalla') : (totalRegistros > items.length ? '✅ Fin de los registros disponibles' : '✅ Todos los comprobantes del mes están cargados')"></span>
+    <span class="block text-[10px] text-slate-500 mt-0.5" x-text="'Total en pantalla: ' + items.length + ' de ' + (totalRegistros || items.length)"></span>
   </div>
 
 </div>

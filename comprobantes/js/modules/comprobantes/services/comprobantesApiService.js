@@ -59,6 +59,8 @@ const MAXIMO_CONSULTA = 500;
 // Tope interno para recuperar datos cuando el filtro de socio del backend
 // devuelve cero aunque existan filas. La UI sigue mostrando como máximo 500.
 export const MAXIMO_RECUPERACION = 2000;
+// Bloque de carga progresiva por red que consume la vista de comprobantes.
+export const LIMITE_PAGINA = 20;
 
 function fechaISO(fecha) {
   const y = fecha.getFullYear();
@@ -99,6 +101,27 @@ function claveItem(item) {
 }
 
 async function consultarLista(params = {}) {
+  const url = construirUrlConsulta(params);
+
+  const res = await fetch(url.toString());
+  const contentType = res.headers.get('content-type');
+  if (!contentType || !contentType.includes('application/json')) {
+    console.warn(`[comprobantesApiService ⚠️ Warning]: La API respondió con formato no JSON (${res.status}).`);
+    return { lista: [], truncada: false };
+  }
+  if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
+
+  const json = await res.json();
+  const lista = json?.comprobantes || json?.data || (Array.isArray(json) ? json : []);
+  const normalizada = Array.isArray(lista) ? lista : [];
+  return { lista: normalizada, truncada: normalizada.length >= LIMITE_API };
+}
+
+/**
+ * Construye la URL de consulta compartida por la carga legacy y la paginada.
+ * Los límites de hash son un recorte posicional local y nunca viajan a la API.
+ */
+function construirUrlConsulta(params = {}, paginacion = {}) {
   const {
     socio = '',
     rol = '',
@@ -118,19 +141,76 @@ async function consultarLista(params = {}) {
   if (fechaFin) url.searchParams.append('fechaFin', fechaFin.trim());
   if (hash) url.searchParams.append('hash', hash.trim());
   if (orden === 'fecha_asc' || orden === 'fecha_desc') url.searchParams.append('orden', orden);
+  if (paginacion.limit != null) url.searchParams.append('limit', String(paginacion.limit));
+  if (paginacion.offset != null) url.searchParams.append('offset', String(paginacion.offset));
 
-  const res = await fetch(url.toString());
-  const contentType = res.headers.get('content-type');
-  if (!contentType || !contentType.includes('application/json')) {
-    console.warn(`[comprobantesApiService ⚠️ Warning]: La API respondió con formato no JSON (${res.status}).`);
-    return { lista: [], truncada: false };
+  return url;
+}
+
+function leerEnteroCabecera(res, nombre) {
+  const valor = res.headers.get(nombre);
+  if (valor === null || valor === '') return null;
+  const numero = Number.parseInt(valor, 10);
+  return Number.isFinite(numero) ? numero : null;
+}
+
+/**
+ * Solicita una página real al backend (limit/offset) y devuelve los metadatos
+ * de paginación necesarios para el scroll progresivo.
+ *
+ * El contrato canónico mantiene un array raíz y expone el universo filtrado en
+ * las cabeceras X-Total-Count / X-Has-More. Si el backend aún no las envía y
+ * devuelve más filas que la ventana pedida, se marca `paginado: false` para
+ * que la UI degrade a paginación local sobre el bloque recibido.
+ */
+export async function fetchComprobantesPagina(params = {}, opciones = {}) {
+  const limit = Math.min(
+    Math.max(Number(opciones.limit) || LIMITE_PAGINA, 1),
+    LIMITE_API
+  );
+  const offset = Math.max(Number(opciones.offset) || 0, 0);
+
+  try {
+    const res = await fetch(construirUrlConsulta(params, { limit, offset }).toString());
+    const contentType = res.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      console.warn(`[comprobantesApiService ⚠️ Warning]: La API respondió con formato no JSON (${res.status}).`);
+      return { lista: [], total: offset, hasMore: false, paginado: true, limit, offset, recibidos: 0 };
+    }
+    if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
+
+    const json = await res.json();
+    const bruta = Array.isArray(json)
+      ? json
+      : (json?.comprobantes || json?.items || json?.data || []);
+    const lista = Array.isArray(bruta) ? bruta : [];
+
+    const totalCabecera = leerEnteroCabecera(res, 'x-total-count');
+    const hasMoreCabecera = res.headers.get('x-has-more');
+    const tieneMetadatos = totalCabecera !== null || hasMoreCabecera !== null;
+    // Un backend sin paginación devuelve su tope físico (100) aunque se pidan 20.
+    const respetoVentana = tieneMetadatos || lista.length <= limit;
+
+    const total = totalCabecera !== null
+      ? Math.max(totalCabecera, offset + lista.length)
+      : offset + lista.length;
+    const hasMore = hasMoreCabecera !== null
+      ? hasMoreCabecera === 'true'
+      : (respetoVentana && lista.length >= limit);
+
+    return {
+      lista,
+      total,
+      hasMore,
+      paginado: respetoVentana,
+      limit,
+      offset,
+      recibidos: lista.length
+    };
+  } catch (err) {
+    console.error('[comprobantesApiService ❌ Fetch Error]:', err.message);
+    return { lista: [], total: offset, hasMore: false, paginado: true, limit, offset, recibidos: 0 };
   }
-  if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
-
-  const json = await res.json();
-  const lista = json?.comprobantes || json?.data || (Array.isArray(json) ? json : []);
-  const normalizada = Array.isArray(lista) ? lista : [];
-  return { lista: normalizada, truncada: normalizada.length >= LIMITE_API };
 }
 
 /**

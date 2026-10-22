@@ -1,6 +1,7 @@
 /**
  * @file comprobantesState.js
- * Estado reactivo Alpine.js con Paginación Real Servidor + Buffer Incremental desde comprobantes_final.
+ * Estado reactivo Alpine.js con carga progresiva por red (bloques de 20,
+ * tope de 500 en pantalla) y degradación local si el backend no pagina.
  */
 
 import {
@@ -16,12 +17,20 @@ import {
 } from '../services/saldosCalculatorService.js';
 
 import { eliminarComprobantePorHash } from '../services/comprobantesApiService.js';
-import { cargarComprobantesFiltrados } from '../services/comprobantesCargaService.js';
+import { cargarPaginaComprobantes } from '../services/comprobantesCargaService.js';
+import { aplicarRangoHash } from '../services/comprobantesFilterService.js';
 import { crearAccionesModal } from '../services/comprobantesModalActions.js';
 import { prepararEdicionComprobante, obtenerInsigniaRol } from '../services/comprobantesMapperService.js';
 import { capturarReporteEstadoCuenta } from '../services/comprobantesReporteService.js';
 import { obtenerSaldoAnteriorSocio, obtenerSujetoAuditado } from '../services/comprobantesSaldosService.js';
 import { obtenerRangoMesActualCaracas, formatearFechaLatina } from '../utils/comprobantesFechaUtils.js';
+
+function claveComprobante(item) {
+  const c = item?.comprobante || item || {};
+  const principal = String(c.hash_largo || c.id || c.referencia || '').trim().toLowerCase();
+  if (principal) return principal;
+  return `${c.fecha_hora_comprobante || c.fecha || ''}|${c.monto || ''}|${c.banco || ''}`;
+}
 
 export function comprobantesState() {
   const { fechaInicio: inicioMes, fechaFin: finMes } = obtenerRangoMesActualCaracas();
@@ -31,8 +40,15 @@ export function comprobantesState() {
     items: [],
     directorio: [],
     cargando: false,
+    cargandoMas: false,
     hayMasDatos: true,
     solicitudActual: 0,
+
+    // Paginación por red
+    totalRegistros: 0,
+    siguienteOffset: 0,
+    modoPaginacion: 'red',
+    visibleLocal: 0,
 
     tamanoLote: 20,
     capMaximoDOM: 500,
@@ -59,7 +75,7 @@ export function comprobantesState() {
     },
 
     get movimientoFiltradoTotal() {
-      return calcularMovimientoFiltradoTotal(this.todosLosItems, this.filtroSocio);
+      return calcularMovimientoFiltradoTotal(this.items, this.filtroSocio);
     },
 
     get saldoActualTotal() {
@@ -67,9 +83,14 @@ export function comprobantesState() {
     },
 
     get sociosPendientesConsolidado() {
-      return calcularSociosPendientesConsolidado(this.directorio, this.todosLosItems, {
+      return calcularSociosPendientesConsolidado(this.directorio, this.items, {
         fechaInicio: this.filtroFechaInicio, fechaFin: this.filtroFechaFin
       });
+    },
+
+    get hayDatosParciales() {
+      const total = Number(this.totalRegistros) || 0;
+      return total > 0 && this.items.length < total;
     },
 
     init() {
@@ -86,26 +107,33 @@ export function comprobantesState() {
         if (!payload || !payload.hash_largo) return;
 
         const targetHash = String(payload.hash_largo).trim().toLowerCase();
+        const idxTodos = this.todosLosItems.findIndex(
+          i => String(i.hash_largo || i.id).trim().toLowerCase() === targetHash
+        );
 
-        const idxTodos = this.todosLosItems.findIndex(i => String(i.hash_largo || i.id).trim().toLowerCase() === targetHash);
         if (idxTodos !== -1) {
           this.todosLosItems[idxTodos] = prepararEdicionComprobante({
             ...this.todosLosItems[idxTodos],
             ...payload
           }, this.loteActivo);
+          this.todosLosItems = [...this.todosLosItems];
+          this.actualizarVisibles();
+          return;
         }
 
-        const idxVisibles = this.items.findIndex(i => String(i.hash_largo || i.id).trim().toLowerCase() === targetHash);
+        const idxVisibles = this.items.findIndex(
+          i => String(i.hash_largo || i.id).trim().toLowerCase() === targetHash
+        );
         if (idxVisibles !== -1) {
           this.items[idxVisibles] = prepararEdicionComprobante({
             ...this.items[idxVisibles],
             ...payload
           }, this.loteActivo);
-
           this.items = [...this.items];
-        } else if (idxTodos === -1) {
-          this.resetearYRefrescar();
+          return;
         }
+
+        this.resetearYRefrescar();
       });
     },
 
@@ -126,58 +154,150 @@ export function comprobantesState() {
       return this.resetearYRefrescar();
     },
 
+    paramsConsulta() {
+      return {
+        socio: this.filtroSocio,
+        rol: this.filtroRol,
+        fechaInicio: this.filtroFechaInicio,
+        fechaFin: this.filtroFechaFin,
+        orden: this.filtroOrden,
+        hash: this.filtroHash
+      };
+    },
+
+    /** Recalcula las tarjetas visibles aplicando el rango posicional de hash. */
+    actualizarVisibles() {
+      const universo = aplicarRangoHash(
+        this.todosLosItems,
+        this.filtroDesdeHash,
+        this.filtroHastaHash
+      );
+
+      if (this.modoPaginacion === 'local') {
+        this.totalRegistros = universo.length;
+        this.items = universo.slice(0, Math.min(this.visibleLocal, this.capMaximoDOM));
+        this.hayMasDatos = this.items.length < universo.length
+          && this.items.length < this.capMaximoDOM;
+        return;
+      }
+
+      this.items = universo;
+      this.hayMasDatos = this.siguienteOffset < this.totalRegistros
+        && this.todosLosItems.length < this.capMaximoDOM
+        && this.items.length < this.capMaximoDOM;
+    },
+
+    /** Incorpora una página recién llegada sin volver a renderizar las previas. */
+    procesarPagina(pagina) {
+      const entrantes = Array.isArray(pagina?.items) ? pagina.items : [];
+
+      // Backend sin limit/offset: se usa el bloque recibido como buffer local
+      // y se revela de 20 en 20 sin repetir peticiones.
+      if (!pagina?.paginado) {
+        const vistos = new Set();
+        const buffer = [];
+        for (const item of entrantes) {
+          if (buffer.length >= this.capMaximoDOM) break;
+          const clave = claveComprobante(item);
+          if (vistos.has(clave)) continue;
+          vistos.add(clave);
+          buffer.push(item);
+        }
+        this.modoPaginacion = 'local';
+        this.todosLosItems = buffer;
+        this.visibleLocal = Math.min(this.tamanoLote, this.capMaximoDOM);
+        this.actualizarVisibles();
+        return;
+      }
+
+      this.modoPaginacion = 'red';
+      const existentes = new Set(this.todosLosItems.map(claveComprobante));
+      let agregados = 0;
+
+      for (const item of entrantes) {
+        if (this.todosLosItems.length >= this.capMaximoDOM) break;
+        const clave = claveComprobante(item);
+        if (existentes.has(clave)) continue;
+        existentes.add(clave);
+        this.todosLosItems.push(item);
+        agregados += 1;
+      }
+
+      this.siguienteOffset = Math.max(
+        this.siguienteOffset,
+        Number(pagina.offset || 0) + Number(pagina.recibidos || 0)
+      );
+      this.totalRegistros = Math.max(
+        Number(this.totalRegistros) || 0,
+        Number(pagina.total) || 0,
+        this.siguienteOffset
+      );
+
+      this.actualizarVisibles();
+
+      if (agregados === 0 && Number(pagina.recibidos) > 0) this.hayMasDatos = false;
+      if (!pagina.hasMore) this.hayMasDatos = false;
+      if (this.todosLosItems.length >= this.capMaximoDOM) this.hayMasDatos = false;
+    },
+
     async resetearYRefrescar() {
       const token = ++this.solicitudActual;
       this.items = [];
       this.todosLosItems = [];
-      this.hayMasDatos = false;
+      this.totalRegistros = 0;
+      this.siguienteOffset = 0;
+      this.visibleLocal = 0;
+      this.modoPaginacion = 'red';
+      this.hayMasDatos = true;
       this.cargando = true;
+      this.cargandoMas = false;
 
       try {
-        const params = {
-          socio: this.filtroSocio,
-          rol: this.filtroRol,
-          fechaInicio: this.filtroFechaInicio,
-          fechaFin: this.filtroFechaFin,
-          desdeHash: this.filtroDesdeHash,
-          hastaHash: this.filtroHastaHash,
-          orden: this.filtroOrden,
-          hash: this.filtroHash
-        };
-
-        const ordenados = await cargarComprobantesFiltrados(params, {
-          maximo: this.capMaximoDOM,
+        // La primera pantalla solo descarga el primer bloque de 20.
+        const pagina = await cargarPaginaComprobantes(this.paramsConsulta(), {
+          limit: this.tamanoLote,
+          offset: 0,
           loteActivo: this.loteActivo
         });
         if (token !== this.solicitudActual) return;
-
-        this.todosLosItems = ordenados.slice(0, this.capMaximoDOM);
-        this.items = this.todosLosItems.slice(0, this.tamanoLote);
-        this.hayMasDatos = this.items.length < this.todosLosItems.length;
+        this.procesarPagina(pagina);
       } catch (err) {
-        console.error('❌ Error al cargar lote de comprobantes:', err);
+        console.error('❌ Error al cargar la primera página de comprobantes:', err);
       } finally {
         if (token === this.solicitudActual) this.cargando = false;
       }
     },
 
-    cargarSiguientePagina() {
-      if (this.cargando || !this.hayMasDatos) return;
+    async cargarSiguientePagina() {
+      if (this.cargando || this.cargandoMas || !this.hayMasDatos) return;
 
-      const proximoLimite = Math.min(
-        this.items.length + this.tamanoLote,
-        this.capMaximoDOM,
-        this.todosLosItems.length
-      );
+      if (this.modoPaginacion === 'local') {
+        this.visibleLocal = Math.min(this.visibleLocal + this.tamanoLote, this.capMaximoDOM);
+        this.actualizarVisibles();
+        return;
+      }
 
-      this.items = this.todosLosItems.slice(0, proximoLimite);
-      this.hayMasDatos = this.items.length < this.todosLosItems.length;
+      const token = this.solicitudActual;
+      this.cargandoMas = true;
+      try {
+        const pagina = await cargarPaginaComprobantes(this.paramsConsulta(), {
+          limit: this.tamanoLote,
+          offset: this.siguienteOffset,
+          loteActivo: this.loteActivo
+        });
+        if (token !== this.solicitudActual) return;
+        this.procesarPagina(pagina);
+      } catch (err) {
+        console.error('❌ Error al cargar el siguiente bloque de comprobantes:', err);
+      } finally {
+        if (token === this.solicitudActual) this.cargandoMas = false;
+      }
     },
 
     iniciarEscuchadoresScroll() {
       this.$nextTick(() => {
         const intentarCargar = () => {
-          if (this.vistaActiva !== 'comprobantes' || this.cargando || !this.hayMasDatos) return;
+          if (this.vistaActiva !== 'comprobantes' || this.cargando || this.cargandoMas || !this.hayMasDatos) return;
 
           const sentinel = document.getElementById('sentinel-scroll');
           if (!sentinel) return;
@@ -260,9 +380,22 @@ export function comprobantesState() {
       } catch (err) {
         console.error('❌ Error al eliminar:', err);
       } finally {
-        this.items = this.items.filter(item => String(item.id || item.hash_largo || '') !== idStr);
-        this.todosLosItems = this.todosLosItems.filter(item => String(item.id || item.hash_largo || '') !== idStr);
-        this.hayMasDatos = this.items.length < this.todosLosItems.length;
+        const antes = this.todosLosItems.length;
+        this.todosLosItems = this.todosLosItems.filter(
+          item => String(item.id || item.hash_largo || '') !== idStr
+        );
+        const eliminados = antes - this.todosLosItems.length;
+
+        if (eliminados > 0) {
+          // El universo y la ventana del servidor se reducen en la misma
+          // proporción para no saltar el siguiente registro al paginar.
+          this.totalRegistros = Math.max(0, (Number(this.totalRegistros) || 0) - eliminados);
+          if (this.modoPaginacion === 'red') {
+            this.siguienteOffset = Math.max(0, this.siguienteOffset - eliminados);
+          }
+        }
+
+        this.actualizarVisibles();
       }
     },
 
