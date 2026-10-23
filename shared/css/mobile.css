@@ -144,6 +144,19 @@ body.glauk-sheet-open .glauk-main {
   body.glauk-has-bottom-nav .footer {
     padding-bottom: calc(var(--glauk-nav-height) + var(--glauk-safe-bottom));
   }
+
+  /* En Tasas el footer de acciones es fijo: debe subir por encima de la
+     BottomNav para que "Ver Previa" y "Guardar Cambios" sigan siendo
+     alcanzables con el pulgar. */
+  body.glauk-has-bottom-nav .sticky-footer {
+    bottom: calc(var(--glauk-nav-height) + var(--glauk-safe-bottom));
+    z-index: 45;
+  }
+
+  /* Reserva espacio para el footer de acciones cuando está visible. */
+  body.glauk-has-bottom-nav:has(#stickyFooter:not(.hidden)) .glauk-main {
+    padding-bottom: calc(var(--glauk-nav-height) + 76px + var(--glauk-safe-bottom)) !important;
+  }
 }
 
 /* --------------------------------------------------------------------------
