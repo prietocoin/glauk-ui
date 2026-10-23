@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#030611">
   <meta name="description" content="Reportes Glauk: constructor, filtros, plantillas y JPEG para WhatsApp.">
   <title>Reportes · Glauk</title>
@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="../shared/css/base.css">
   <link rel="stylesheet" href="../shared/css/components.css">
   <link rel="stylesheet" href="../shared/css/print.css">
+  <link rel="stylesheet" href="../shared/css/mobile.css">
 </head>
 <body>
   <div class="app-shell">
@@ -28,7 +29,7 @@
       </div>
     </header>
 
-    <main class="container page stack">
+    <main class="container page stack glauk-main">
       <section class="view stack" id="view-constructor">
         <div class="card">
           <div class="card-head"><div><h2>Filtros del reporte</h2><p class="small">Rol, entidad y hash se cachean 60 segundos.</p></div><span class="badge" id="filtros-cache">Sin cargar</span></div>
@@ -46,8 +47,8 @@
         </div>
 
         <div class="card">
-          <div class="card-head"><div><h2>Vista previa de datos</h2><p class="small">El reporte final se rasteriza localmente.</p></div><span class="badge badge-accent" id="movimientos-count">0 filas</span></div>
-          <div class="card-body"><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Socio</th><th>Operación</th><th>Monto</th><th>ME1</th></tr></thead><tbody id="movimientos-tabla"></tbody></table></div></div>
+          <div class="card-head"><div><h2>Vista previa de datos</h2><p class="small">La tabla muestra hasta 50 filas; el JPEG hasta 20.</p></div><span class="badge badge-accent" id="movimientos-count">0 movimientos</span></div>
+          <div class="card-body"><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Socio</th><th>Operación</th><th>Monto</th><th>ME1</th></tr></thead><tbody id="movimientos-tabla"></tbody></table></div><p class="small muted hidden" id="movimientos-aviso"></p></div>
         </div>
 
         <div class="card">
@@ -87,5 +88,6 @@
   <script src="../config.js"></script>
   <script src="../shared/vendor/html2canvas.min.js"></script>
   <script type="module" src="./js/main.js"></script>
+  <script type="module" src="/shared/js/mobile-nav.js"></script>
 </body>
 </html>

@@ -40,11 +40,17 @@
 
 <body class="bg-[#030611] text-slate-100 font-sans antialiased min-h-screen selection:bg-cyan-500 selection:text-black"
       x-data="app"
-      @keydown.escape.window="cerrarFiltros(); cerrarDetalle()"
+      @keydown.escape.window="cerrarFiltros(); cerrarDetalle(); cerrarMenuMovil()"
       x-cloak>
 
   <!-- CONTENEDOR FIJO DE PANTALLA COMPLETA -->
   <div class="flex flex-col md:flex-row h-screen overflow-hidden">
+
+    <!-- FONDO DEL MENÚ MÓVIL -->
+    <div x-show="menuMovilAbierto"
+         x-cloak
+         class="glauk-sidebar-backdrop"
+         @click="cerrarMenuMovil()"></div>
 
     <!-- NAVEGACIÓN LATERAL PRINCIPAL -->
     <!-- ================================================================= -->
@@ -53,8 +59,14 @@
 <!-- RESPONSABILIDAD: Menú lateral de navegación global y Modales      -->
 <!-- ================================================================= -->
 
-<aside class="w-full md:w-64 bg-[#070e23] border-r border-slate-800 flex flex-col justify-between shrink-0">
+<aside id="glauk-sidebar"
+       class="glauk-sidebar w-full md:w-64 bg-[#070e23] border-r border-slate-800 flex flex-col justify-between shrink-0"
+       :class="{ 'is-open': menuMovilAbierto }">
   <div class="p-4 space-y-6">
+    <button type="button"
+            class="glauk-sidebar-close"
+            @click="cerrarMenuMovil()"
+            aria-label="Cerrar menú">✕</button>
     <!-- LOGO -->
     <div class="flex items-center gap-3">
       <img src="./logo-fundablock.png" alt="Logo" class="h-9 w-auto" loading="lazy" decoding="async">
@@ -68,13 +80,13 @@
     <nav class="space-y-1">
 
       <!-- 1. COMPROBANTES -->
-      <button @click="vistaActiva = 'comprobantes'" :class="vistaActiva === 'comprobantes' ? 'bg-cyan-500/10 text-cyan-400 border-l-2 border-cyan-400' : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-r text-sm font-medium transition">
+      <button @click="vistaActiva = 'comprobantes'; cerrarMenuMovil()" :class="vistaActiva === 'comprobantes' ? 'bg-cyan-500/10 text-cyan-400 border-l-2 border-cyan-400' : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-r text-sm font-medium transition">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
         Comprobantes
       </button>
 
       <!-- 2. CARTELERA TASAS (módulo TasasHub real) -->
-      <a href="/tasas/" class="w-full flex items-center justify-between px-3 py-2.5 rounded-r text-sm font-medium text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 transition no-underline" aria-label="Abrir el módulo TasasHub">
+      <a href="/tasas/" @click="cerrarMenuMovil()" class="w-full flex items-center justify-between px-3 py-2.5 rounded-r text-sm font-medium text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 transition no-underline" aria-label="Abrir el módulo TasasHub">
         <span class="flex items-center gap-3">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
           Cartelera Tasas
@@ -83,7 +95,7 @@
       </a>
 
       <!-- 3. DIRECTORIO SOCIOS (módulo PerfilHub real) -->
-      <a href="/perfiles/" class="w-full flex items-center justify-between px-3 py-2.5 rounded-r text-sm font-medium text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 transition" aria-label="Abrir el módulo PerfilHub">
+      <a href="/perfiles/" @click="cerrarMenuMovil()" class="w-full flex items-center justify-between px-3 py-2.5 rounded-r text-sm font-medium text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 transition" aria-label="Abrir el módulo PerfilHub">
         <span class="flex items-center gap-3">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
           Directorio Socios
@@ -92,7 +104,7 @@
       </a>
 
       <!-- 4. DASHBOARD -->
-      <button @click="vistaActiva = 'dashboard'" :class="vistaActiva === 'dashboard' ? 'bg-cyan-500/10 text-cyan-400 border-l-2 border-cyan-400' : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-r text-sm font-medium transition">
+      <button @click="vistaActiva = 'dashboard'; cerrarMenuMovil()" :class="vistaActiva === 'dashboard' ? 'bg-cyan-500/10 text-cyan-400 border-l-2 border-cyan-400' : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-r text-sm font-medium transition">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
         Dashboard
       </button>
@@ -111,6 +123,20 @@
 
     <!-- ÁREA DE CONTENIDO DINÁMICO -->
     <main class="glauk-main flex-1 p-3 md:p-6 overflow-y-auto overflow-x-hidden space-y-4 md:space-y-5">
+
+      <!-- BARRA MÓVIL: ABRE EL MENÚ LATERAL COMO DRAWER -->
+      <div class="glauk-mobile-topbar md:hidden">
+        <button type="button"
+                class="glauk-mobile-menu-btn"
+                @click="abrirMenuMovil()"
+                :aria-expanded="menuMovilAbierto ? 'true' : 'false'"
+                aria-controls="glauk-sidebar"
+                aria-label="Abrir menú de navegación">☰</button>
+        <div class="glauk-mobile-brand">
+          <strong>FUNDABLOCK</strong>
+          <span>GLAUK2 ENGINE</span>
+        </div>
+      </div>
 
       <!-- VISTA 1: AUDITORÍA DE COMPROBANTES -->
       <div x-show="vistaActiva === 'comprobantes'" class="space-y-3 md:space-y-4">
@@ -309,7 +335,7 @@
                }
              }"
              @click="abrirDetalle(item)"
-             @keydown.enter.prevent="abrirDetalle(item)"
+             @keydown.enter.self.prevent="abrirDetalle(item)"
              tabindex="0"
              role="button"
              :aria-label="'Abrir detalle del comprobante ' + (item.hash_corto || item.hash_largo || '')">
@@ -430,13 +456,11 @@
           <button type="button"
                   class="glauk-icon-btn"
                   @click.stop="eliminarComprobante(item.id || item.hash_largo)"
-                  @keydown.stop
                   title="Eliminar Comprobante"
                   aria-label="Eliminar comprobante">🗑️</button>
           <button type="button"
                   class="glauk-icon-btn"
                   @click.stop="$dispatch('abrir-modal-edicion', item)"
-                  @keydown.stop
                   title="Auditar / Editar"
                   aria-label="Auditar o editar comprobante">✏️</button>
         </div>

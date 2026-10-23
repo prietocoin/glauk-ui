@@ -7,7 +7,8 @@ import { crearConstructor } from './views/constructor.js';
 import { crearPlantillas } from './views/plantillas.js';
 
 const state = {
-  view: 'constructor', socios: [], rows: [], filtros: { roles: [], entidades: [], hashes: [] },
+  view: 'constructor', socios: [], rows: [], totalMovimientos: 0,
+  filtros: { roles: [], entidades: [], hashes: [] },
   reporte: { blob: null, base64: '', key: '', meta: null }
 };
 

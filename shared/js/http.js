@@ -43,7 +43,7 @@ async function errorFrom(response) {
 export async function request(path, options = {}) {
   const {
     method = 'GET', body, headers = {}, timeout = DEFAULT_TIMEOUT,
-    idempotencyKey: idem, params, responseType = 'json'
+    idempotencyKey: idem, params, responseType = 'json', includeResponse = false
   } = options;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
@@ -69,7 +69,10 @@ export async function request(path, options = {}) {
     });
     if (responseType === 'blob') {
       if (!response.ok) throw await errorFrom(response);
-      return await response.blob();
+      const blob = await response.blob();
+      return includeResponse
+        ? { data: blob, headers: response.headers, status: response.status }
+        : blob;
     }
     const text = await response.text();
     let data = null;
@@ -85,7 +88,9 @@ export async function request(path, options = {}) {
         status: response.status, code: data.code || 'API_ERROR', body: data
       });
     }
-    return data;
+    return includeResponse
+      ? { data, headers: response.headers, status: response.status }
+      : data;
   } catch (error) {
     if (error instanceof HTTPError) throw error;
     if (error.name === 'AbortError') {

@@ -345,8 +345,11 @@ export async function eliminarComprobantePorHash(hashLargo) {
       headers: { 'Content-Type': 'application/json' }
     });
 
-    if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
-    return true;
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data?.success === false) {
+      throw new Error(data?.error || data?.message || `HTTP Error: ${res.status}`);
+    }
+    return data || true;
   } catch (err) {
     console.error('[comprobantesApiService ❌ Delete Error]:', err.message);
     throw err;

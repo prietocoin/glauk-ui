@@ -114,6 +114,7 @@ tbody tr:last-child td { border-bottom: 0; }
 .reporte-sheet th, .reporte-sheet td { border-color: #cbd5e1; padding: 9px 10px; }
 .reporte-sheet th { background: #e2e8f0; color: #334155; }
 .reporte-sheet .reporte-total { margin-top: auto; border-top: 2px solid #0f172a; padding-top: 18px; font-size: 24px; font-weight: 900; text-align: right; }
+.reporte-sheet .reporte-aviso { background: #fff7ed; border: 1px solid #fdba74; color: #9a3412; padding: 10px 12px; border-radius: 8px; font-size: 15px; font-weight: 700; text-align: center; }
 .reporte-sheet .reporte-foot { font-size: 15px; display: flex; justify-content: space-between; gap: 20px; }
 .reporte-sheet .reporte-meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; background: #f1f5f9; padding: 16px; border-radius: 12px; font-size: 17px; }
 .preview-frame { background: #fff; border-radius: 10px; padding: 10px; max-height: 520px; overflow: auto; }

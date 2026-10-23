@@ -15,14 +15,14 @@ export function crearPreview(ctx) {
     qs('#reporte-resultado').textContent = '';
   }
 
-  async function generar(elemento, meta, filas) {
+  async function generar(elemento, meta, filas, total = filas.length) {
     try {
       qs('#canvas-estado').textContent = 'Generando…';
       qs('#btn-generar').disabled = true;
       const resultado = await generarReporteJPEG({ elemento });
       ctx.state.reporte = {
         blob: resultado.blob, base64: resultado.base64,
-        key: idempotencyKey(), meta: { ...meta, filas: filas.length }
+        key: idempotencyKey(), meta: { ...meta, filas: filas.length, totalMovimientos: total }
       };
       const image = el('img', { src: `data:image/jpeg;base64,${resultado.base64}`, alt: 'Vista previa del reporte' });
       qs('#reporte-preview').replaceChildren(image);
@@ -30,7 +30,9 @@ export function crearPreview(ctx) {
       qs('#btn-enviar').disabled = false;
       qs('#canvas-estado').textContent = `${Math.round(resultado.blob.size / 1024)} KiB`;
       qs('#reportes-badge').textContent = 'JPEG listo';
-      qs('#reporte-resultado').textContent = `${filas.length} movimientos incluidos.`;
+      qs('#reporte-resultado').textContent = total > filas.length
+        ? `${filas.length} de ${total} movimientos incluidos en el JPEG.`
+        : `${filas.length} movimientos incluidos.`;
       ctx.notify.success('Reporte rasterizado en el navegador.');
     } catch (err) {
       qs('#canvas-estado').textContent = 'Error';

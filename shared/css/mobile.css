@@ -17,13 +17,60 @@ body.glauk-sheet-open .glauk-main {
   overflow: hidden;
 }
 
+/* Notificaciones compartidas (Comprobantes no carga components.css). */
+.toast-host {
+  position: fixed;
+  right: 14px;
+  bottom: 14px;
+  z-index: 120;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(380px, calc(100% - 28px));
+}
+
+.toast-host .toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 10px 11px;
+  border: 1px solid #16224f;
+  border-left: 4px solid #06b6d4;
+  border-radius: 10px;
+  background: #0b1326;
+  color: #e8eefc;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, .35);
+  animation: glauk-toast-in .18s ease-out;
+}
+
+.toast-host .toast-success { border-left-color: #10b981; }
+.toast-host .toast-error { border-left-color: #fb7185; }
+.toast-host .toast-warning { border-left-color: #f59e0b; }
+.toast-host .toast-icon { color: #06b6d4; font-weight: 900; }
+.toast-host .toast-success .toast-icon { color: #10b981; }
+.toast-host .toast-error .toast-icon { color: #fb7185; }
+.toast-host .toast-warning .toast-icon { color: #f59e0b; }
+.toast-host .toast-text { flex: 1; font-size: .78rem; }
+.toast-host .toast-close { border: 0; background: transparent; color: #94a3b8; font-size: 1.1rem; line-height: 1; }
+
+@media (max-width: 1023px) {
+  .toast-host {
+    bottom: calc(14px + var(--glauk-nav-height) + var(--glauk-safe-bottom));
+  }
+}
+
+@keyframes glauk-toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
 /* --------------------------------------------------------------------------
    Bottom navigation (solo móvil/tablet; en desktop manda el sidebar)
    -------------------------------------------------------------------------- */
 .glauk-bottom-nav {
   position: fixed;
   inset: auto 0 0 0;
-  z-index: 70;
+  z-index: 40;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   height: calc(var(--glauk-nav-height) + var(--glauk-safe-bottom));
@@ -87,19 +134,132 @@ body.glauk-sheet-open .glauk-main {
   body.glauk-has-bottom-nav {
     padding-bottom: 0;
   }
-
-  .glauk-main {
-    padding-bottom: 0 !important;
-  }
 }
 
 @media (max-width: 1023px) {
-  body.glauk-has-bottom-nav {
-    padding-bottom: calc(var(--glauk-nav-height) + var(--glauk-safe-bottom));
-  }
-
   .glauk-main {
     padding-bottom: calc(var(--glauk-nav-height) + var(--glauk-safe-bottom)) !important;
+  }
+
+  body.glauk-has-bottom-nav .footer {
+    padding-bottom: calc(var(--glauk-nav-height) + var(--glauk-safe-bottom));
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Drawer del sidebar en móvil
+   -------------------------------------------------------------------------- */
+.glauk-sidebar-backdrop {
+  display: none;
+}
+
+.glauk-sidebar-close {
+  display: none;
+}
+
+.glauk-mobile-topbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 2px 2px;
+}
+
+.glauk-mobile-menu-btn {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(34, 211, 238, .35);
+  border-radius: 12px;
+  background: #060c24;
+  color: #67e8f9;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.glauk-mobile-brand {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.1;
+}
+
+.glauk-mobile-brand strong {
+  color: #f8fafc;
+  font-size: 13px;
+  letter-spacing: .04em;
+}
+
+.glauk-mobile-brand span {
+  color: #22d3ee;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 9px;
+  letter-spacing: .08em;
+}
+
+@media (max-width: 1023px) {
+  .glauk-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 80;
+    width: min(84vw, 300px);
+    max-width: 300px;
+    overflow-y: auto;
+    transform: translateX(-105%);
+    transition: transform .22s ease;
+    box-shadow: 24px 0 60px rgba(0, 0, 0, .55);
+  }
+
+  .glauk-sidebar.is-open {
+    transform: translateX(0);
+  }
+
+  .glauk-sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 75;
+    background: rgba(0, 0, 0, .66);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+
+  .glauk-sidebar-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 40px;
+    height: 40px;
+    margin-left: auto;
+    border: 1px solid rgba(30, 58, 138, .8);
+    border-radius: 12px;
+    background: #030611;
+    color: #94a3b8;
+    font-size: 16px;
+    font-weight: 900;
+  }
+}
+
+@media (min-width: 1024px) {
+  .glauk-sidebar {
+    position: static;
+    transform: none;
+  }
+
+  .glauk-sidebar-backdrop {
+    display: none !important;
+  }
+
+  .glauk-sidebar-close {
+    display: none !important;
+  }
+
+  .glauk-mobile-topbar {
+    display: none;
   }
 }
 

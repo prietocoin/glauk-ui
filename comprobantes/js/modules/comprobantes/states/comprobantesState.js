@@ -60,6 +60,7 @@ export function comprobantesState() {
 
     // BottomSheet de filtros y detalle táctil de tarjeta.
     filtrosSheetAbierto: false,
+    menuMovilAbierto: false,
     filtrosBorrador: {
       rol: '',
       socio: '',
@@ -211,8 +212,18 @@ export function comprobantesState() {
     actualizarBloqueoScroll() {
       document.body.classList.toggle(
         'glauk-sheet-open',
-        Boolean(this.filtrosSheetAbierto || this.detalleAbierto)
+        Boolean(this.filtrosSheetAbierto || this.detalleAbierto || this.menuMovilAbierto)
       );
+    },
+
+    abrirMenuMovil() {
+      this.menuMovilAbierto = true;
+      this.actualizarBloqueoScroll();
+    },
+
+    cerrarMenuMovil() {
+      this.menuMovilAbierto = false;
+      this.actualizarBloqueoScroll();
     },
 
     abrirFiltros() {
@@ -537,9 +548,7 @@ export function comprobantesState() {
 
       try {
         await eliminarComprobantePorHash(idStr);
-      } catch (err) {
-        console.error('❌ Error al eliminar:', err);
-      } finally {
+
         const antes = this.todosLosItems.length;
         this.todosLosItems = this.todosLosItems.filter(
           item => String(item.id || item.hash_largo || '') !== idStr
@@ -556,6 +565,13 @@ export function comprobantesState() {
         }
 
         this.actualizarVisibles();
+        notify('Comprobante eliminado correctamente.', { type: 'success' });
+      } catch (err) {
+        console.error('❌ Error al eliminar:', err);
+        notify(
+          `No se pudo eliminar el comprobante: ${err.message || 'error del servidor'}`,
+          { type: 'error' }
+        );
       }
     },
 
