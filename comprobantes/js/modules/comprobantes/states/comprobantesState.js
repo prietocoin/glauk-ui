@@ -18,7 +18,10 @@ import {
 } from '../services/saldosCalculatorService.js';
 
 import { eliminarComprobantePorHash } from '../services/comprobantesApiService.js';
-import { cargarPaginaComprobantes } from '../services/comprobantesCargaService.js';
+import {
+  cargarPaginaComprobantes,
+  cargarComprobantesFiltrados
+} from '../services/comprobantesCargaService.js';
 import { aplicarRangoHash } from '../services/comprobantesFilterService.js';
 import { crearAccionesModal } from '../services/comprobantesModalActions.js';
 import { prepararEdicionComprobante, obtenerInsigniaRol } from '../services/comprobantesMapperService.js';
@@ -424,6 +427,31 @@ export function comprobantesState() {
       this.cargandoMas = false;
 
       try {
+        // El backend solo ordena por fecha (fecha_asc/fecha_desc). Para los
+        // criterios por monto se carga el universo acotado y se ordena de forma
+        // global en el cliente, revelándolo luego de 20 en 20. Así el filtro
+        // "Ordenar" conserva sus cuatro opciones en modo paginado.
+        if (String(this.filtroOrden || '').startsWith('monto')) {
+          const lista = await cargarComprobantesFiltrados(
+            {
+              ...this.paramsConsulta(),
+              desdeHash: this.filtroDesdeHash,
+              hastaHash: this.filtroHastaHash
+            },
+            { maximo: this.capMaximoDOM, loteActivo: this.loteActivo }
+          );
+          if (token !== this.solicitudActual) return;
+          this.procesarPagina({
+            items: lista,
+            total: lista.length,
+            hasMore: false,
+            paginado: false,
+            offset: 0,
+            recibidos: lista.length
+          });
+          return;
+        }
+
         // La primera pantalla solo descarga el primer bloque de 20.
         const pagina = await cargarPaginaComprobantes(this.paramsConsulta(), {
           limit: this.tamanoLote,
