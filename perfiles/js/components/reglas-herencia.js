@@ -5,8 +5,8 @@ function etiquetaBase(base) {
 }
 
 function renderFila(regla) {
-  const claseDep = regla.dep_op === '+' ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold';
-  const clasePago = regla.pago_op === '+' ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold';
+  const claseDep = regla.polar_D === '+' ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold';
+  const clasePago = regla.polar_P === '+' ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold';
   return `
     <div class="px-4 py-2.5 border-b border-slate-800/50 last:border-0 flex items-center justify-between hover:bg-slate-800/30 transition">
       <div class="flex items-center gap-3">
@@ -21,7 +21,7 @@ function renderFila(regla) {
         <div class="flex flex-col items-end">
           <span class="text-[9px] text-cyan-500/70 font-sans font-bold">DEPÓSITO (D)</span>
           <span class="text-slate-300">
-            <span class="${claseDep}">${escapeHTML(regla.dep_op)}</span>
+            <span class="${claseDep}">${escapeHTML(regla.polar_D)}</span>
             <span>${escapeHTML(regla.deposito)}%</span>
           </span>
         </div>
@@ -29,7 +29,7 @@ function renderFila(regla) {
         <div class="flex flex-col items-start">
           <span class="text-[9px] text-amber-500/70 font-sans font-bold">PAGO (P)</span>
           <span class="text-slate-300">
-            <span class="${clasePago}">${escapeHTML(regla.pago_op)}</span>
+            <span class="${clasePago}">${escapeHTML(regla.polar_P)}</span>
             <span>${escapeHTML(regla.pago)}%</span>
           </span>
         </div>

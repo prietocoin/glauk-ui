@@ -15,10 +15,10 @@ function opcionesCatalogo(seleccionada, reglas) {
 }
 
 function renderRegla(regla, index) {
-  const claseDep = regla.dep_op === '+' ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400' : 'border-rose-500/40 bg-rose-500/10 text-rose-400';
-  const clasePago = regla.pago_op === '-' ? 'border-rose-500/40 bg-rose-500/10 text-rose-400' : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400';
-  const textoDep = regla.dep_op === '+' ? '+ Suma' : '- Resta';
-  const textoPago = regla.pago_op === '-' ? '- Resta' : '+ Suma';
+  const claseDep = regla.polar_D === '+' ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400' : 'border-rose-500/40 bg-rose-500/10 text-rose-400';
+  const clasePago = regla.polar_P === '-' ? 'border-rose-500/40 bg-rose-500/10 text-rose-400' : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400';
+  const textoDep = regla.polar_D === '+' ? '+ Suma' : '- Resta';
+  const textoPago = regla.polar_P === '-' ? '- Resta' : '+ Suma';
   const base = escapeHTML(etiquetaBase(regla.base));
   return `
     <div class="bg-[#050a1e] border border-purple-500/30 hover:border-purple-500/50 rounded-xl p-3.5 space-y-3 shadow-md transition">
@@ -31,9 +31,9 @@ function renderRegla(regla, index) {
         <div class="flex items-center gap-3">
           <div class="flex items-center gap-1.5">
             <span class="text-[10px] font-bold uppercase text-slate-400">DEF:</span>
-            <select data-regla="${index}" data-campo="def" class="bg-[#030611] border border-slate-700 text-xs text-cyan-400 rounded px-2 py-0.5 font-bold focus:outline-none">
-              <option value="D"${regla.def === 'D' ? ' selected' : ''}>D (Depósito)</option>
-              <option value="P"${regla.def === 'P' ? ' selected' : ''}>P (Pago)</option>
+            <select data-regla="${index}" data-campo="tipo" class="bg-[#030611] border border-slate-700 text-xs text-cyan-400 rounded px-2 py-0.5 font-bold focus:outline-none">
+              <option value="D"${regla.tipo === 'D' ? ' selected' : ''}>D (Depósito)</option>
+              <option value="P"${regla.tipo === 'P' ? ' selected' : ''}>P (Pago)</option>
             </select>
           </div>
 

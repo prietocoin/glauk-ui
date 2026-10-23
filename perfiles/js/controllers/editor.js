@@ -82,8 +82,8 @@ export function crearEditor({ recargar = async () => {}, alertar = globalThis.al
   function alternarSigno(indice, tipo) {
     const regla = state.reglas[indice];
     if (!regla) return;
-    if (tipo === 'dep') regla.dep_op = regla.dep_op === '+' ? '-' : '+';
-    if (tipo === 'pago') regla.pago_op = regla.pago_op === '-' ? '+' : '-';
+    if (tipo === 'dep') regla.polar_D = regla.polar_D === '+' ? '-' : '+';
+    if (tipo === 'pago') regla.polar_P = regla.polar_P === '-' ? '+' : '-';
     renderReglas();
   }
 
@@ -158,8 +158,8 @@ export function crearEditor({ recargar = async () => {}, alertar = globalThis.al
       return;
     }
     const indice = Number(target.dataset.regla);
-    if (campo === 'def' && Number.isInteger(indice) && state.reglas[indice]) {
-      state.reglas[indice].def = target.value;
+    if (campo === 'tipo' && Number.isInteger(indice) && state.reglas[indice]) {
+      state.reglas[indice].tipo = target.value === 'P' ? 'P' : 'D';
     }
   }
 
