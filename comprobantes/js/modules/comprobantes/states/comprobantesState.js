@@ -10,6 +10,7 @@ import {
 } from '../utils/comprobantesFormatters.js';
 
 import { apiUrl } from '../../../../../shared/js/api-base.js';
+import { notify } from '../../../../../shared/js/toast.js';
 
 import {
   calcularSociosPendientesConsolidado,
@@ -57,6 +58,22 @@ export function comprobantesState() {
     itemEdicion: null,
     loteActivo: 'T070',
 
+    // BottomSheet de filtros y detalle táctil de tarjeta.
+    filtrosSheetAbierto: false,
+    filtrosBorrador: {
+      rol: '',
+      socio: '',
+      fechaInicio: inicioMes,
+      fechaFin: finMes,
+      desdeHash: '',
+      hastaHash: '',
+      orden: 'fecha_desc',
+      hash: ''
+    },
+    filtroChip: 'todos',
+    detalleAbierto: false,
+    itemDetalle: null,
+
     filtroRol: '',
     filtroSocio: '',
     filtroFechaInicio: inicioMes,
@@ -91,6 +108,19 @@ export function comprobantesState() {
     get hayDatosParciales() {
       const total = Number(this.totalRegistros) || 0;
       return total > 0 && this.items.length < total;
+    },
+
+    get filtrosActivosCount() {
+      let total = 0;
+      if (this.filtroRol) total += 1;
+      if (this.filtroSocio) total += 1;
+      if (this.filtroFechaInicio) total += 1;
+      if (this.filtroFechaFin) total += 1;
+      if (this.filtroDesdeHash) total += 1;
+      if (this.filtroHastaHash) total += 1;
+      if (this.filtroOrden && this.filtroOrden !== 'fecha_desc') total += 1;
+      if (this.filtroHash) total += 1;
+      return total;
     },
 
     init() {
@@ -154,6 +184,130 @@ export function comprobantesState() {
       return this.resetearYRefrescar();
     },
 
+    filtrosActuales() {
+      return {
+        rol: this.filtroRol,
+        socio: this.filtroSocio,
+        fechaInicio: this.filtroFechaInicio,
+        fechaFin: this.filtroFechaFin,
+        desdeHash: this.filtroDesdeHash,
+        hastaHash: this.filtroHastaHash,
+        orden: this.filtroOrden,
+        hash: this.filtroHash
+      };
+    },
+
+    fechaHoyCaracas() {
+      const partes = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Caracas',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).formatToParts(new Date());
+      const valor = (tipo) => partes.find((parte) => parte.type === tipo)?.value || '';
+      return `${valor('year')}-${valor('month')}-${valor('day')}`;
+    },
+
+    actualizarBloqueoScroll() {
+      document.body.classList.toggle(
+        'glauk-sheet-open',
+        Boolean(this.filtrosSheetAbierto || this.detalleAbierto)
+      );
+    },
+
+    abrirFiltros() {
+      this.filtrosBorrador = this.filtrosActuales();
+      this.filtrosSheetAbierto = true;
+      this.actualizarBloqueoScroll();
+    },
+
+    cerrarFiltros() {
+      this.filtrosSheetAbierto = false;
+      this.actualizarBloqueoScroll();
+    },
+
+    limpiarFiltros() {
+      this.filtrosBorrador = {
+        rol: '',
+        socio: '',
+        fechaInicio: '',
+        fechaFin: '',
+        desdeHash: '',
+        hastaHash: '',
+        orden: 'fecha_desc',
+        hash: ''
+      };
+    },
+
+    async aplicarFiltros() {
+      const borrador = this.filtrosBorrador;
+      if (borrador.fechaInicio && borrador.fechaFin && borrador.fechaInicio > borrador.fechaFin) {
+        notify('La fecha inicial no puede ser posterior a la fecha final.', { type: 'warning' });
+        return;
+      }
+
+      this.filtroRol = String(borrador.rol || '').trim();
+      this.filtroSocio = String(borrador.socio || '').trim();
+      this.filtroFechaInicio = String(borrador.fechaInicio || '').trim();
+      this.filtroFechaFin = String(borrador.fechaFin || '').trim();
+      this.filtroDesdeHash = String(borrador.desdeHash || '').trim();
+      this.filtroHastaHash = String(borrador.hastaHash || '').trim();
+      this.filtroOrden = String(borrador.orden || 'fecha_desc');
+      this.filtroHash = String(borrador.hash || '').trim();
+      this.filtroChip = 'todos';
+      this.saldoAnterior = obtenerSaldoAnteriorSocio(this.directorio, this.filtroSocio);
+      this.filtrosSheetAbierto = false;
+      this.actualizarBloqueoScroll();
+      return this.resetearYRefrescar();
+    },
+
+    aplicarChip(tipo) {
+      if (tipo === 'hoy') {
+        const hoy = this.fechaHoyCaracas();
+        this.filtroFechaInicio = hoy;
+        this.filtroFechaFin = hoy;
+        this.filtroChip = 'hoy';
+        return this.resetearYRefrescar();
+      }
+
+      if (tipo === 'todos') {
+        const { fechaInicio, fechaFin } = obtenerRangoMesActualCaracas();
+        this.filtroFechaInicio = fechaInicio;
+        this.filtroFechaFin = fechaFin;
+        this.filtroChip = 'todos';
+        return this.resetearYRefrescar();
+      }
+
+      this.filtroChip = tipo;
+      this.actualizarVisibles();
+    },
+
+    urlRecibo(item) {
+      if (!item) return '';
+      return item.link_img || item.url_r2_comprobante || item.url_imagen || '';
+    },
+
+    abrirDetalle(item) {
+      if (!item) return;
+      this.itemDetalle = item;
+      this.detalleAbierto = true;
+      this.actualizarBloqueoScroll();
+    },
+
+    cerrarDetalle() {
+      this.detalleAbierto = false;
+      this.itemDetalle = null;
+      this.actualizarBloqueoScroll();
+    },
+
+    editarDesdeDetalle() {
+      const item = this.itemDetalle;
+      this.cerrarDetalle();
+      if (item) {
+        window.dispatchEvent(new CustomEvent('abrir-modal-edicion', { detail: item }));
+      }
+    },
+
     paramsConsulta() {
       return {
         socio: this.filtroSocio,
@@ -167,11 +321,17 @@ export function comprobantesState() {
 
     /** Recalcula las tarjetas visibles aplicando el rango posicional de hash. */
     actualizarVisibles() {
-      const universo = aplicarRangoHash(
+      let universo = aplicarRangoHash(
         this.todosLosItems,
         this.filtroDesdeHash,
         this.filtroHastaHash
       );
+
+      if (this.filtroChip === 'pendientes') {
+        universo = universo.filter((item) => !item.esta_liquidado);
+      } else if (this.filtroChip === 'sin_liquidar') {
+        universo = universo.filter((item) => !(item.lote_tasa_asignado || item.lote_tasa || item.lote));
+      }
 
       if (this.modoPaginacion === 'local') {
         this.totalRegistros = universo.length;
