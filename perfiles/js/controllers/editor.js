@@ -7,6 +7,7 @@ import {
 import { renderModalSocio } from '../components/modal-socio.js';
 import { renderReglasEditor } from '../components/reglas-editor.js';
 import { renderReglasHerencia } from '../components/reglas-herencia.js';
+import { notificarSociosActualizados } from '../../../shared/js/sync.js';
 
 export function crearEditor({ recargar = async () => {}, alertar = globalThis.alert } = {}) {
   let root = null;
@@ -95,20 +96,67 @@ export function crearEditor({ recargar = async () => {}, alertar = globalThis.al
     }
   }
 
+  // Lee los campos del propio modal antes de serializar. El estado puede quedar
+  // desfasado si un evento no llegó a propagarse (autofill, tecleo rápido o un
+  // cambio hecho fuera del listener), y el modal no debe guardar una foto
+  // cosmética: DEF, porcentajes y signos se toman del DOM visible.
+  function leerSocioDelDOM() {
+    const socio = { ...state.socioEdicion };
+    if (!root) return socio;
+    root.querySelectorAll('[data-campo]:not([data-regla])').forEach((control) => {
+      const campo = control.dataset.campo;
+      if (campo === 'herencia') {
+        socio.herencia = control.value === 'true';
+      } else if (campo === 'nombre' || campo === 'moneda_base' || campo === 'saldo_inicial' || campo === 'id_grupo') {
+        socio[campo] = control.value;
+      }
+    });
+    return socio;
+  }
+
+  function leerReglasDelDOM() {
+    const reglas = state.reglas.map((regla) => ({ ...regla }));
+    if (!root) return reglas;
+    const host = qs('#perfiles-reglas', root);
+    if (!host) return reglas;
+    host.querySelectorAll('[data-regla][data-campo]').forEach((control) => {
+      const regla = reglas[Number(control.dataset.regla)];
+      if (!regla) return;
+      if (control.dataset.campo === 'tipo') {
+        regla.tipo = control.value === 'P' ? 'P' : 'D';
+      } else if (control.dataset.campo === 'deposito' || control.dataset.campo === 'pago') {
+        regla[control.dataset.campo] = control.value;
+      }
+    });
+    host.querySelectorAll('[data-accion][data-indice][data-signo]').forEach((boton) => {
+      const regla = reglas[Number(boton.dataset.indice)];
+      if (!regla) return;
+      const signo = boton.dataset.signo === '-' ? '-' : '+';
+      if (boton.dataset.accion === 'toggle-dep') regla.polar_D = signo;
+      if (boton.dataset.accion === 'toggle-pago') regla.polar_P = signo;
+    });
+    return reglas;
+  }
+
   async function guardar() {
-    const nombre = String(state.socioEdicion.nombre || '').trim();
+    const socio = leerSocioDelDOM();
+    const nombre = String(socio.nombre || '').trim();
     if (!nombre) {
       alertar('El nombre del socio es obligatorio');
       return;
     }
+    const reglas = esHerencia(socio.herencia) ? state.reglas : leerReglasDelDOM();
+    state.socioEdicion = socio;
+    state.reglas = reglas;
     try {
-      await api.guardar(payloadGuardar(state.socioEdicion, state.reglas));
+      await api.guardar(payloadGuardar(socio, reglas));
     } catch (err) {
       avisarErrorGuardado(err);
       return;
     }
     cerrar();
     await recargar();
+    notificarSociosActualizados('perfiles');
   }
 
   async function guardarHerencia() {
@@ -118,6 +166,7 @@ export function crearEditor({ recargar = async () => {}, alertar = globalThis.al
       console.error('Error guardando herencia automáticamente:', err);
     } finally {
       await recargar();
+      notificarSociosActualizados('perfiles');
     }
   }
 

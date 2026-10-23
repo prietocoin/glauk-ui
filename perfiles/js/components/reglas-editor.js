@@ -49,7 +49,7 @@ function renderRegla(regla, index) {
           </div>
           <div class="flex items-center gap-1.5">
             <input type="number" step="0.01" data-regla="${index}" data-campo="deposito" value="${escapeHTML(regla.deposito)}" class="w-full bg-[#070e23] border border-slate-800 rounded px-2 py-1 text-center font-bold text-xs text-white focus:outline-none focus:border-cyan-500">
-            <button type="button" data-accion="toggle-dep" data-indice="${index}" class="px-2 py-1 rounded text-[11px] font-bold border shrink-0 transition ${claseDep}">${textoDep}</button>
+            <button type="button" data-accion="toggle-dep" data-indice="${index}" data-signo="${regla.polar_D}" class="px-2 py-1 rounded text-[11px] font-bold border shrink-0 transition ${claseDep}">${textoDep}</button>
           </div>
         </div>
 
@@ -60,7 +60,7 @@ function renderRegla(regla, index) {
           </div>
           <div class="flex items-center gap-1.5">
             <input type="number" step="0.01" data-regla="${index}" data-campo="pago" value="${escapeHTML(regla.pago)}" class="w-full bg-[#070e23] border border-slate-800 rounded px-2 py-1 text-center font-bold text-xs text-white focus:outline-none focus:border-amber-500">
-            <button type="button" data-accion="toggle-pago" data-indice="${index}" class="px-2 py-1 rounded text-[11px] font-bold border shrink-0 transition ${clasePago}">${textoPago}</button>
+            <button type="button" data-accion="toggle-pago" data-indice="${index}" data-signo="${regla.polar_P}" class="px-2 py-1 rounded text-[11px] font-bold border shrink-0 transition ${clasePago}">${textoPago}</button>
           </div>
         </div>
       </div>

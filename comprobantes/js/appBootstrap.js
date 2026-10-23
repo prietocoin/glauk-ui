@@ -8,6 +8,7 @@ import { createTasasState } from './modules/tasas/states/tasasState.js';
 import { createDirectorioState } from './modules/directorio/states/directorioState.js';
 import { comprobantesState } from './modules/comprobantes/states/comprobantesState.js';
 import { createComprobantesReporteState } from './modules/comprobantes/states/comprobantesReporteState.js';
+import { escucharSociosActualizados } from '../../shared/js/sync.js';
 
 /**
  * Copia el estado preservando descriptores. Un spread simple evaluaría los
@@ -32,17 +33,31 @@ function registrarApp() {
     // Vista por defecto
     app.vistaActiva = 'comprobantes';
 
+    // Reacción a un guardado de Perfiles: el backend sanea las monedas
+    // históricas al leer el directorio, así que ese GET debe completarse antes
+    // de proyectar los comprobantes. Si se consultara primero el listado, el
+    // primer render seguiría usando la heurística vieja de polaridad.
+    app.refrescarPorCambioDeSocios = async function refrescarPorCambioDeSocios() {
+      if (this.cargarDirectorio) await this.cargarDirectorio();
+      if (this.cargarComprobantes) await this.cargarComprobantes();
+    };
+
     // Inicialización global del ciclo de vida
     app.init = async function init() {
+      if (this.cargarDirectorio) await this.cargarDirectorio();
+
       await Promise.all([
         this.cargarTasasMercado ? this.cargarTasasMercado() : Promise.resolve(),
-        this.cargarDirectorio ? this.cargarDirectorio() : Promise.resolve(),
         this.cargarComprobantes ? this.cargarComprobantes() : Promise.resolve()
       ]);
 
       this.$nextTick(() => {
         if (this.escucharActualizacionesGlobales) this.escucharActualizacionesGlobales();
         if (this.iniciarEscuchadoresScroll) this.iniciarEscuchadoresScroll();
+      });
+
+      this.desuscribirSocios = escucharSociosActualizados(() => {
+        void this.refrescarPorCambioDeSocios();
       });
     };
 

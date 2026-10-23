@@ -14,6 +14,7 @@ import {
   eliminarSocioDelDirectorio
 } from '../services/directorioAccionesService.js';
 import { LISTA_MONEDAS_ACTIVAS, obtenerInfoMonedasMaestra } from '../../../shared/constants/listaMonedasActivas.js';
+import { notificarSociosActualizados } from '../../../../../shared/js/sync.js';
 
 export function createDirectorioState() {
   return {
@@ -84,7 +85,11 @@ export function createDirectorioState() {
     async guardarConfigSocioModal() {
       await guardarConfiguracionSocio(this.socioConfigEdit);
       this.modalConfigSocioAbierto = false;
+      // El guardado puede cambiar tipo/polar_D/polar_P: la proyección de esta
+      // misma vista debe recalcularse, y las demás pestañas deben enterarse.
       await this.cargarDirectorio();
+      if (this.cargarComprobantes) await this.cargarComprobantes();
+      notificarSociosActualizados('comprobantes');
     }
   };
 }
