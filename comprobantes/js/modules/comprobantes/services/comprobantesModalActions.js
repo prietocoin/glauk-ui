@@ -81,12 +81,12 @@ export function crearAccionesModal(state) {
         // Actualizar datos en las listas reactivas de Alpine.js
         const idx = state.items.findIndex(i => (i.hash_largo || i.id) === hashTarget);
         if (idx !== -1) {
-          state.items[idx] = { ...state.items[idx], ...payload, es_edicion_manual: true, esta_liquidado: true };
+          state.items[idx] = { ...state.items[idx], ...payload, es_edicion_manual: true };
         }
 
         const idxTodos = state.todosLosItems.findIndex(i => (i.hash_largo || i.id) === hashTarget);
         if (idxTodos !== -1) {
-          state.todosLosItems[idxTodos] = { ...state.todosLosItems[idxTodos], ...payload, es_edicion_manual: true, esta_liquidado: true };
+          state.todosLosItems[idxTodos] = { ...state.todosLosItems[idxTodos], ...payload, es_edicion_manual: true };
         }
 
         state.cerrarModal();

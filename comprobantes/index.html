@@ -210,8 +210,6 @@
   <div class="glauk-filter-chips" role="group" aria-label="Filtros rápidos de comprobantes">
     <button type="button" class="glauk-chip" :class="{ 'is-active': filtroChip === 'todos' }" @click="aplicarChip('todos')">Todos</button>
     <button type="button" class="glauk-chip" :class="{ 'is-active': filtroChip === 'hoy' }" @click="aplicarChip('hoy')">Hoy</button>
-    <button type="button" class="glauk-chip" :class="{ 'is-active': filtroChip === 'pendientes' }" @click="aplicarChip('pendientes')">Pendientes</button>
-    <button type="button" class="glauk-chip" :class="{ 'is-active': filtroChip === 'sin_liquidar' }" @click="aplicarChip('sin_liquidar')">Sin liquidar</button>
   </div>
   <button type="button" class="glauk-filter-trigger" @click="abrirFiltros()" aria-haspopup="dialog" aria-controls="glauk-filtros-sheet">
     <span aria-hidden="true">⚙️</span>
@@ -358,9 +356,6 @@
             <span x-text="formatMonto(item.monto)"></span>
             <small x-text="item.moneda || '---'"></small>
           </div>
-          <span class="glauk-status"
-                :class="item.esta_liquidado ? 'is-ok' : 'is-pending'"
-                x-text="item.esta_liquidado ? 'LIQUIDADO' : 'PENDIENTE'"></span>
         </div>
       </div>
 
@@ -462,8 +457,8 @@
           <button type="button"
                   class="glauk-icon-btn"
                   @click.stop="$dispatch('abrir-modal-edicion', item)"
-                  title="Auditar / Editar"
-                  aria-label="Auditar o editar comprobante">✏️</button>
+                  title="Editar comprobante"
+                  aria-label="Editar comprobante">✏️</button>
         </div>
       </div>
 
@@ -881,7 +876,7 @@
 
         <!-- CABECERA FIJA DEL MODAL -->
         <header class="glauk-modal__header">
-          <h3 id="glauk-editar-title">✏️ Auditar &amp; Liquidar Comprobante</h3>
+          <h3 id="glauk-editar-title">✏️ Editar Comprobante</h3>
           <button type="button"
                   class="glauk-modal__close"
                   @click="modalAbierto = false"
@@ -1051,7 +1046,7 @@
                       @click="guardarModal()"
                       :disabled="cargando"
                       class="px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl font-black shadow-lg shadow-cyan-950/50 transition-all active:scale-95 text-xs cursor-pointer disabled:opacity-50">
-                <span x-show="!cargando">💾 Guardar &amp; Congelar</span>
+                <span x-show="!cargando">💾 Guardar Cambios</span>
                 <span x-show="cargando">⏳ Guardando...</span>
               </button>
             </footer>
@@ -1269,7 +1264,6 @@
 
       <div class="glauk-detail-grid">
         <div><span>Monto recibo</span><strong x-text="formatMonto(itemDetalle?.monto || 0) + ' ' + (itemDetalle?.moneda || '')"></strong></div>
-        <div><span>Estado</span><strong x-text="itemDetalle?.esta_liquidado ? 'LIQUIDADO' : 'PENDIENTE'"></strong></div>
         <div><span>Banco</span><strong x-text="itemDetalle?.banco || '-'"></strong></div>
         <div><span>Titular</span><strong x-text="itemDetalle?.titular || '-'"></strong></div>
         <div><span>Referencia</span><strong x-text="itemDetalle?.referencia || '-'"></strong></div>
@@ -1297,7 +1291,7 @@
 
     <footer class="glauk-sheet-foot">
       <button type="button" class="glauk-btn-secondary" @click="cerrarDetalle()">Cerrar</button>
-      <button type="button" class="glauk-btn-primary" @click="editarDesdeDetalle()">✏️ Editar / Liquidar</button>
+      <button type="button" class="glauk-btn-primary" @click="editarDesdeDetalle()">✏️ Editar</button>
     </footer>
   </section>
 </div>

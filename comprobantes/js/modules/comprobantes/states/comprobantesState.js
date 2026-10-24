@@ -291,16 +291,11 @@ export function comprobantesState() {
         return this.resetearYRefrescar();
       }
 
-      if (tipo === 'todos') {
-        const { fechaInicio, fechaFin } = obtenerRangoMesActualCaracas();
-        this.filtroFechaInicio = fechaInicio;
-        this.filtroFechaFin = fechaFin;
-        this.filtroChip = 'todos';
-        return this.resetearYRefrescar();
-      }
-
-      this.filtroChip = tipo;
-      this.actualizarVisibles();
+      const { fechaInicio, fechaFin } = obtenerRangoMesActualCaracas();
+      this.filtroFechaInicio = fechaInicio;
+      this.filtroFechaFin = fechaFin;
+      this.filtroChip = 'todos';
+      return this.resetearYRefrescar();
     },
 
     urlRecibo(item) {
@@ -359,17 +354,11 @@ export function comprobantesState() {
 
     /** Recalcula las tarjetas visibles aplicando el rango posicional de hash. */
     actualizarVisibles() {
-      let universo = aplicarRangoHash(
+      const universo = aplicarRangoHash(
         this.todosLosItems,
         this.filtroDesdeHash,
         this.filtroHastaHash
       );
-
-      if (this.filtroChip === 'pendientes') {
-        universo = universo.filter((item) => !item.esta_liquidado);
-      } else if (this.filtroChip === 'sin_liquidar') {
-        universo = universo.filter((item) => !(item.lote_tasa_asignado || item.lote_tasa || item.lote));
-      }
 
       if (this.modoPaginacion === 'local') {
         this.totalRegistros = universo.length;
