@@ -176,12 +176,16 @@ export function catalogoTasasComercialActual() {
  * en el catálogo; el llamador puede caer a tasa_1/tasa_2.
  */
 export function resolverTasaComercialCatalogo(catalogo, socio, lote, divisa, tipo) {
-  if (!catalogo || !socio || !lote || !divisa) return null;
-
   const letra = String(tipo || '').trim().toUpperCase();
-  if (letra === 'A') return 1;
+  const codigoDivisa = normalizarDivisa(divisa);
 
-  const precios = catalogo[normalizarSocio(socio)]?.[String(lote).trim().toUpperCase()]?.[normalizarDivisa(divisa)];
+  // Los abonos y las operaciones en USDT no dependen de la cartelera: su tasa
+  // comercial es la paridad 1.00.
+  if (letra === 'A' || codigoDivisa === 'USDT') return 1;
+
+  if (!catalogo || !socio || !lote || !codigoDivisa) return null;
+
+  const precios = catalogo[normalizarSocio(socio)]?.[String(lote).trim().toUpperCase()]?.[codigoDivisa];
   if (!precios) return null;
   if (letra === 'D') return precios.compra > 0 ? precios.compra : null;
   if (letra === 'P') return precios.venta > 0 ? precios.venta : null;

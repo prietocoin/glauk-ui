@@ -1264,7 +1264,7 @@
               <span class="block text-[10px] text-slate-500 font-mono" x-text="'Movimiento total del rango: ' + (reporteMovimientoTotal < 0 ? '-' : '+') + formatMonto(Math.abs(reporteMovimientoTotal)) + ' ' + reporteMoneda"></span>
             </div>
             <div class="bg-slate-50 border border-slate-200 rounded-lg px-5 py-3 text-right" style="min-width:190px">
-              <span class="block text-[9px] font-black text-slate-500 uppercase">Saldo anterior de página</span>
+              <span class="block text-[9px] font-black text-slate-500 uppercase" x-text="reporteEsDescendente ? 'Saldo final de página' : 'Saldo anterior de página'"></span>
               <span class="block text-xl font-mono font-black text-amber-700" x-text="formatMonto(reporteSaldoAnteriorPagina) + ' ' + reporteMoneda"></span>
             </div>
           </div>
@@ -1314,7 +1314,7 @@
               <span class="block text-sm font-mono font-black" :style="reporteMovimientoPagina < 0 ? 'color:#e11d48' : 'color:#0f172a'" x-text="(reporteMovimientoPagina < 0 ? '-' : '+') + formatMonto(Math.abs(reporteMovimientoPagina)) + ' ' + reporteMoneda"></span>
             </div>
             <div class="bg-emerald-50 border border-emerald-200 rounded-lg px-5 py-3 text-right" style="min-width:190px">
-              <span class="block text-[9px] font-black text-emerald-700 uppercase">Nuevo saldo de página</span>
+              <span class="block text-[9px] font-black text-emerald-700 uppercase" x-text="reporteEsDescendente ? 'Saldo inicial de página' : 'Nuevo saldo de página'"></span>
               <span class="block text-xl font-mono font-black text-emerald-800" x-text="formatMonto(reporteSaldoFinalPagina) + ' ' + reporteMoneda"></span>
             </div>
           </div>

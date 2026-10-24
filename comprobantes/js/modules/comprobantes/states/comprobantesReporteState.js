@@ -24,7 +24,13 @@ import {
   resolverTasaSocio,
   resolverTipoComprobante
 } from '../utils/comprobantesTasasUtils.js';
-import { formatearFechaLatina, obtenerRangoMesActualCaracas } from '../utils/comprobantesFechaUtils.js';
+import {
+  dentroRangoCaracas,
+  fechaCaracasISO,
+  formatearFechaLatina,
+  obtenerRangoMesActualCaracas,
+  sumarDiasISO
+} from '../utils/comprobantesFechaUtils.js';
 
 function numero(valor, fallback = 0) {
   const num = parseFloat(valor);
@@ -36,20 +42,11 @@ function claveReporte(item = {}) {
 }
 
 function formatearFechaReporte(item = {}) {
-  const raw = item.fecha_hora_comprobante || item.timestamp_msg;
-  if (!raw) return '-';
+  const fecha = fechaCaracasISO(item);
+  if (!fecha) return '-';
 
-  const texto = String(raw);
-  const fecha = /^\d+$/.test(texto)
-    ? new Date(Number(texto) < 1e10 ? Number(texto) * 1000 : Number(texto))
-    : /^\d{4}-\d{2}-\d{2}$/.test(texto)
-      ? new Date(`${texto}T00:00:00`)
-      : new Date(raw);
-
-  if (isNaN(fecha.getTime())) return '-';
-  const dia = String(fecha.getDate()).padStart(2, '0');
-  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-  return `${dia}/${mes}/${fecha.getFullYear()}`;
+  const [anio, mes, dia] = fecha.split('-');
+  return `${dia}/${mes}/${anio}`;
 }
 
 export function createComprobantesReporteState() {
@@ -70,7 +67,7 @@ export function createComprobantesReporteState() {
     reporteCargando: false,
     reporteSolicitudActual: 0,
     reportePaginaActual: 1,
-    reporteItemsPorPagina: 10,
+    reporteItemsPorPagina: 20,
 
     get reporteEsDescendente() {
       return this.reporteOrden === 'fecha_desc';
@@ -248,10 +245,15 @@ export function createComprobantesReporteState() {
         // TASA cae a tasa_1/tasa_2 sin bloquear el reporte.
         const catalogoPromesa = obtenerCatalogoTasasComerciales().catch(() => ({}));
 
+        // El backend filtra por fecha UTC (creado_en). Un abono de las 20:36 de
+        // Caracas se guarda como 00:36Z del día siguiente, así que se consulta
+        // hasta fechaFin + 1 día y luego se recorta por el día real de Caracas.
+        const finConsulta = sumarDiasISO(this.reporteFechaFin, 1) || this.reporteFechaFin;
+
         const items = await cargarComprobantesFiltrados({
           socio,
           fechaInicio: this.reporteFechaInicio,
-          fechaFin: this.reporteFechaFin,
+          fechaFin: finConsulta,
           orden: this.reporteOrden === 'fecha_desc' ? 'fecha_desc' : 'fecha_asc'
         }, {
           // Se consulta sin el filtro de socio del backend y se resuelve en el
@@ -266,9 +268,12 @@ export function createComprobantesReporteState() {
         this.reporteCatalogoTasasListo += 1;
 
         this.reporteItemsBase = (Array.isArray(items) ? items : [])
-          // Filtro explícito por ambos lados: un abono 'A' puede tener al socio
-          // auditado como socio_1 o como socio_2 y nunca debe quedar fuera.
-          .filter(item => coincideSocioEstricto(item, socio));
+          // Un abono 'A' puede tener al socio auditado como socio_1 o socio_2
+          // (y con alias distintos): nunca debe quedar fuera.
+          .filter(item => coincideSocioEstricto(item, socio))
+          // La ventana UTC ampliada puede traer filas del día siguiente en
+          // Caracas. Solo se listan las que pertenecen al rango auditado.
+          .filter(item => dentroRangoCaracas(item, this.reporteFechaInicio, this.reporteFechaFin));
         this.normalizarRangoHashReporte();
         this.reporteSaldoAnterior = obtenerSaldoAnteriorSocio(this.directorio, socio);
         this.reportePaginaActual = Math.min(
@@ -379,7 +384,7 @@ export function createComprobantesReporteState() {
     },
 
     reporteHashItem(item) {
-      return String(item?.hash_corto || item?.hash_largo || '').slice(0, 7);
+      return String(item?.hash_corto || item?.hash_largo || '').slice(0, 8);
     },
 
     reporteTitularItem(item) {
