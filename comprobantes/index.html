@@ -485,7 +485,7 @@
         <span class="glauk-mini-badge">🔑 <span x-text="item.hash_corto || 'HASH'"></span></span>
         <span class="glauk-mini-badge">📊 <span x-text="item.lote_tasa_asignado || item.lote || 'T-ND'"></span></span>
         <span class="glauk-mini-badge" :class="claseInsignia(resolverTipoComprobante(item))">🏷️ <span x-text="resolverTipoComprobante(item)"></span></span>
-        <span x-show="item.es_x2" class="glauk-mini-badge is-x2">⚡ x2</span>
+        <span x-show="esComprobante2x(item)" class="glauk-mini-badge is-x2">⚡ x2</span>
       </div>
 
       <div class="glauk-finance-grid">

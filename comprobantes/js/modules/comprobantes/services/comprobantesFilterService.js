@@ -8,11 +8,12 @@
 
 import {
   normalizarSocio,
-  coincideSocioEstricto,
-  obtenerNombresSocio
+  coincideSocioEstricto
 } from '../utils/comprobantesSocioUtils.js';
+import { esComprobante2x } from '../utils/comprobantes2xUtils.js';
 
 export { normalizarSocio, coincideSocioEstricto } from '../utils/comprobantesSocioUtils.js';
+export { esComprobante2x, esValido2x } from '../utils/comprobantes2xUtils.js';
 
 export function limpiarFiltro(val) {
   if (!val) return '';
@@ -107,17 +108,9 @@ export function filtrarComprobantesAtómico(listaBase = [], directorio = [], fil
 
   let resultado = [...listaBase];
 
-  // 🟢 0. CORTAFUEGOS OBLIGATORIO x2 (Descartar registros 1x / basura unipersonal)
-  resultado = resultado.filter(item => {
-    if (!item) return false;
-
-    // Si viene la bandera directa desde comprobantes_final, la evaluamos
-    if (typeof item.es_x2 === 'boolean') {
-      if (!item.es_x2) return false;
-    }
-
-    return obtenerNombresSocio(item, 2).size > 0;
-  });
+  // 🟢 0. CORTAFUEGOS OBLIGATORIO 2x: descarta huérfanos, borradores,
+  // montos en cero y filas GENERAL. Es la misma condición del badge ⚡ x2.
+  resultado = resultado.filter(esComprobante2x);
 
   const socioBuscado = normalizarSocio(filtros.filtroSocio);
 

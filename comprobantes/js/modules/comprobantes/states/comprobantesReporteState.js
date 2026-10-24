@@ -20,6 +20,7 @@ import {
   construirCatalogoSocios,
   establecerCatalogoSocios
 } from '../services/comprobantesNaturalezaService.js';
+import { esComprobante2x } from '../utils/comprobantes2xUtils.js';
 import { normalizarSocio, obtenerPosicionSocio } from '../utils/comprobantesSocioUtils.js';
 import {
   resolverMonedaSocio,
@@ -282,7 +283,9 @@ export function createComprobantesReporteState() {
           .filter(item => coincideSocioEstricto(item, socio))
           // La ventana UTC ampliada puede traer filas del día siguiente en
           // Caracas. Solo se listan las que pertenecen al rango auditado.
-          .filter(item => dentroRangoCaracas(item, this.reporteFechaInicio, this.reporteFechaFin));
+          .filter(item => dentroRangoCaracas(item, this.reporteFechaInicio, this.reporteFechaFin))
+          // Guardián 2x: el reporte tampoco consume huérfanos ni filas 1x.
+          .filter(esComprobante2x);
         this.normalizarRangoHashReporte();
         this.reporteSaldoAnterior = obtenerSaldoAnteriorSocio(this.directorio, socio);
         this.reportePaginaActual = Math.min(

@@ -16,6 +16,7 @@ import {
   ordenarComprobantes
 } from './comprobantesFilterService.js';
 import { normalizarSocio } from '../utils/comprobantesSocioUtils.js';
+import { esComprobante2x } from '../utils/comprobantes2xUtils.js';
 
 function esFiltroSocioActivo(socio = '') {
   const normalizado = normalizarSocio(socio);
@@ -28,7 +29,9 @@ function esFiltroSocioActivo(socio = '') {
 function mapearFiltrarYOrdenar(raw, socio, loteActivo, orden, maximo, desdeHash, hastaHash) {
   const lista = Array.isArray(raw) ? raw : [];
   const mapeados = lista.map(item => prepararEdicionComprobante(item, loteActivo));
-  const estrictos = filtrarPorSocioEstricto(mapeados, socio);
+  // Guardián 2x: ningún huérfano, broadcast o fila GENERAL avanza al estado.
+  const validos = mapeados.filter(esComprobante2x);
+  const estrictos = filtrarPorSocioEstricto(validos, socio);
   const ordenados = ordenarComprobantes(estrictos, orden);
   // El rango por hash es posicional sobre el orden visible: se aplica al final.
   const acotados = aplicarRangoHash(ordenados, desdeHash, hastaHash);
@@ -50,7 +53,9 @@ export async function cargarPaginaComprobantes(params = {}, opciones = {}) {
 
   const pagina = await fetchComprobantesPagina(params, { limit, offset });
   const mapeados = pagina.lista.map(item => prepararEdicionComprobante(item, loteActivo));
-  const estrictos = filtrarPorSocioEstricto(mapeados, socio);
+  const validos = mapeados.filter(esComprobante2x);
+  const descartados2x = mapeados.length - validos.length;
+  const estrictos = filtrarPorSocioEstricto(validos, socio);
 
   // Rescate legacy: si la primera página de un socio activo llega vacía, se
   // reintenta sin el parámetro `socio` y se filtra localmente. El resultado se
@@ -59,14 +64,16 @@ export async function cargarPaginaComprobantes(params = {}, opciones = {}) {
   if (offset === 0 && esFiltroSocioActivo(socio) && pagina.lista.length === 0) {
     const respaldo = await fetchComprobantesHasta({ ...params, socio: '' }, MAXIMO_RECUPERACION);
     const mapeadosRespaldo = respaldo.map(item => prepararEdicionComprobante(item, loteActivo));
-    const filtrados = filtrarPorSocioEstricto(mapeadosRespaldo, socio);
+    const validosRespaldo = mapeadosRespaldo.filter(esComprobante2x);
+    const filtrados = filtrarPorSocioEstricto(validosRespaldo, socio);
     return {
       items: ordenarComprobantes(filtrados, params.orden || 'fecha_desc'),
       total: filtrados.length,
       hasMore: false,
       paginado: false,
       offset: 0,
-      recibidos: respaldo.length
+      recibidos: respaldo.length,
+      descartados2x: mapeadosRespaldo.length - validosRespaldo.length
     };
   }
 
@@ -76,7 +83,8 @@ export async function cargarPaginaComprobantes(params = {}, opciones = {}) {
     hasMore: pagina.hasMore,
     paginado: pagina.paginado,
     offset: pagina.offset,
-    recibidos: pagina.recibidos
+    recibidos: pagina.recibidos,
+    descartados2x
   };
 }
 

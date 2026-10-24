@@ -134,7 +134,14 @@ export function prepararEdicionComprobante(item = {}, loteActivo = 'T070') {
   // 6. DETECCIÓN ROBUSTA DE BANDERAS SOCIO 2x
   const s2Upper = String(socio2Real || '').trim().toUpperCase();
   const tieneSocio2Valido = !['', 'GENERAL', 'NO DEFINIDO', 'S/D', 'N/A', 'NULL', 'UNDEFINED', '-'].includes(s2Upper);
-  const esX2 = (item.es_x2 !== undefined) ? Boolean(item.es_x2) : tieneSocio2Valido;
+
+  // El badge x2 se activa con cualquier flag explícito del backend o cuando
+  // existe un socio 2 real. Es la misma condición que consume el guardián 2x.
+  const tieneFlag2x = Boolean(
+    item.es_x2 || item.es_2x || item.is_2x || item.pareado
+    || c.es_x2 || c.es_2x || c.is_2x || c.pareado
+  );
+  const esX2 = tieneFlag2x || tieneSocio2Valido;
 
   // Naturaleza centralizada: moneda natural -> IRIS -> caption A -> tabla.
   // La tarjeta, el reporte y los totales consumen este mismo resultado.

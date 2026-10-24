@@ -35,6 +35,7 @@ import {
   construirCatalogoSocios,
   establecerCatalogoSocios
 } from '../services/comprobantesNaturalezaService.js';
+import { esComprobante2x } from '../utils/comprobantes2xUtils.js';
 import { capturarReporteEstadoCuenta } from '../services/comprobantesReporteService.js';
 import { obtenerSaldoAnteriorSocio, obtenerSujetoAuditado } from '../services/comprobantesSaldosService.js';
 import { obtenerRangoMesActualCaracas, formatearFechaLatina } from '../utils/comprobantesFechaUtils.js';
@@ -60,6 +61,8 @@ export function comprobantesState() {
 
     // Paginación por red
     totalRegistros: 0,
+    totalRegistrosBackend: 0,
+    descartadosNo2x: 0,
     siguienteOffset: 0,
     modoPaginacion: 'red',
     visibleLocal: 0,
@@ -164,10 +167,17 @@ export function comprobantesState() {
         );
 
         if (idxTodos !== -1) {
-          this.todosLosItems[idxTodos] = prepararEdicionComprobante({
+          const actualizado = prepararEdicionComprobante({
             ...this.todosLosItems[idxTodos],
             ...payload
           }, this.loteActivo);
+
+          if (esComprobante2x(actualizado)) {
+            this.todosLosItems[idxTodos] = actualizado;
+          } else {
+            this.todosLosItems.splice(idxTodos, 1);
+            this.totalRegistros = Math.max(0, (Number(this.totalRegistros) || 0) - 1);
+          }
           this.todosLosItems = [...this.todosLosItems];
           this.actualizarVisibles();
           return;
@@ -177,10 +187,13 @@ export function comprobantesState() {
           i => String(i.hash_largo || i.id).trim().toLowerCase() === targetHash
         );
         if (idxVisibles !== -1) {
-          this.items[idxVisibles] = prepararEdicionComprobante({
+          const actualizado = prepararEdicionComprobante({
             ...this.items[idxVisibles],
             ...payload
           }, this.loteActivo);
+
+          if (esComprobante2x(actualizado)) this.items[idxVisibles] = actualizado;
+          else this.items.splice(idxVisibles, 1);
           this.items = [...this.items];
           return;
         }
@@ -366,7 +379,7 @@ export function comprobantesState() {
     /** Recalcula las tarjetas visibles aplicando el rango posicional de hash. */
     actualizarVisibles() {
       const universo = aplicarRangoHash(
-        this.todosLosItems,
+        (this.todosLosItems || []).filter(esComprobante2x),
         this.filtroDesdeHash,
         this.filtroHastaHash
       );
@@ -387,7 +400,12 @@ export function comprobantesState() {
 
     /** Incorpora una página recién llegada sin volver a renderizar las previas. */
     procesarPagina(pagina) {
-      const entrantes = Array.isArray(pagina?.items) ? pagina.items : [];
+      const entrantesBrutos = Array.isArray(pagina?.items) ? pagina.items : [];
+      // Defensa adicional: el servicio ya filtra, pero el estado nunca acepta
+      // un ítem que no supere el guardián 2x.
+      const entrantes = entrantesBrutos.filter(esComprobante2x);
+      const descartadosLocales = entrantesBrutos.length - entrantes.length;
+      const descartadosServicio = Math.max(0, Number(pagina?.descartados2x) || 0);
 
       // Backend sin limit/offset: se usa el bloque recibido como buffer local
       // y se revela de 20 en 20 sin repetir peticiones.
@@ -403,12 +421,15 @@ export function comprobantesState() {
         }
         this.modoPaginacion = 'local';
         this.todosLosItems = buffer;
+        this.descartadosNo2x = 0;
+        this.totalRegistrosBackend = 0;
         this.visibleLocal = Math.min(this.tamanoLote, this.capMaximoDOM);
         this.actualizarVisibles();
         return;
       }
 
       this.modoPaginacion = 'red';
+      this.descartadosNo2x += descartadosServicio + descartadosLocales;
       const existentes = new Set(this.todosLosItems.map(claveComprobante));
       let agregados = 0;
 
@@ -425,11 +446,13 @@ export function comprobantesState() {
         this.siguienteOffset,
         Number(pagina.offset || 0) + Number(pagina.recibidos || 0)
       );
-      this.totalRegistros = Math.max(
-        Number(this.totalRegistros) || 0,
+      this.totalRegistrosBackend = Math.max(
+        Number(this.totalRegistrosBackend) || 0,
         Number(pagina.total) || 0,
         this.siguienteOffset
       );
+      // OPERADOS y el contador superior reflejan solo los ítems 2x.
+      this.totalRegistros = Math.max(0, this.totalRegistrosBackend - this.descartadosNo2x);
 
       this.actualizarVisibles();
 
@@ -444,6 +467,8 @@ export function comprobantesState() {
       this.items = [];
       this.todosLosItems = [];
       this.totalRegistros = 0;
+      this.totalRegistrosBackend = 0;
+      this.descartadosNo2x = 0;
       this.siguienteOffset = 0;
       this.visibleLocal = 0;
       this.modoPaginacion = 'red';
@@ -657,7 +682,7 @@ export function comprobantesState() {
     },
 
     formatMonto, formatTasa, obtenerME1, obtenerME2, obtenerTasaSocioCalculada, claseInsignia, formatDiaHora,
-    resolverTipoComprobante
+    resolverTipoComprobante, esComprobante2x
   };
 
   Object.assign(state, crearAccionesModal(state));
