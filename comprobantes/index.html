@@ -11,15 +11,15 @@
   <meta name="theme-color" content="#030611">
 
   <link rel="icon" type="image/png" href="./logo-fundablock.png">
-  <link rel="stylesheet" href="/shared/vendor/glauk2/tailwind.css?v=20261024_07">
-  <link rel="stylesheet" href="/shared/css/mobile.css?v=20261024_07">
+  <link rel="stylesheet" href="/shared/vendor/glauk2/tailwind.css?v=20261024_08">
+  <link rel="stylesheet" href="/shared/css/mobile.css?v=20261024_08">
 
   <!-- CLIENTE MODULAR Y ALPINE.JS -->
-  <script src="../config.js?v=20261024_07"></script>
-  <script type="module" src="./js/appBootstrap.js?v=20261024_07"></script>
-  <script type="module" src="./js/pwa.js?v=20261024_07"></script>
-  <script src="/shared/vendor/glauk2/alpine.min.js?v=20261024_07" defer></script>
-  <script src="/shared/vendor/html2canvas.min.js?v=20261024_07"></script>
+  <script src="../config.js?v=20261024_08"></script>
+  <script type="module" src="./js/appBootstrap.js?v=20261024_08"></script>
+  <script type="module" src="./js/pwa.js?v=20261024_08"></script>
+  <script src="/shared/vendor/glauk2/alpine.min.js?v=20261024_08" defer></script>
+  <script src="/shared/vendor/html2canvas.min.js?v=20261024_08"></script>
 
   <style>
     [x-cloak] { display: none !important; }
@@ -747,7 +747,8 @@
   </div>
   <p class="text-xs text-slate-400">Inspecciona y monitorea los saldos pendientes por socio y lote.</p>
 
-  <div class="overflow-x-auto">
+  <!-- TABLA: solo escritorio (>= 768px) -->
+  <div class="glauk-lotes-tabla overflow-x-auto">
     <table class="w-full text-left text-xs">
       <thead class="bg-slate-900/80 text-slate-400 font-mono">
         <tr>
@@ -781,6 +782,49 @@
         </template>
       </tbody>
     </table>
+  </div>
+
+  <!-- TARJETAS TÁCTILES: solo móvil (< 768px) -->
+  <div class="glauk-lotes-cards">
+    <template x-for="item in sociosPendientesConsolidado" :key="'lote-movil-' + item.nombre">
+      <article class="glauk-lote-card">
+        <div class="glauk-lote-card__info">
+          <p class="glauk-lote-card__name" x-text="item.nombre"></p>
+          <p class="glauk-lote-card__amount"
+             :class="(Number(item.saldoFinal) || 0) >= 0 ? 'is-positive' : 'is-negative'"
+             x-text="formatMonto(item.saldoFinal) + ' ' + item.moneda"></p>
+        </div>
+        <div class="glauk-lote-card__actions">
+          <button type="button"
+                  class="glauk-lote-action is-ver"
+                  @click="verComprobantesDeSocio(item.nombre)"
+                  title="Ver comprobantes del socio"
+                  aria-label="Ver comprobantes del socio">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+          <button type="button"
+                  class="glauk-lote-action is-reporte"
+                  @click="abrirReporteSocio(item.nombre)"
+                  title="Generar estado de cuenta"
+                  aria-label="Generar estado de cuenta">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <path d="M14 2v6h6"/>
+              <path d="M8 13h8"/>
+              <path d="M8 17h5"/>
+            </svg>
+          </button>
+        </div>
+      </article>
+    </template>
+
+    <div class="glauk-lote-empty"
+         x-show="!sociosPendientesConsolidado || sociosPendientesConsolidado.length === 0">
+      No hay pendientes registrados en este período.
+    </div>
   </div>
 </div>
 
@@ -1474,6 +1518,6 @@
        @click.stop>
 </div>
 
-<script type="module" src="/shared/js/mobile-nav.js?v=20261024_07"></script>
+<script type="module" src="/shared/js/mobile-nav.js?v=20261024_08"></script>
 </body>
 </html>

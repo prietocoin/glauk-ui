@@ -1486,6 +1486,115 @@ body.glauk-sheet-open .glauk-main {
 }
 
 /* --------------------------------------------------------------------------
+   Inspección de lotes: tabla financiera en escritorio, tarjetas en móvil
+   -------------------------------------------------------------------------- */
+.glauk-lotes-tabla {
+  display: none;
+}
+
+.glauk-lotes-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+@media (min-width: 768px) {
+  .glauk-lotes-tabla {
+    display: block;
+  }
+
+  .glauk-lotes-cards {
+    display: none;
+  }
+}
+
+.glauk-lote-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #1e293b;
+  border-radius: 12px;
+  background: #0b1120;
+}
+
+.glauk-lote-card__info {
+  min-width: 0;
+}
+
+.glauk-lote-card__name {
+  margin: 0;
+  overflow: hidden;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: .02em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.glauk-lote-card__amount {
+  margin: 4px 0 0;
+  font-size: 18px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.glauk-lote-card__amount.is-positive {
+  color: #34d399;
+}
+
+.glauk-lote-card__amount.is-negative {
+  color: #f43f5e;
+}
+
+.glauk-lote-card__actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.glauk-lote-action {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  background: #1e293b;
+  transition: background .15s ease, border-color .15s ease, transform .12s ease;
+}
+
+.glauk-lote-action.is-ver {
+  color: #38bdf8;
+}
+
+.glauk-lote-action.is-reporte {
+  color: #34d399;
+}
+
+.glauk-lote-action:hover {
+  border-color: #475569;
+  background: #334155;
+}
+
+.glauk-lote-action:active {
+  transform: scale(.95);
+}
+
+.glauk-lote-empty {
+  padding: 16px 0;
+  color: #64748b;
+  font-size: 12px;
+  text-align: center;
+}
+
+/* --------------------------------------------------------------------------
    Reporte de estado de cuenta: paridad total web / móvil
    --------------------------------------------------------------------------
    El lienzo conserva los 800 px lógicos y la tabla financiera completa en
