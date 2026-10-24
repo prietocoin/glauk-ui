@@ -110,19 +110,22 @@
   </main>
   <div id="modalDeleteBatch" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="tituloBorrarLote">
     <div class="modal-card modal-sm">
+      <div class="modal-handle" aria-hidden="true"></div>
       <div class="modal-head">
         <h3 id="tituloBorrarLote">🗑️ Borrar Lote Publicado</h3>
-        <button type="button" class="close-btn close-btn-plain" data-close-modal="modalDeleteBatch" aria-label="Cerrar">✕</button>
+        <button type="button" class="close-btn close-btn-plain modal-close" data-close-modal="modalDeleteBatch" aria-label="Cerrar">✕</button>
       </div>
-      <p class="modal-copy">
-        Ingresa el número de lote a eliminar de la base de datos (Ejemplo:
-        <strong class="text-cyan">T068</strong>):
-      </p>
-      <input type="text" id="txtBatchIdToDelete" placeholder="T000" autocomplete="off"
-        class="text-input modal-input">
+      <div class="modal-body">
+        <p class="modal-copy">
+          Ingresa el número de lote a eliminar de la base de datos (Ejemplo:
+          <strong class="text-cyan">T068</strong>):
+        </p>
+        <input type="text" id="txtBatchIdToDelete" placeholder="T000" autocomplete="off" inputmode="text"
+          class="text-input modal-input">
+      </div>
       <div class="modal-actions">
-        <button id="btnConfirmarBorrar" type="button" class="btn btn-danger">Borrar Lote</button>
         <button type="button" class="btn btn-secondary" data-close-modal="modalDeleteBatch">Cancelar</button>
+        <button id="btnConfirmarBorrar" type="button" class="btn btn-danger">Borrar Lote</button>
       </div>
     </div>
   </div>
@@ -134,28 +137,32 @@
   </div>
   <div id="partnerSheet" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="tituloSocios">
     <div class="sheet-card">
+      <div class="modal-handle" aria-hidden="true"></div>
       <div class="modal-head">
         <h3 id="tituloSocios">Seleccionar Socio</h3>
-        <button type="button" class="close-btn close-btn-plain" data-close-modal="partnerSheet" aria-label="Cerrar">✕</button>
+        <button type="button" class="close-btn close-btn-plain modal-close" data-close-modal="partnerSheet" aria-label="Cerrar">✕</button>
       </div>
-      <input type="text" id="txtSearchPartner" placeholder="🔍 Escribe para buscar socio..."
-        autocomplete="off" class="text-input">
-      <div id="partnerListContainer" class="partner-list"></div>
+      <div class="modal-body">
+        <input type="text" id="txtSearchPartner" placeholder="🔍 Escribe para buscar socio..."
+          autocomplete="off" class="text-input">
+        <div id="partnerListContainer" class="partner-list"></div>
+      </div>
     </div>
   </div>
   <div id="modalPreview" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="tituloPreview">
     <div class="modal-card preview-card">
+      <div class="modal-handle" aria-hidden="true"></div>
       <div class="modal-head preview-head">
         <h3 id="tituloPreview">
           👁️ Vista Previa Cartelera — <span id="lblModalPartnerName" class="text-cyan">---</span>
         </h3>
-        <button type="button" class="close-btn" data-close-modal="modalPreview" aria-label="Cerrar">✕</button>
+        <button type="button" class="close-btn modal-close" data-close-modal="modalPreview" aria-label="Cerrar">✕</button>
       </div>
-      <div class="preview-body">
+      <div class="preview-body modal-body">
         <div id="previewSpinner" class="preview-spinner"><span class="preview-bolt">⚡</span> Generando cartelera PNG...</div>
         <img id="imgPreviewCartelera" class="preview-image hidden" alt="Vista Previa Cartelera">
       </div>
-      <div class="preview-footer">
+      <div class="preview-footer modal-actions">
         <div class="preview-footer-group">
           <label class="switch-label">
             <span>Prueba Socio</span>

@@ -1,44 +1,45 @@
 .modal-card {
-  display: flex;
   width: 100%;
   max-width: 28rem;
-  max-height: 92vh;
-  flex-direction: column;
-  overflow: hidden;
-  border: 1px solid var(--border-dark);
-  border-radius: var(--radius-2xl);
-  background: var(--card-dark);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, .65);
 }
 
 .modal-sm {
   max-width: 20rem;
-  gap: 12px;
-  padding: 16px;
+}
+
+@media (max-width: 767px) {
+  /* En mobile el bottom sheet ocupa todo el ancho: sin bordes flotantes. */
+  .modal-sm {
+    max-width: 100%;
+  }
 }
 
 .modal-head {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border-dark);
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, .08);
+  background: #0f172a;
 }
 
 .modal-head h3 {
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
   color: var(--white);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 800;
-  line-height: 1rem;
+  line-height: 1.2rem;
 }
 
 .modal-copy {
   color: var(--slate-400);
-  font-size: 11px;
+  font-size: 12px;
+  line-height: 1.35rem;
 }
 
 .modal-input {
@@ -54,27 +55,48 @@
 }
 
 .modal-actions {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding-top: 4px;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid rgba(255, 255, 255, .08);
+  background: #0f172a;
 }
 
-.modal-actions .btn:first-child {
-  flex: 1;
+.modal-actions .btn,
+.modal-actions .soft-btn {
+  min-height: 44px;
+}
+
+@media (max-width: 767px) {
+  .modal-actions .btn,
+  .modal-actions .soft-btn {
+    flex: 1 1 0;
+  }
+}
+
+@media (min-width: 768px) {
+  .modal-actions {
+    padding-bottom: 12px;
+  }
 }
 
 .close-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 12px;
   color: var(--slate-400);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.25rem;
+  touch-action: manipulation;
 }
 
 .close-btn:hover {
@@ -82,25 +104,14 @@
 }
 
 .close-btn-plain {
-  width: auto;
-  height: auto;
-  border-radius: 0;
-  font-size: 14px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  font-size: 16px;
 }
 
 .sheet-card .close-btn-plain {
   font-size: 18px;
-}
-
-.sheet-card {
-  display: flex;
-  max-height: 85vh;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px;
-  border-top: 1px solid var(--border-dark);
-  border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
-  background: var(--card-dark);
 }
 
 .sheet-card .modal-head h3 {
@@ -126,8 +137,8 @@
 }
 
 .preview-head {
-  padding: 12px;
-  background: rgba(15, 23, 42, .5);
+  padding: 12px 14px;
+  background: #0f172a;
 }
 
 .preview-head h3 {
@@ -137,11 +148,12 @@
 
 .preview-body {
   display: flex;
-  min-height: 280px;
-  flex: 1;
+  min-height: 180px;
+  flex: 1 1 auto;
   align-items: center;
   justify-content: center;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 12px;
   background: var(--brand-dark);
 }
@@ -152,9 +164,9 @@
   justify-content: space-between;
   gap: 8px;
   flex-wrap: wrap;
-  padding: 12px;
-  border-top: 1px solid var(--border-dark);
-  background: rgba(15, 23, 42, .8);
+  padding: 12px 14px calc(12px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid rgba(255, 255, 255, .08);
+  background: #0f172a;
 }
 
 .preview-footer .btn-secondary {

@@ -146,23 +146,83 @@
 .sheet {
   position: fixed;
   inset: 0;
-  z-index: 50;
-  background: rgba(0, 0, 0, .8);
-  backdrop-filter: blur(4px);
-}
-
-.modal {
+  z-index: 1050;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
-  padding: 12px;
+  background: rgba(0, 0, 0, .75);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  overscroll-behavior: contain;
 }
 
-.sheet {
+/* Mobile-first: el modal nace como bottom sheet. El diálogo nunca scrollea
+   completo; solo su .modal-body. El footer queda siempre visible. */
+.modal-card,
+.sheet-card {
+  width: 100%;
+  max-width: 600px;
+  max-height: 92vh;
+  max-height: 92dvh;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  background: rgba(0, 0, 0, .7);
+  overflow: hidden;
+  background: #0b132b;
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, .15);
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -20px 60px rgba(0, 0, 0, .55);
+}
+
+.modal-handle {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 5px;
+  margin: 8px auto 0;
+  border-radius: 999px;
+  background: #334155;
+}
+
+.modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px;
+}
+
+.modal-body input,
+.modal-body select,
+.modal-body textarea {
+  min-height: 44px;
+}
+
+.modal-body button {
+  min-height: 44px;
+}
+
+@media (min-width: 768px) {
+  .modal,
+  .sheet {
+    align-items: center;
+    padding: 24px;
+  }
+
+  .modal-card,
+  .sheet-card {
+    width: 90%;
+    max-height: 85vh;
+    border: 1px solid rgba(255, 255, 255, .12);
+    border-radius: 12px;
+  }
+
+  .modal-handle {
+    display: none;
+  }
 }
 
 @media (min-width: 640px) {

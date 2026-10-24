@@ -366,36 +366,48 @@ body.glauk-sheet-open .glauk-main {
 }
 
 /* --------------------------------------------------------------------------
-   Bottom sheet / modal deslizante
-   -------------------------------------------------------------------------- */
-.glauk-sheet-backdrop {
+   Bottom sheet / modal compartido (mobile-first)
+   --------------------------------------------------------------------------
+   Anatomía obligatoria: handle + header fijo + body scrolleable + footer fijo.
+   El diálogo nunca scrollea completo: solo su body. Así los botones de acción
+   quedan siempre accesibles con el pulgar, incluso con el teclado virtual. */
+.glauk-sheet-backdrop,
+.glauk-modal {
   position: fixed;
   inset: 0;
-  z-index: 90;
+  z-index: 1050;
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  background: rgba(0, 0, 0, .72);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  background: rgba(0, 0, 0, .75);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  overscroll-behavior: contain;
 }
 
-.glauk-bottom-sheet {
+.glauk-bottom-sheet,
+.glauk-modal__dialog {
   width: 100%;
-  max-width: 760px;
-  max-height: 90vh;
+  max-width: 600px;
+  max-height: 92vh;
+  max-height: 92dvh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: #070e23;
-  border: 1px solid rgba(34, 211, 238, .18);
-  border-bottom: 0;
-  border-radius: 22px 22px 0 0;
+  background: #0b132b;
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, .15);
+  border-radius: 16px 16px 0 0;
   box-shadow: 0 -20px 60px rgba(0, 0, 0, .55);
   animation: glauk-sheet-up .22s ease-out;
 }
 
-.glauk-sheet-handle {
+.glauk-modal__dialog--wide {
+  max-width: min(1400px, 100%);
+}
+
+.glauk-sheet-handle,
+.glauk-modal__handle {
   flex: 0 0 auto;
   width: 44px;
   height: 5px;
@@ -404,76 +416,163 @@ body.glauk-sheet-open .glauk-main {
   background: #334155;
 }
 
-.glauk-sheet-head {
+.glauk-sheet-head,
+.glauk-modal__header {
   flex: 0 0 auto;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px 16px 10px;
-  border-bottom: 1px solid rgba(30, 41, 59, .8);
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, .08);
+  background: #0f172a;
 }
 
-.glauk-sheet-head h3 {
+.glauk-sheet-head h3,
+.glauk-modal__header h3 {
   margin: 0;
   color: #f8fafc;
   font-size: 15px;
   font-weight: 900;
 }
 
-.glauk-sheet-head p {
+.glauk-sheet-head p,
+.glauk-modal__header p {
   margin: 2px 0 0;
   color: #64748b;
   font-size: 10px;
   font-weight: 700;
 }
 
-.glauk-sheet-close {
+.glauk-sheet-close,
+.glauk-modal__close {
   flex: 0 0 auto;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 12px;
-  border: 1px solid rgba(30, 58, 138, .8);
+  border: 1px solid rgba(148, 163, 184, .28);
   background: #030611;
-  color: #94a3b8;
-  font-size: 16px;
+  color: #cbd5e1;
+  font-size: 18px;
   font-weight: 900;
+  line-height: 1;
+  touch-action: manipulation;
 }
 
-.glauk-sheet-body {
+.glauk-sheet-close:active,
+.glauk-modal__close:active {
+  transform: scale(.96);
+}
+
+.glauk-sheet-body,
+.glauk-modal__body {
   flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  padding: 14px 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-.glauk-sheet-foot {
+/* Permite que el body y el footer convivan dentro de un x-if de Alpine y que
+   el body siga siendo el único elemento con scroll. */
+.glauk-modal__content {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.glauk-sheet-foot,
+.glauk-modal__footer {
   flex: 0 0 auto;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
   gap: 10px;
   padding: 12px 16px calc(12px + var(--glauk-safe-bottom));
-  border-top: 1px solid rgba(30, 41, 59, .9);
-  background: #070e23;
+  border-top: 1px solid rgba(255, 255, 255, .08);
+  background: #0f172a;
 }
 
-@media (min-width: 1024px) {
-  .glauk-sheet-backdrop {
+.glauk-sheet-foot > button,
+.glauk-modal__footer > button {
+  min-height: 44px;
+}
+
+@media (max-width: 767px) {
+  /* Dos acciones principales a ancho completo: objetivo táctil cómodo. */
+  .glauk-sheet-foot > button,
+  .glauk-modal__footer > button {
+    flex: 1 1 0;
+  }
+
+  /* Los campos de formulario nunca bajan de 44px: se usan con el pulgar y son
+     el principal motivo de recortes cuando el teclado virtual abre. */
+  .glauk-modal__body input:not([type="checkbox"]):not([type="radio"]),
+  .glauk-modal__body select,
+  .glauk-modal__body textarea,
+  .glauk-sheet-body input:not([type="checkbox"]):not([type="radio"]),
+  .glauk-sheet-body select,
+  .glauk-sheet-body textarea {
+    min-height: 44px;
+  }
+
+  /* Cualquier acción dentro del cuerpo conserva el objetivo táctil mínimo,
+     incluidas las tarjetas de monedas ([+ Suma] / [- Resta]). */
+  .glauk-modal__body button,
+  .glauk-sheet-body button {
+    min-height: 44px;
+  }
+
+  /* Los botones solo-icono (quitar moneda) también deben ser cuadrados de 44px. */
+  .glauk-modal__body [data-accion="eliminar-moneda"] {
+    min-width: 44px;
+  }
+}
+
+/* Ningún bloque de contenido puede crear un scroll anidado vertical: el único
+   scroll del modal es el del body. */
+.glauk-modal__body > *,
+.glauk-sheet-body > * {
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .glauk-sheet-backdrop,
+  .glauk-modal {
     align-items: center;
     padding: 24px;
   }
 
-  .glauk-bottom-sheet {
-    max-width: 820px;
-    max-height: 88vh;
-    border-bottom: 1px solid rgba(34, 211, 238, .18);
-    border-radius: 20px;
+  .glauk-bottom-sheet,
+  .glauk-modal__dialog {
+    width: 90%;
+    max-width: 600px;
+    max-height: 85vh;
+    border: 1px solid rgba(255, 255, 255, .12);
+    border-radius: 12px;
   }
 
-  .glauk-sheet-foot {
+  .glauk-modal__dialog--wide {
+    max-width: min(1400px, 100%);
+  }
+
+  .glauk-sheet-handle,
+  .glauk-modal__handle {
+    display: none;
+  }
+
+  .glauk-sheet-foot,
+  .glauk-modal__footer {
     padding-bottom: 12px;
   }
 }
@@ -487,6 +586,50 @@ body.glauk-sheet-open .glauk-main {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* --------------------------------------------------------------------------
+   Lightbox de comprobantes
+   -------------------------------------------------------------------------- */
+.glauk-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: rgba(0, 0, 0, .94);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.glauk-lightbox__image {
+  max-width: 100%;
+  max-height: 75dvh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  margin: auto;
+  display: block;
+  border-radius: 8px;
+}
+
+.glauk-lightbox__close {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top, 0px));
+  right: 12px;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, .24);
+  background: rgba(3, 6, 17, .9);
+  color: #f8fafc;
+  font-size: 20px;
+  font-weight: 900;
 }
 
 /* --------------------------------------------------------------------------
@@ -845,7 +988,7 @@ body.glauk-sheet-open .glauk-main {
    Detalle del comprobante
    -------------------------------------------------------------------------- */
 .glauk-detail-backdrop {
-  z-index: 95;
+  z-index: 1060;
 }
 
 .glauk-detail-sheet {
@@ -871,9 +1014,19 @@ body.glauk-sheet-open .glauk-main {
 
 .glauk-detail-image img {
   max-width: 100%;
-  max-height: 42vh;
+  max-height: 45dvh;
   width: auto;
+  height: auto;
   object-fit: contain;
+  cursor: zoom-in;
+}
+
+.glauk-detail-hint {
+  margin: -6px 0 0;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
 }
 
 .glauk-detail-grid {
@@ -950,10 +1103,6 @@ body.glauk-sheet-open .glauk-main {
 
 @media (max-width: 420px) {
   .glauk-detail-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .glauk-sheet-foot {
     grid-template-columns: 1fr;
   }
 }

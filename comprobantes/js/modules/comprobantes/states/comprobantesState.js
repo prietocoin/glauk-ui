@@ -77,6 +77,8 @@ export function comprobantesState() {
     filtroChip: 'todos',
     detalleAbierto: false,
     itemDetalle: null,
+    lightboxAbierto: false,
+    lightboxImagen: '',
 
     filtroRol: '',
     filtroSocio: '',
@@ -132,6 +134,11 @@ export function comprobantesState() {
         this.escucharActualizacionesGlobales();
         this.resetearYRefrescar();
         this.iniciarEscuchadoresScroll();
+      });
+      window.addEventListener('keydown', (evt) => {
+        if (evt.key !== 'Escape') return;
+        if (this.lightboxAbierto) this.cerrarLightbox();
+        else if (this.detalleAbierto) this.cerrarDetalle();
       });
     },
 
@@ -215,7 +222,7 @@ export function comprobantesState() {
     actualizarBloqueoScroll() {
       document.body.classList.toggle(
         'glauk-sheet-open',
-        Boolean(this.filtrosSheetAbierto || this.detalleAbierto || this.menuMovilAbierto)
+        Boolean(this.filtrosSheetAbierto || this.detalleAbierto || this.menuMovilAbierto || this.lightboxAbierto)
       );
     },
 
@@ -311,6 +318,23 @@ export function comprobantesState() {
     cerrarDetalle() {
       this.detalleAbierto = false;
       this.itemDetalle = null;
+      this.actualizarBloqueoScroll();
+    },
+
+    // Visor de imagen (lightbox). Se usa tanto desde la miniatura de la
+    // tarjeta como desde la imagen del detalle.
+    abrirLightbox(item, evento) {
+      if (evento && typeof evento.stopPropagation === 'function') evento.stopPropagation();
+      const url = this.urlRecibo(item);
+      if (!url) return;
+      this.lightboxImagen = url;
+      this.lightboxAbierto = true;
+      this.actualizarBloqueoScroll();
+    },
+
+    cerrarLightbox() {
+      this.lightboxAbierto = false;
+      this.lightboxImagen = '';
       this.actualizarBloqueoScroll();
     },
 

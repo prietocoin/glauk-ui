@@ -8,11 +8,11 @@ function renderFila(regla) {
   const claseDep = regla.polar_D === '+' ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold';
   const clasePago = regla.polar_P === '+' ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold';
   return `
-    <div class="px-4 py-2.5 border-b border-slate-800/50 last:border-0 flex items-center justify-between hover:bg-slate-800/30 transition">
-      <div class="flex items-center gap-3">
+    <div class="px-4 py-3 border-b border-slate-800/50 last:border-0 flex flex-wrap items-center justify-between gap-2 hover:bg-slate-800/30 transition">
+      <div class="flex items-center gap-3 min-w-0">
         <span class="text-xs font-mono font-bold text-cyan-400">${escapeHTML(regla.iso)}</span>
-        <div>
-          <p class="text-xs font-bold text-slate-200">${escapeHTML(regla.nombre)} (${escapeHTML(regla.codigo)})</p>
+        <div class="min-w-0">
+          <p class="text-xs font-bold text-slate-200 truncate">${escapeHTML(regla.nombre)} (${escapeHTML(regla.codigo)})</p>
           <p class="text-[10px] text-slate-500 font-mono">Base: ${escapeHTML(etiquetaBase(regla.base))}</p>
         </div>
       </div>
@@ -60,7 +60,7 @@ export function renderReglasHerencia(reglas = []) {
           <span class="text-xs font-bold text-slate-400 uppercase">Reglas del Perfil Matriz (FUNDDA)</span>
           <span class="text-[10px] px-2 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20">${reglas.length} países</span>
         </div>
-        <div class="max-h-[300px] overflow-y-auto">${filas}</div>
+        <div>${filas}</div>
       </div>
     </div>`;
 }

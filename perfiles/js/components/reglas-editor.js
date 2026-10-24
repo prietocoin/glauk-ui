@@ -22,34 +22,32 @@ function renderRegla(regla, index) {
   const base = escapeHTML(etiquetaBase(regla.base));
   return `
     <div class="bg-[#050a1e] border border-purple-500/30 hover:border-purple-500/50 rounded-xl p-3.5 space-y-3 shadow-md transition">
-      <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
-        <div class="flex items-center gap-2">
+      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 pb-2">
+        <div class="flex items-center gap-2 min-w-0">
           <span class="text-xs font-mono font-bold text-cyan-400">${escapeHTML(regla.iso)}</span>
-          <span class="text-sm font-bold text-white tracking-wide">${escapeHTML(regla.nombre)} (${escapeHTML(regla.codigo)})</span>
+          <span class="text-sm font-bold text-white tracking-wide truncate">${escapeHTML(regla.nombre)} (${escapeHTML(regla.codigo)})</span>
         </div>
 
-        <div class="flex items-center gap-3">
-          <div class="flex items-center gap-1.5">
-            <span class="text-[10px] font-bold uppercase text-slate-400">DEF:</span>
-            <select data-regla="${index}" data-campo="tipo" class="bg-[#030611] border border-slate-700 text-xs text-cyan-400 rounded px-2 py-0.5 font-bold focus:outline-none">
-              <option value="D"${regla.tipo === 'D' ? ' selected' : ''}>D (Depósito)</option>
-              <option value="P"${regla.tipo === 'P' ? ' selected' : ''}>P (Pago)</option>
-            </select>
-          </div>
+        <div class="flex items-center gap-2">
+          <label class="text-[10px] font-bold uppercase text-slate-400" for="perfiles-regla-${index}-tipo">DEF:</label>
+          <select id="perfiles-regla-${index}-tipo" data-regla="${index}" data-campo="tipo" class="min-h-10 bg-[#030611] border border-slate-700 text-xs text-cyan-400 rounded-lg px-2.5 py-2 font-bold focus:outline-none">
+            <option value="D"${regla.tipo === 'D' ? ' selected' : ''}>D (Depósito)</option>
+            <option value="P"${regla.tipo === 'P' ? ' selected' : ''}>P (Pago)</option>
+          </select>
 
-          <button type="button" data-accion="eliminar-moneda" data-indice="${index}" class="text-slate-400 hover:text-rose-400 text-sm transition p-1" title="Quitar país">🗑</button>
+          <button type="button" data-accion="eliminar-moneda" data-indice="${index}" class="min-w-11 min-h-11 inline-flex items-center justify-center text-slate-400 hover:text-rose-400 text-base transition p-2 rounded-lg border border-transparent hover:border-rose-500/40" title="Quitar país" aria-label="Quitar ${escapeHTML(regla.codigo)}">🗑</button>
         </div>
       </div>
 
-      <div class="grid grid-cols-2 gap-3">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div class="bg-[#030611] rounded-lg p-2.5 space-y-1.5 border border-cyan-950/80">
           <div class="flex items-center justify-between">
             <span class="text-[10px] font-bold text-cyan-400">DEPÓSITO (D) %</span>
             <span class="text-[10px] font-mono text-slate-500">${base}</span>
           </div>
-          <div class="flex items-center gap-1.5">
-            <input type="number" step="0.01" data-regla="${index}" data-campo="deposito" value="${escapeHTML(regla.deposito)}" class="w-full bg-[#070e23] border border-slate-800 rounded px-2 py-1 text-center font-bold text-xs text-white focus:outline-none focus:border-cyan-500">
-            <button type="button" data-accion="toggle-dep" data-indice="${index}" data-signo="${regla.polar_D}" class="px-2 py-1 rounded text-[11px] font-bold border shrink-0 transition ${claseDep}">${textoDep}</button>
+          <div class="flex items-center gap-2">
+            <input type="number" step="0.01" inputmode="decimal" data-regla="${index}" data-campo="deposito" value="${escapeHTML(regla.deposito)}" class="w-full min-h-11 bg-[#070e23] border border-slate-800 rounded-lg px-2 py-2 text-center font-bold text-sm text-white focus:outline-none focus:border-cyan-500">
+            <button type="button" data-accion="toggle-dep" data-indice="${index}" data-signo="${regla.polar_D}" class="min-h-11 min-w-20 px-3 py-2 rounded-lg text-[11px] font-bold border shrink-0 transition ${claseDep}">${textoDep}</button>
           </div>
         </div>
 
@@ -58,9 +56,9 @@ function renderRegla(regla, index) {
             <span class="text-[10px] font-bold text-amber-400">PAGO (P) %</span>
             <span class="text-[10px] font-mono text-slate-500">${base}</span>
           </div>
-          <div class="flex items-center gap-1.5">
-            <input type="number" step="0.01" data-regla="${index}" data-campo="pago" value="${escapeHTML(regla.pago)}" class="w-full bg-[#070e23] border border-slate-800 rounded px-2 py-1 text-center font-bold text-xs text-white focus:outline-none focus:border-amber-500">
-            <button type="button" data-accion="toggle-pago" data-indice="${index}" data-signo="${regla.polar_P}" class="px-2 py-1 rounded text-[11px] font-bold border shrink-0 transition ${clasePago}">${textoPago}</button>
+          <div class="flex items-center gap-2">
+            <input type="number" step="0.01" inputmode="decimal" data-regla="${index}" data-campo="pago" value="${escapeHTML(regla.pago)}" class="w-full min-h-11 bg-[#070e23] border border-slate-800 rounded-lg px-2 py-2 text-center font-bold text-sm text-white focus:outline-none focus:border-amber-500">
+            <button type="button" data-accion="toggle-pago" data-indice="${index}" data-signo="${regla.polar_P}" class="min-h-11 min-w-20 px-3 py-2 rounded-lg text-[11px] font-bold border shrink-0 transition ${clasePago}">${textoPago}</button>
           </div>
         </div>
       </div>
@@ -68,9 +66,11 @@ function renderRegla(regla, index) {
 }
 
 // Vista editable: selector de catálogo, tarjetas por moneda y empty state.
+// Sin scroll interno: el único scroll es el body del modal, para que las
+// tarjetas no queden atrapadas en una caja de 380px en mobile.
 export function renderReglasEditor(reglas = [], monedaParaAgregar = '') {
   const tarjetas = reglas.length
-    ? `<div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 max-h-[380px] overflow-y-auto pr-1">${reglas.map(renderRegla).join('')}</div>`
+    ? `<div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">${reglas.map(renderRegla).join('')}</div>`
     : '';
   const vacio = reglas.length === 0
     ? '<div class="text-center py-6 border border-dashed border-slate-800 rounded-xl text-slate-500 text-xs">Sin reglas configuradas.</div>'
@@ -84,12 +84,12 @@ export function renderReglasEditor(reglas = [], monedaParaAgregar = '') {
           <span class="text-[10px] px-2 py-0.5 rounded border bg-cyan-500/10 text-cyan-300 border-cyan-500/20">${reglas.length} activas</span>
         </h3>
 
-        <div class="flex items-center gap-2">
-          <select id="perfiles-moneda-agregar" class="bg-[#030611] border border-slate-700 text-xs rounded-lg px-3 py-1.5 text-slate-200 focus:outline-none focus:border-cyan-500">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <select id="perfiles-moneda-agregar" aria-label="Moneda para agregar" class="min-h-11 bg-[#030611] border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-cyan-500">
             <option value="">Seleccionar país/moneda...</option>
             ${opcionesCatalogo(monedaParaAgregar, reglas)}
           </select>
-          <button type="button" data-accion="agregar-moneda"${deshabilitado} class="px-3 py-1.5 rounded-lg border border-cyan-500/50 bg-cyan-500/10 text-cyan-400 text-xs font-bold hover:bg-cyan-500/20 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1">+ Agregar Moneda</button>
+          <button type="button" data-accion="agregar-moneda"${deshabilitado} class="min-h-11 px-3 py-2 rounded-lg border border-cyan-500/50 bg-cyan-500/10 text-cyan-400 text-xs font-bold hover:bg-cyan-500/20 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center justify-center gap-1">+ Agregar Moneda</button>
         </div>
       </div>
 

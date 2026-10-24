@@ -162,10 +162,9 @@
 
 .partner-list {
   display: flex;
-  flex: 1;
+  flex: 0 0 auto;
   flex-direction: column;
   gap: 6px;
-  overflow-y: auto;
   padding-right: 4px;
 }
 

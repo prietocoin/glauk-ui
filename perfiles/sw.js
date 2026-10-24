@@ -1,4 +1,4 @@
-const CACHE = 'glauk-perfiles-v3';
+const CACHE = 'glauk-perfiles-v4';
 const ASSETS = [
   './', './index.html', './manifest.json',
   './css/tailwind.css', './css/perfiles.css',

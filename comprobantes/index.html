@@ -347,6 +347,7 @@
                  alt="Recibo del comprobante"
                  loading="lazy"
                  decoding="async"
+                 @click.stop.prevent="abrirLightbox(item, $event)"
                  @error="$el.style.display='none'; $el.nextElementSibling?.classList.remove('hidden')">
           </template>
           <div class="glauk-thumb-empty" :class="{ 'hidden': urlRecibo(item) }" aria-hidden="true">📷</div>
@@ -665,25 +666,28 @@
 <!-- RESPONSABILIDAD: Modal de configuración integral del socio        -->
 <!-- ================================================================= -->
 
-<div x-show="modalConfigSocioAbierto" class="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/80 backdrop-blur-md" x-cloak>
-  <div class="bg-[#080e26] border border-blue-800/80 rounded-2xl md:rounded-3xl w-[95vw] max-w-4xl p-4 sm:p-5 space-y-3.5 shadow-2xl relative max-h-[90vh] overflow-y-auto" @click.away="modalConfigSocioAbierto = false">
-
-    <!-- CABECERA DE MODAL -->
-    <div class="flex items-center justify-between border-b border-blue-900/60 pb-2.5">
-      <div class="flex items-center gap-2.5">
-        <div class="w-8 h-8 rounded-xl bg-purple-950 border border-purple-500/40 flex items-center justify-center text-purple-300 text-base">⚙</div>
-        <div>
-          <h3 class="font-black text-white text-sm sm:text-base">Configuración Integral</h3>
-          <p class="text-[10px] text-slate-400">Valores con lote <strong class="text-cyan-400" x-text="loteActivo || 'ACTIVO'"></strong>.</p>
+<div x-show="modalConfigSocioAbierto"
+     x-cloak
+     class="glauk-modal"
+     @click.self="modalConfigSocioAbierto = false">
+  <div class="glauk-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="glauk-config-socio-title">
+    <div class="glauk-modal__handle" aria-hidden="true"></div>
+    <header class="glauk-modal__header">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <div class="w-8 h-8 shrink-0 rounded-xl bg-purple-950 border border-purple-500/40 flex items-center justify-center text-purple-300 text-base">⚙</div>
+        <div class="min-w-0">
+          <h3 id="glauk-config-socio-title">Configuración Integral</h3>
+          <p>Valores con lote <strong class="text-cyan-400" x-text="loteActivo || 'ACTIVO'"></strong>.</p>
         </div>
       </div>
-      <button type="button" @click="modalConfigSocioAbierto = false" class="text-slate-400 hover:text-white text-lg font-bold p-1">✕</button>
-    </div>
+      <button type="button" class="glauk-modal__close" @click="modalConfigSocioAbierto = false" aria-label="Cerrar configuración">✕</button>
+    </header>
 
     <!-- FORMULARIO REACTIVO DE EDICIÓN -->
     <template x-if="socioConfigEdit">
-      <div class="space-y-4">
-        <div class="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-6 gap-2.5 bg-[#030611] p-3 rounded-2xl border border-blue-900/60">
+      <div class="glauk-modal__content">
+        <div class="glauk-modal__body">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 bg-[#030611] p-3 rounded-2xl border border-blue-900/60">
           <div>
             <label class="block text-[9px] font-bold text-purple-400 uppercase mb-1">Nombre Socio</label>
             <input type="text" x-model="socioConfigEdit.nombre" class="w-full bg-[#080e26] border border-blue-900/80 rounded-xl px-2.5 py-1.5 text-xs text-white font-bold outline-none uppercase">
@@ -720,17 +724,17 @@
           </div>
         </div>
 
-        <!-- ACCIONES Y ACCESOS DIRECTOS DE ENVÍO -->
-        <div class="flex flex-col sm:flex-row items-center justify-between pt-3 border-t border-blue-900/60 gap-3">
-          <div class="flex items-center gap-2 w-full sm:w-auto">
-            <button type="button" @click="enviarTasaIndividual(socioConfigEdit, true)" class="px-3 py-2 bg-purple-950/80 border border-purple-500/50 text-purple-300 rounded-xl text-xs font-black active:scale-95 transition-all">🧪 Enviar a Prueba</button>
-            <button type="button" @click="enviarTasaIndividual(socioConfigEdit, false)" class="px-3 py-2 bg-amber-950/80 border border-amber-500/50 text-amber-300 rounded-xl text-xs font-black active:scale-95 transition-all">⚡ Enviar Prod</button>
-          </div>
-          <div class="flex items-center gap-2 w-full sm:w-auto">
-            <button type="button" @click="modalConfigSocioAbierto = false" class="px-3 py-2 bg-[#030611] text-slate-400 rounded-xl text-xs font-bold border border-blue-900 hover:text-white transition-all">Cancelar</button>
-            <button type="button" @click="guardarConfigSocioModal()" class="px-5 py-2 bg-purple-600 text-white rounded-xl text-xs font-black shadow-lg shadow-purple-600/30 active:scale-95 transition-all">💾 Guardar Cambios</button>
-          </div>
+        <!-- ACCIONES SECUNDARIAS DE ENVÍO -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-3 border-t border-blue-900/60">
+          <button type="button" @click="enviarTasaIndividual(socioConfigEdit, true)" class="min-h-11 px-3 py-2 bg-purple-950/80 border border-purple-500/50 text-purple-300 rounded-xl text-xs font-black active:scale-95 transition-all">🧪 Enviar a Prueba</button>
+          <button type="button" @click="enviarTasaIndividual(socioConfigEdit, false)" class="min-h-11 px-3 py-2 bg-amber-950/80 border border-amber-500/50 text-amber-300 rounded-xl text-xs font-black active:scale-95 transition-all">⚡ Enviar Prod</button>
         </div>
+        </div>
+
+        <footer class="glauk-modal__footer">
+          <button type="button" @click="modalConfigSocioAbierto = false" class="px-4 py-2.5 bg-[#030611] text-slate-300 rounded-xl text-xs font-bold border border-blue-900 hover:text-white transition-all">Cancelar</button>
+          <button type="button" @click="guardarConfigSocioModal()" class="px-5 py-2.5 bg-purple-600 text-white rounded-xl text-xs font-black shadow-lg shadow-purple-600/30 active:scale-95 transition-all">💾 Guardar Cambios</button>
+        </footer>
       </div>
     </template>
 
@@ -863,28 +867,31 @@
   <template x-teleport="body">
     <div x-show="modalAbierto"
          x-transition:enter="transition ease-out duration-200"
-         x-transition:enter-start="opacity-0 scale-95"
-         x-transition:enter-end="opacity-100 scale-100"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
          x-transition:leave="transition ease-in duration-150"
-         x-transition:leave-start="opacity-100 scale-100"
-         x-transition:leave-end="opacity-0 scale-95"
-         class="fixed inset-0 z-[99999] flex items-center justify-center p-2.5 sm:p-4 bg-black/80 backdrop-blur-md"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="glauk-modal"
+         @click.self="modalAbierto = false"
          x-cloak>
 
-      <div class="bg-[#080e26] border border-blue-900/80 rounded-2xl w-[95vw] max-w-2xl p-4 sm:p-5 space-y-4 shadow-2xl relative max-h-[90vh] overflow-y-auto"
-           @click.away="modalAbierto = false">
+      <div class="glauk-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="glauk-editar-title">
+        <div class="glauk-modal__handle" aria-hidden="true"></div>
 
-        <!-- CABECERA DE MODAL -->
-        <div class="flex items-center justify-between border-b border-blue-900/60 pb-2.5">
-          <span class="text-cyan-400 font-black text-sm sm:text-base flex items-center gap-2">✏️ Auditar & Liquidar Comprobante</span>
+        <!-- CABECERA FIJA DEL MODAL -->
+        <header class="glauk-modal__header">
+          <h3 id="glauk-editar-title">✏️ Auditar &amp; Liquidar Comprobante</h3>
           <button type="button"
+                  class="glauk-modal__close"
                   @click="modalAbierto = false"
-                  class="text-slate-400 hover:text-white text-base font-bold p-1 transition-colors cursor-pointer">✕</button>
-        </div>
+                  aria-label="Cerrar edición">✕</button>
+        </header>
 
-        <!-- CUERPO PRINCIPAL DEL MODAL -->
+        <!-- CUERPO SCROLLEABLE DEL MODAL -->
         <template x-if="itemEdicion">
-          <div class="space-y-3.5 text-xs">
+          <div class="glauk-modal__content">
+            <div class="glauk-modal__body text-xs">
 
             <!-- ENCABEZADO: HASH LARGO Y FECHA INPUT -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-[#030611] p-2.5 rounded-xl border border-blue-900/60">
@@ -969,7 +976,7 @@
               <span class="text-[10px] font-black text-amber-400 uppercase tracking-wider">3. REGLAS DE OPERACIÓN</span>
               <div class="bg-[#030611] p-2.5 rounded-xl border border-blue-900/60 space-y-2">
 
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div>
                     <label class="block text-[8px] font-bold text-amber-400 uppercase mb-0.5">Naturaleza</label>
                     <select x-model="itemEdicion.tipo_manual"
@@ -1031,27 +1038,23 @@
               </div>
             </div>
 
-            <!-- BOTONERA DE ACCIONES -->
-            <div class="flex flex-wrap justify-between items-center pt-3 border-t border-blue-900/60 gap-2">
-              <div class="flex gap-2">
-                <button type="button"
-                        @click="modalAbierto = false"
-                        class="px-3.5 py-2 bg-rose-950/80 hover:bg-rose-900 border border-rose-600/50 text-rose-300 rounded-xl font-bold transition-all active:scale-95 flex items-center gap-1 text-xs cursor-pointer">
-                  Cancelar
-                </button>
-              </div>
-
-              <div class="flex gap-2">
-                <button type="button"
-                        @click="guardarModal()"
-                        :disabled="cargando"
-                        class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl font-black shadow-lg shadow-cyan-950/50 transition-all active:scale-95 flex items-center gap-1.5 text-xs cursor-pointer disabled:opacity-50">
-                  <span x-show="!cargando">💾 Guardar & Congelar</span>
-                  <span x-show="cargando">⏳ Guardando...</span>
-                </button>
-              </div>
+            <!-- BOTONERA DE ACCIONES (FOOTER FIJO) -->
             </div>
 
+            <footer class="glauk-modal__footer">
+              <button type="button"
+                      @click="modalAbierto = false"
+                      class="px-3.5 py-2.5 bg-rose-950/80 hover:bg-rose-900 border border-rose-600/50 text-rose-300 rounded-xl font-bold transition-all active:scale-95 text-xs cursor-pointer">
+                Cancelar
+              </button>
+              <button type="button"
+                      @click="guardarModal()"
+                      :disabled="cargando"
+                      class="px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl font-black shadow-lg shadow-cyan-950/50 transition-all active:scale-95 text-xs cursor-pointer disabled:opacity-50">
+                <span x-show="!cargando">💾 Guardar &amp; Congelar</span>
+                <span x-show="cargando">⏳ Guardando...</span>
+              </button>
+            </footer>
           </div>
         </template>
 
@@ -1067,17 +1070,27 @@
 <!-- ================================================================= -->
 
 <div x-show="modalReporteAbierto"
-     class="fixed inset-0 z-50 flex items-center justify-center p-1 sm:p-3 md:p-6 bg-black/85 backdrop-blur-md"
+     class="glauk-modal"
+     @click.self="modalReporteAbierto = false"
      x-cloak>
-  <div class="bg-[#060c24] border border-blue-900/80 rounded-2xl w-full max-w-[1400px] max-h-[90vh] flex flex-col shadow-2xl relative overflow-hidden">
+  <div class="glauk-modal__dialog glauk-modal__dialog--wide" role="dialog" aria-modal="true" aria-labelledby="glauk-reporte-title">
+    <div class="glauk-modal__handle" aria-hidden="true"></div>
 
-    <!-- CABECERA MODAL Y DESPACHO -->
-    <div class="flex flex-wrap items-center justify-between gap-2 bg-[#080e26] border-b border-blue-900/60 px-3 py-2.5 shrink-0">
-      <div class="flex items-center gap-2">
-        <span class="font-black text-cyan-300 text-xs sm:text-sm">📄 Estado de Cuenta</span>
-        <span class="text-[10px] text-slate-400 font-mono" x-text="reporteSocio || 'Sin socio'"></span>
+    <!-- CABECERA FIJA -->
+    <header class="glauk-modal__header">
+      <div class="flex items-center gap-2 min-w-0">
+        <h3 id="glauk-reporte-title" class="shrink-0">📄 Estado de Cuenta</h3>
+        <span class="text-[10px] text-slate-400 font-mono truncate" x-text="reporteSocio || 'Sin socio'"></span>
       </div>
-      <div class="flex flex-wrap items-center justify-end gap-1.5">
+      <button type="button" class="glauk-modal__close" @click="modalReporteAbierto = false" aria-label="Cerrar estado de cuenta">✕</button>
+    </header>
+
+    <!-- CUERPO SCROLLEABLE -->
+    <div class="glauk-modal__content">
+      <div class="glauk-modal__body">
+
+    <!-- BARRA DE FILTROS DEL REPORTE -->
+    <div class="flex flex-wrap items-center gap-1.5">
         <div class="flex items-center gap-1 bg-[#030611] border border-blue-900/60 rounded-lg px-1.5 py-1">
           <label class="text-[9px] font-bold text-slate-400 uppercase" for="reporte-desde">Desde</label>
           <input id="reporte-desde" type="date" x-model="reporteFechaInicio" @change="recargarReporte()" class="bg-[#030611] text-[10px] text-slate-200 outline-none">
@@ -1085,9 +1098,9 @@
           <input id="reporte-hasta" type="date" x-model="reporteFechaFin" @change="recargarReporte()" class="bg-[#030611] text-[10px] text-slate-200 outline-none">
         </div>
         <div class="flex items-center gap-1 bg-[#030611] border border-blue-900/60 rounded-lg px-1.5 py-1">
-          <button type="button" @click="reportePaginaAnterior()" :disabled="reportePaginaSegura <= 1" class="px-1.5 text-[11px] text-cyan-300 disabled:opacity-50">◀</button>
+          <button type="button" @click="reportePaginaAnterior()" :disabled="reportePaginaSegura <= 1" class="min-w-8 min-h-8 text-[11px] text-cyan-300 disabled:opacity-50">◀</button>
           <span class="text-[10px] text-slate-300 font-mono" x-text="reportePaginaSegura + '/' + reporteTotalPaginas"></span>
-          <button type="button" @click="reportePaginaSiguiente()" :disabled="reportePaginaSegura >= reporteTotalPaginas" class="px-1.5 text-[11px] text-cyan-300 disabled:opacity-50">▶</button>
+          <button type="button" @click="reportePaginaSiguiente()" :disabled="reportePaginaSegura >= reporteTotalPaginas" class="min-w-8 min-h-8 text-[11px] text-cyan-300 disabled:opacity-50">▶</button>
         </div>
         <div class="flex items-center gap-1 bg-[#030611] border border-amber-500/40 rounded-lg px-1.5 py-1">
           <label class="text-[9px] font-bold text-amber-400 uppercase" for="reporte-desde-hash">Desde hash</label>
@@ -1112,23 +1125,14 @@
             <option value="fecha_desc">Descendente</option>
           </select>
         </div>
-        <button type="button"
-                @click="generandoImagen = true; enviarReporteViaEvolution(reporteSocio).finally(() => generandoImagen = false)"
-                :disabled="generandoImagen || reporteCargando || reporteItems.length === 0"
-                class="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl text-xs font-black shadow-lg active:scale-95 transition-all">
-          <span x-show="!generandoImagen" x-text="'🤖 Enviar Pág ' + reportePaginaSegura"></span>
-          <span x-show="generandoImagen">⏳ Enviando...</span>
-        </button>
-        <button type="button" @click="modalReporteAbierto = false" class="px-2.5 py-1.5 bg-blue-950 text-slate-300 rounded-xl text-xs font-bold border border-blue-900 hover:text-white">✕</button>
-      </div>
     </div>
 
-    <div x-show="reporteCargando" class="px-3 py-1.5 text-[10px] text-amber-300 bg-amber-950/40 border-b border-amber-900/60 shrink-0">
+    <div x-show="reporteCargando" class="px-3 py-1.5 text-[10px] text-amber-300 bg-amber-950/40 border border-amber-900/60 rounded-lg">
       ⏳ Cargando comprobantes y saldos del socio...
     </div>
 
     <!-- DOCUMENTO RENDERIZADO PARA CAPTURA DE IMAGEN -->
-    <div class="flex-1 overflow-y-auto overflow-x-auto p-4 flex items-start bg-[#030611]" style="min-height:0">
+    <div class="overflow-x-auto flex items-start bg-[#030611] rounded-xl p-4">
       <div id="reporte-html-documento" class="bg-white text-slate-900 p-6 rounded-xl shadow-2xl flex flex-col shrink-0" style="width:800px; max-width:800px; margin-left:auto; margin-right:auto">
         <div>
           <div class="border-b-2 border-slate-900 pb-3 mb-4 flex justify-between items-start gap-4">
@@ -1210,6 +1214,23 @@
           </div>
         </div>
       </div>
+      </div>
+      </div>
+
+      <footer class="glauk-modal__footer">
+        <button type="button"
+                @click="modalReporteAbierto = false"
+                class="px-4 py-2.5 bg-blue-950 text-slate-300 rounded-xl text-xs font-bold border border-blue-900 hover:text-white transition-all">
+          Cerrar
+        </button>
+        <button type="button"
+                @click="generandoImagen = true; enviarReporteViaEvolution(reporteSocio).finally(() => generandoImagen = false)"
+                :disabled="generandoImagen || reporteCargando || reporteItems.length === 0"
+                class="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl text-xs font-black shadow-lg active:scale-95 transition-all">
+          <span x-show="!generandoImagen" x-text="'🤖 Enviar Pág ' + reportePaginaSegura"></span>
+          <span x-show="generandoImagen">⏳ Enviando...</span>
+        </button>
+      </footer>
     </div>
 
   </div>
@@ -1239,10 +1260,12 @@
           <img :src="urlRecibo(itemDetalle)"
                alt="Recibo del comprobante"
                loading="lazy"
-               decoding="async">
+               decoding="async"
+               @click="abrirLightbox(itemDetalle)">
         </template>
         <div x-show="!itemDetalle || !urlRecibo(itemDetalle)" class="glauk-thumb-empty">📷 Sin imagen</div>
       </div>
+      <p class="glauk-detail-hint" x-show="itemDetalle && urlRecibo(itemDetalle)">Toca la imagen para ampliarla</p>
 
       <div class="glauk-detail-grid">
         <div><span>Monto recibo</span><strong x-text="formatMonto(itemDetalle?.monto || 0) + ' ' + (itemDetalle?.moneda || '')"></strong></div>
@@ -1277,6 +1300,26 @@
       <button type="button" class="glauk-btn-primary" @click="editarDesdeDetalle()">✏️ Editar / Liquidar</button>
     </footer>
   </section>
+</div>
+
+<!-- LIGHTBOX / VISOR DE IMAGEN A PANTALLA COMPLETA -->
+<div x-show="lightboxAbierto"
+     x-cloak
+     class="glauk-lightbox"
+     @click.self="cerrarLightbox()"
+     role="dialog"
+     aria-modal="true"
+     aria-label="Visor de imagen del comprobante">
+  <button type="button"
+          class="glauk-lightbox__close"
+          @click="cerrarLightbox()"
+          aria-label="Cerrar visor">✕</button>
+  <img x-show="lightboxImagen"
+       :src="lightboxImagen"
+       class="glauk-lightbox__image"
+       alt="Comprobante ampliado"
+       decoding="async"
+       @click.stop>
 </div>
 
 <script type="module" src="/shared/js/mobile-nav.js"></script>

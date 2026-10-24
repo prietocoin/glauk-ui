@@ -57,12 +57,16 @@ export function crearEditor({ recargar = async () => {}, alertar = globalThis.al
     state.reglas = reglasSegunModo(state.socios, state.socioEdicion);
     state.monedaParaAgregar = '';
     state.modalAbierto = true;
+    // Bloquea el scroll del documento: en mobile el modal ocupa el viewport y
+    // solo su body debe desplazarse.
+    document.body.classList.add('glauk-sheet-open');
     render();
   }
 
   function cerrar() {
     state.modalAbierto = false;
     state.monedaParaAgregar = '';
+    document.body.classList.remove('glauk-sheet-open');
     render();
   }
 
