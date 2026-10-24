@@ -2,92 +2,38 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reportes retirado · Glauk2 Engine</title>
+  <meta name="robots" content="noindex">
   <meta name="theme-color" content="#030611">
-  <meta name="description" content="Reportes Glauk: constructor, filtros, plantillas y JPEG para WhatsApp.">
-  <title>Reportes · Glauk</title>
-  <link rel="icon" type="image/svg+xml" href="../shared/brand/favicon.svg">
-  <link rel="manifest" href="./manifest.json">
-  <link rel="stylesheet" href="../shared/css/base.css">
-  <link rel="stylesheet" href="../shared/css/components.css">
-  <link rel="stylesheet" href="../shared/css/print.css">
-  <link rel="stylesheet" href="../shared/css/mobile.css">
+  <link rel="canonical" href="/dashboard/">
+  <meta http-equiv="refresh" content="0; url=/dashboard/">
+  <script>
+    // El "Constructor Visual" de Reportes quedó obsoleto. El estado de cuenta
+    // formal se genera desde la Inspección de Lotes (Dashboard) o desde cada
+    // comprobante. Se elimina la caché del service worker antiguo antes de
+    // redirigir para que ningún cliente siga viendo la vista retirada.
+    (function () {
+      var destino = '/dashboard/';
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations()
+          .then(function (registros) {
+            registros.forEach(function (registro) { registro.unregister(); });
+          })
+          .catch(function () {});
+      }
+      if (window.caches && caches.keys) {
+        caches.keys()
+          .then(function (claves) {
+            return Promise.all(claves.map(function (clave) { return caches.delete(clave); }));
+          })
+          .catch(function () {});
+      }
+      window.location.replace(destino);
+    })();
+  </script>
 </head>
-<body>
-  <div class="app-shell">
-    <header class="topbar">
-      <div class="topbar-inner">
-        <a class="brand" href="../">
-          <img src="../shared/brand/logo-fundablock.png" alt="FUNDABLOCK">
-          <span><strong>Reportes</strong><small>CONSTRUCTOR VISUAL</small></span>
-        </a>
-        <nav class="tabs" aria-label="Secciones de Reportes">
-          <button class="tab active" type="button" data-view="constructor">Constructor</button>
-          <button class="tab" type="button" data-view="plantillas">Plantillas</button>
-        </nav>
-        <span class="badge badge-amber" id="reportes-badge">Sin generar</span>
-      </div>
-    </header>
-
-    <main class="container page stack glauk-main">
-      <section class="view stack" id="view-constructor">
-        <div class="card">
-          <div class="card-head"><div><h2>Filtros del reporte</h2><p class="small">Rol, entidad y hash se cachean 60 segundos.</p></div><span class="badge" id="filtros-cache">Sin cargar</span></div>
-          <div class="card-body stack">
-            <div class="grid cols-4">
-              <label class="field"><span class="label">Rol</span><select class="select" id="filtro-rol"><option value="">Todos</option></select></label>
-              <label class="field"><span class="label">Entidad</span><select class="select" id="filtro-entidad"><option value="">Todas</option></select></label>
-              <label class="field"><span class="label">Hash</span><select class="select" id="filtro-hash"><option value="">Todos</option></select></label>
-              <label class="field"><span class="label">Orden</span><select class="select" id="filtro-orden"><option value="fecha_desc">Más reciente</option><option value="fecha_asc">Más antiguo</option></select></label>
-              <label class="field"><span class="label">Desde</span><input class="input" id="filtro-desde" type="date"></label>
-              <label class="field"><span class="label">Hasta</span><input class="input" id="filtro-hasta" type="date"></label>
-            </div>
-            <div class="row between"><span class="small muted" id="filtros-resumen">Seleccione filtros y consulte.</span><div class="row"><button class="btn btn-ghost btn-sm" id="btn-limpiar" type="button">Limpiar</button><button class="btn btn-primary btn-sm" id="btn-consultar" type="button">Consultar movimientos</button></div></div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-head"><div><h2>Vista previa de datos</h2><p class="small">La tabla muestra hasta 50 filas; el JPEG hasta 20.</p></div><span class="badge badge-accent" id="movimientos-count">0 movimientos</span></div>
-          <div class="card-body"><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Socio</th><th>Operación</th><th>Monto</th><th>ME1</th></tr></thead><tbody id="movimientos-tabla"></tbody></table></div><p class="small muted hidden" id="movimientos-aviso"></p></div>
-        </div>
-
-        <div class="card">
-          <div class="card-head"><div><h2>Salida JPEG</h2><p class="small">1080×1350 · fondo blanco · calidad 0.90.</p></div><span class="badge badge-green" id="canvas-estado">Listo</span></div>
-          <div class="card-body stack">
-            <div class="grid cols-3">
-              <label class="field"><span class="label">Socio destino</span><select class="select" id="reporte-socio"></select></label>
-              <label class="field"><span class="label">Lote</span><input class="input" id="reporte-lote" placeholder="T000"></label>
-              <label class="field"><span class="label">Pie de mensaje</span><input class="input" id="reporte-caption" maxlength="1024" placeholder="Resumen de operaciones"></label>
-            </div>
-            <div class="row"><button class="btn btn-primary" id="btn-generar" type="button">Generar JPEG</button><button class="btn btn-secondary" id="btn-descargar" type="button" disabled>Descargar</button><button class="btn btn-success" id="btn-enviar" type="button" disabled>Enviar por WhatsApp</button></div>
-            <div class="preview-frame" id="reporte-preview"><div class="empty">Genere el reporte para ver la vista previa.</div></div>
-            <p class="small muted" id="reporte-resultado"></p>
-          </div>
-        </div>
-        <div class="offscreen" id="reporte-render-wrap"><article class="reporte-sheet" id="reporte-render"></article></div>
-      </section>
-
-      <section class="view hidden stack" id="view-plantillas">
-        <div class="card">
-          <div class="card-head"><div><h2>Plantillas locales</h2><p class="small">Se guardan solo en este navegador.</p></div></div>
-          <div class="card-body stack">
-            <div class="row">
-              <div class="field grow"><label class="label" for="plantilla-nombre">Nombre de la plantilla</label><input class="input" id="plantilla-nombre" placeholder="Cierre semanal"></div>
-              <button class="btn btn-primary" id="btn-guardar-plantilla" type="button">Guardar plantilla</button>
-            </div>
-            <div id="plantillas-lista"></div>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <footer class="footer"><div class="container row between"><span>Reportes · Glauk</span><span>Render en navegador · assets locales</span></div></footer>
-  </div>
-  <div id="modal-root"></div>
-  <div class="toast-host" id="toast-host" aria-live="polite"></div>
-  <script src="../config.js"></script>
-  <script src="../shared/vendor/html2canvas.min.js"></script>
-  <script type="module" src="./js/main.js"></script>
-  <script type="module" src="/shared/js/mobile-nav.js"></script>
+<body style="margin:0;background:#030611;color:#94a3b8;font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh">
+  <p>El módulo Reportes fue retirado. <a href="/dashboard/" style="color:#22d3ee">Ir al Dashboard</a></p>
 </body>
 </html>

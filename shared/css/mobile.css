@@ -120,6 +120,15 @@ body.glauk-sheet-open .glauk-main {
 .glauk-nav-icon {
   font-size: 20px;
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.glauk-nav-icon svg {
+  display: block;
+  width: 22px;
+  height: 22px;
 }
 
 .glauk-nav-label {

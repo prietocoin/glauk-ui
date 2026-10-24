@@ -6,8 +6,8 @@
 import { createRouterState } from './shared/states/routerState.js';
 import { createTasasState } from './modules/tasas/states/tasasState.js';
 import { createDirectorioState } from './modules/directorio/states/directorioState.js';
-import { comprobantesState } from './modules/comprobantes/states/comprobantesState.js?v=20261024_08';
-import { createComprobantesReporteState } from './modules/comprobantes/states/comprobantesReporteState.js?v=20261024_08';
+import { comprobantesState } from './modules/comprobantes/states/comprobantesState.js?v=20261024_09';
+import { createComprobantesReporteState } from './modules/comprobantes/states/comprobantesReporteState.js?v=20261024_09';
 import { escucharSociosActualizados } from '../../shared/js/sync.js';
 
 /**
@@ -32,6 +32,13 @@ function registrarApp() {
 
     // Vista por defecto
     app.vistaActiva = 'comprobantes';
+
+    // La barra móvil enlaza al Dashboard oficial en /dashboard/, que redirige
+    // a /comprobantes/?vista=dashboard. Al bootear se respeta ese parámetro.
+    const vistaSolicitada = new URLSearchParams(window.location.search).get('vista');
+    if (vistaSolicitada === 'dashboard') {
+      app.vistaActiva = 'dashboard';
+    }
 
     // Reacción a un guardado de Perfiles: el backend sanea las monedas
     // históricas al leer el directorio, así que ese GET debe completarse antes
