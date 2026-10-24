@@ -224,7 +224,10 @@ export function createComprobantesReporteState() {
       this.reporteFechaFin = this.filtroFechaFin || finMes;
       this.reporteDesdeHash = this.filtroDesdeHash || '';
       this.reporteHastaHash = this.filtroHastaHash || '';
-      this.reporteOrden = this.filtroOrden === 'fecha_desc' ? 'fecha_desc' : 'fecha_asc';
+      // El estado de cuenta siempre abre en orden cronológico ascendente: debe
+      // leerse desde el saldo anterior hasta el cierre, sin heredar el orden
+      // (posiblemente descendente) del listado del Dashboard.
+      this.reporteOrden = 'fecha_asc';
       this.reporteSaldoAnterior = obtenerSaldoAnteriorSocio(this.directorio, socio);
       this.reporteItemsBase = [];
       this.reportePaginaActual = 1;
@@ -397,6 +400,22 @@ export function createComprobantesReporteState() {
 
     reporteHashItem(item) {
       return String(item?.hash_corto || item?.hash_largo || '').slice(0, 8);
+    },
+
+    /**
+     * Código del lote de tasa con el que se cotizó la fila (T084, T085, ...).
+     * Se lee de las mismas claves que usa el catálogo comercial para resolver
+     * la tasa, de modo que el valor y su lote siempre correspondan al mismo
+     * lote. Devuelve '' cuando la fila no trae lote.
+     */
+    reporteLoteItem(item) {
+      const lote = item?.lote_tasa_asignado
+        || item?.lote
+        || item?.lote_tasa
+        || item?.id_tasa
+        || item?.lote_tasa_id
+        || '';
+      return String(lote).trim().toUpperCase();
     },
 
     reporteTitularItem(item) {
