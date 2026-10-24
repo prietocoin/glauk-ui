@@ -4,16 +4,10 @@
  */
 
 import { extraerNombreSocio } from '../utils/comprobantesSocioUtils.js';
-
-/**
- * Trunca o normaliza el valor numérico de la tasa.
- * Si viene 'N/A', nulo o un valor no válido, retorna 1.0 por defecto.
- */
-function truncarTasaComercial(val) {
-  if (val === 'N/A' || val === null || val === undefined) return 1.0;
-  const num = parseFloat(val);
-  return isNaN(num) || num <= 0 ? 1.0 : Math.floor(num * 10000) / 10000;
-}
+import {
+  normalizarTasaComercial,
+  resolverTipoComprobante
+} from '../utils/comprobantesTasasUtils.js';
 
 function fechaDesdeItem(c, item) {
   const raw = c.fecha_hora_comprobante || item.fecha_hora_comprobante ||
@@ -104,18 +98,20 @@ export function prepararEdicionComprobante(item = {}, loteActivo = 'T070') {
   const rol1 = c.rol_1 || item.rol_1 || c.grupo_1?.rol || c.perfil_1?.rol || 'SOCIO';
   const rol2 = c.rol_2 || item.rol_2 || c.grupo_2?.rol || c.perfil_2?.rol || 'SOCIO';
 
-  const t1 = truncarTasaComercial(
+  const t1 = normalizarTasaComercial(
     c.tasa_1 ?? item.tasa_1 ?? c.tasa_socio_1 ?? item.tasa_socio_1 ?? c.t1_tasa ?? item.t1_tasa ?? c.grupo_1?.tasa
   );
-  const t2 = truncarTasaComercial(
+  const t2 = normalizarTasaComercial(
     c.tasa_2 ?? item.tasa_2 ?? c.tasa_socio_2 ?? item.tasa_socio_2 ?? c.t2_tasa ?? item.t2_tasa ?? c.grupo_2?.tasa
   );
 
   // PRESERVACIÓN FIEL DE MONTOS INDIVIDUALES DE SOCIO
   const rawM1 = c.m1_socio ?? item.m1_socio ?? c.monto_1 ?? item.monto_1 ??
+    c.monto1 ?? item.monto1 ??
     c.monto_socio_1 ?? item.monto_socio_1 ?? c.monto_socio1 ?? item.monto_socio1 ??
     c.t1_monto ?? item.t1_monto ?? c.me1 ?? item.me1 ?? fallbackMonto;
   const rawM2 = c.m2_socio ?? item.m2_socio ?? c.monto_2 ?? item.monto_2 ??
+    c.monto2 ?? item.monto2 ??
     c.monto_socio_2 ?? item.monto_socio_2 ?? c.monto_socio2 ?? item.monto_socio2 ??
     c.t2_monto ?? item.t2_monto ?? c.me2 ?? item.me2 ?? fallbackMonto;
 
@@ -139,6 +135,16 @@ export function prepararEdicionComprobante(item = {}, loteActivo = 'T070') {
   const s2Upper = String(socio2Real || '').trim().toUpperCase();
   const tieneSocio2Valido = !['', 'GENERAL', 'NO DEFINIDO', 'S/D', 'N/A', 'NULL', 'UNDEFINED', '-'].includes(s2Upper);
   const esX2 = (item.es_x2 !== undefined) ? Boolean(item.es_x2) : tieneSocio2Valido;
+
+  // El tipo corregido en la tarjeta (tipo_manual) manda sobre cualquier valor
+  // heredado del extractor. Se resuelve una sola vez para tarjeta y reporte.
+  const tipoResuelto = resolverTipoComprobante({
+    tipo_manual: c.tipo_manual || item.tipo_manual,
+    tipo_op: c.tipo_op || item.tipo_op,
+    tipo_op1: c.tipo_op1 || item.tipo_op1,
+    t1_tipo: c.t1_tipo || item.t1_tipo,
+    tipo: c.tipo || item.tipo
+  });
 
   return {
     ...item,
@@ -193,8 +199,8 @@ export function prepararEdicionComprobante(item = {}, loteActivo = 'T070') {
 
     // REGLAS GENERALES Y LOTES
     es_x2: esX2,
-    tipo_op: String(c.tipo_op || c.tipo_op1 || c.t1_tipo || c.tipo || item.tipo || item.tipo_manual || 'D').split('-')[0].toUpperCase(),
-    tipo_manual: String(c.tipo_manual || c.tipo_op1 || c.t1_tipo || c.tipo || item.tipo || 'D').split('-')[0].toUpperCase(),
+    tipo_op: tipoResuelto,
+    tipo_manual: tipoResuelto,
     moneda: monedaFinal,
     monto: fallbackMonto,
     monto_local: fallbackMonto,

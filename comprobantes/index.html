@@ -29,10 +29,125 @@
     ::-webkit-scrollbar-thumb:hover { background: #2563eb; }
     input, select, textarea { font-size: 14px !important; }
 
+    /* Documento de estado de cuenta: hoja blanca plana, sin sombras,
+       gradientes, máscaras ni pseudo-elementos que oscurezcan las filas. */
+    #reporte-html-documento {
+      background: #ffffff !important;
+      background-image: none !important;
+      color: #0f172a !important;
+      border: 1px solid #e2e8f0 !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      filter: none !important;
+      -webkit-mask-image: none !important;
+      mask-image: none !important;
+      text-shadow: none !important;
+    }
+
+    #reporte-html-documento::before,
+    #reporte-html-documento::after,
+    #reporte-html-documento *::before,
+    #reporte-html-documento *::after {
+      content: none !important;
+      display: none !important;
+    }
+
+    /* Ningún descendiente puede reintroducir una sombra, gradiente o máscara
+       oscura sobre la tabla: la hoja es blanca de inicio a fin. */
+    #reporte-html-documento * {
+      background-image: none !important;
+      box-shadow: none !important;
+      filter: none !important;
+      -webkit-mask-image: none !important;
+      mask-image: none !important;
+      text-shadow: none !important;
+    }
+
+    #reporte-html-documento [class*="rounded"] {
+      border-radius: 0 !important;
+    }
+
+    #reporte-html-documento table,
+    #reporte-html-documento tbody,
+    #reporte-html-documento tr,
+    #reporte-html-documento td,
+    #reporte-html-documento th {
+      background-image: none !important;
+    }
+
+    #reporte-html-documento tbody tr {
+      background-color: #ffffff !important;
+    }
+
+    #reporte-html-documento td,
+    #reporte-html-documento th {
+      border-color: #e2e8f0 !important;
+    }
+
+    /* La tabla siempre cabe en los 800 px del documento: columnas fijas y
+       texto largo con salto para que ninguna fila se recorte por la derecha. */
+    #reporte-html-documento table {
+      width: 100% !important;
+      table-layout: fixed !important;
+    }
+
+    #reporte-html-documento th,
+    #reporte-html-documento td {
+      vertical-align: top;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    #reporte-html-documento th:nth-child(1),
+    #reporte-html-documento td:nth-child(1) { width: 11%; }
+
+    #reporte-html-documento th:nth-child(2),
+    #reporte-html-documento td:nth-child(2) { width: 6%; }
+
+    #reporte-html-documento th:nth-child(3),
+    #reporte-html-documento td:nth-child(3) { width: 12%; }
+
+    #reporte-html-documento th:nth-child(4),
+    #reporte-html-documento td:nth-child(4) { width: 17%; }
+
+    #reporte-html-documento th:nth-child(5),
+    #reporte-html-documento td:nth-child(5) { width: 8%; }
+
+    #reporte-html-documento th:nth-child(6),
+    #reporte-html-documento td:nth-child(6) { width: 28%; }
+
+    #reporte-html-documento th:nth-child(7),
+    #reporte-html-documento td:nth-child(7) { width: 18%; }
+
+    /* Durante la captura se elimina todo el chrome que puede pintarse encima
+       del documento (header/footer fijos, handle, sombra del diálogo y velo
+       del backdrop). Sin esto, html2canvas oscurece las filas inferiores. */
+    body.glauk-capturando-reporte .glauk-modal__header,
+    body.glauk-capturando-reporte .glauk-modal__footer,
+    body.glauk-capturando-reporte .glauk-modal__handle {
+      visibility: hidden !important;
+    }
+
+    body.glauk-capturando-reporte .glauk-modal__dialog {
+      box-shadow: none !important;
+      background: #ffffff !important;
+    }
+
+    body.glauk-capturando-reporte .glauk-modal {
+      background: transparent !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+
+    body.glauk-capturando-reporte .glauk-modal__content,
+    body.glauk-capturando-reporte .glauk-modal__body {
+      overflow: visible !important;
+    }
+
     @media print {
       body * { visibility: hidden; }
       #reporte-html-documento, #reporte-html-documento * { visibility: visible; }
-      #reporte-html-documento { position: absolute; left: 0; top: 0; width: 100%; background: #ffffff !important; color: #000000 !important; }
+      #reporte-html-documento { position: absolute; left: 0; top: 0; width: 100%; background: #ffffff !important; color: #0f172a !important; }
       .no-imprimir { display: none !important; }
     }
   </style>
@@ -369,7 +484,7 @@
         <span class="glauk-mini-badge">📅 <span x-text="item.fecha_fmt || 'S/F'"></span></span>
         <span class="glauk-mini-badge">🔑 <span x-text="item.hash_corto || 'HASH'"></span></span>
         <span class="glauk-mini-badge">📊 <span x-text="item.lote_tasa_asignado || item.lote || 'T-ND'"></span></span>
-        <span class="glauk-mini-badge" :class="claseInsignia(item.tipo_manual || item.tipo || 'D')">🏷️ <span x-text="item.tipo_manual || item.tipo || 'D'"></span></span>
+        <span class="glauk-mini-badge" :class="claseInsignia(resolverTipoComprobante(item))">🏷️ <span x-text="resolverTipoComprobante(item)"></span></span>
         <span x-show="item.es_x2" class="glauk-mini-badge is-x2">⚡ x2</span>
       </div>
 
@@ -401,7 +516,7 @@
             <span x-text="'Socio 1 · ' + s1Nombre"></span>
           </div>
           <div class="glauk-finance-values">
-            <span x-text="'T1 ' + formatTasa(obtenerTasaSocioCalculada(item, 1))"></span>
+            <span x-text="'T1 ' + formatTasa(resolverTasaComprobante(item, 1), item.moneda, resolverTipoComprobante(item))"></span>
             <strong :class="s1Polaridad === '-' ? 'text-pink-400' : 'text-emerald-400'"
                     x-text="(s1Polaridad === '-' ? '- ' : '') + formatMonto(Math.abs(parseFloat(obtenerME1(item) || 0))) + ' ' + s1Moneda"></strong>
           </div>
@@ -435,7 +550,7 @@
             <span x-text="'Socio 2 · ' + s2Nombre"></span>
           </div>
           <div class="glauk-finance-values">
-            <span x-text="'T2 ' + formatTasa(obtenerTasaSocioCalculada(item, 2))"></span>
+            <span x-text="'T2 ' + formatTasa(resolverTasaComprobante(item, 2), item.moneda, resolverTipoComprobante(item))"></span>
             <strong :class="s2Polaridad === '-' ? 'text-pink-400' : 'text-emerald-400'"
                     x-text="(s2Polaridad === '-' ? '- ' : '') + formatMonto(Math.abs(parseFloat(obtenerME2(item) || 0))) + ' ' + s2Moneda"></strong>
           </div>
@@ -1128,7 +1243,7 @@
 
     <!-- DOCUMENTO RENDERIZADO PARA CAPTURA DE IMAGEN -->
     <div class="overflow-x-auto flex items-start bg-[#030611] rounded-xl p-4">
-      <div id="reporte-html-documento" class="bg-white text-slate-900 p-6 rounded-xl shadow-2xl flex flex-col shrink-0" style="width:800px; max-width:800px; margin-left:auto; margin-right:auto">
+      <div id="reporte-html-documento" class="bg-white text-slate-900 p-6 flex flex-col shrink-0" style="width:800px; max-width:800px; margin-left:auto; margin-right:auto">
         <div>
           <div class="border-b-2 border-slate-900 pb-3 mb-4 flex justify-between items-start gap-4">
             <div>
@@ -1148,15 +1263,15 @@
               <span class="block text-[10px] text-slate-500 font-mono" x-text="reporteItems.length + ' comprobante(s) cargado(s)'"></span>
               <span class="block text-[10px] text-slate-500 font-mono" x-text="'Movimiento total del rango: ' + (reporteMovimientoTotal < 0 ? '-' : '+') + formatMonto(Math.abs(reporteMovimientoTotal)) + ' ' + reporteMoneda"></span>
             </div>
-            <div class="bg-slate-900/95 rounded-lg px-5 py-3 text-right" style="min-width:190px">
-              <span class="block text-[9px] font-black text-slate-400 uppercase">Saldo anterior de página</span>
-              <span class="block text-xl font-mono font-black text-amber-400" x-text="formatMonto(reporteSaldoAnteriorPagina) + ' ' + reporteMoneda"></span>
+            <div class="bg-slate-50 border border-slate-200 rounded-lg px-5 py-3 text-right" style="min-width:190px">
+              <span class="block text-[9px] font-black text-slate-500 uppercase">Saldo anterior de página</span>
+              <span class="block text-xl font-mono font-black text-amber-700" x-text="formatMonto(reporteSaldoAnteriorPagina) + ' ' + reporteMoneda"></span>
             </div>
           </div>
 
           <table class="w-full text-left text-[10px]">
             <thead>
-              <tr class="bg-slate-900/95 text-white font-mono uppercase">
+              <tr class="bg-slate-100 text-slate-700 font-mono uppercase">
                 <th class="px-2 py-1.5">Fecha</th>
                 <th class="px-2 py-1.5">Tipo</th>
                 <th class="px-2 py-1.5">Hash</th>
@@ -1173,7 +1288,7 @@
                   <td class="px-2 py-1.5"><span class="font-black text-slate-900" x-text="reporteTipoItem(item)"></span></td>
                   <td class="px-2 py-1.5 font-mono text-slate-500" x-text="reporteHashItem(item)"></td>
                   <td class="px-2 py-1.5 text-right font-mono text-slate-900" x-text="formatMonto(reporteMontoOriginalItem(item)) + ' ' + reporteMonedaOriginalItem(item)"></td>
-                  <td class="px-2 py-1.5 text-center font-mono text-slate-500" x-text="formatTasa(reporteTasaItem(item))"></td>
+                  <td class="px-2 py-1.5 text-center font-mono text-slate-500" x-text="formatTasa(reporteTasaItem(item), reporteMonedaTasaItem(item), reporteTipoItem(item))"></td>
                   <td class="px-2 py-1.5 text-slate-500">
                     <span class="block font-bold text-slate-900" x-text="reporteTitularItem(item)"></span>
                     <span class="block text-[9px] text-slate-400" x-text="reporteBancoItem(item)"></span>
@@ -1198,9 +1313,9 @@
               <span class="block text-[9px] font-black text-slate-400 uppercase">Movimiento de página</span>
               <span class="block text-sm font-mono font-black" :style="reporteMovimientoPagina < 0 ? 'color:#e11d48' : 'color:#0f172a'" x-text="(reporteMovimientoPagina < 0 ? '-' : '+') + formatMonto(Math.abs(reporteMovimientoPagina)) + ' ' + reporteMoneda"></span>
             </div>
-            <div class="bg-emerald-950 rounded-lg px-5 py-3 text-right" style="min-width:190px">
-              <span class="block text-[9px] font-black text-emerald-300 uppercase">Nuevo saldo de página</span>
-              <span class="block text-xl font-mono font-black text-emerald-300" x-text="formatMonto(reporteSaldoFinalPagina) + ' ' + reporteMoneda"></span>
+            <div class="bg-emerald-50 border border-emerald-200 rounded-lg px-5 py-3 text-right" style="min-width:190px">
+              <span class="block text-[9px] font-black text-emerald-700 uppercase">Nuevo saldo de página</span>
+              <span class="block text-xl font-mono font-black text-emerald-800" x-text="formatMonto(reporteSaldoFinalPagina) + ' ' + reporteMoneda"></span>
             </div>
           </div>
           <div class="border-t-2 border-slate-900 pt-2 text-[9px] text-slate-500 flex justify-between font-mono gap-4">
@@ -1276,14 +1391,14 @@
         <div class="glauk-detail-socio">
           <h4>Socio 1</h4>
           <p><span>Nombre</span><strong x-text="itemDetalle?.socio_1 || itemDetalle?.nombre_socio_1 || 'GENERAL'"></strong></p>
-          <p><span>Tasa</span><strong x-text="formatTasa(obtenerTasaSocioCalculada(itemDetalle || {}, 1))"></strong></p>
+          <p><span>Tasa</span><strong x-text="formatTasa(resolverTasaComprobante(itemDetalle || {}, 1), (itemDetalle || {}).moneda, resolverTipoComprobante(itemDetalle || {}))"></strong></p>
           <p><span>ME1</span><strong x-text="formatMonto(Math.abs(parseFloat(obtenerME1(itemDetalle || {}) || 0)))"></strong></p>
         </div>
         <div class="glauk-detail-socio"
              x-show="itemDetalle && (itemDetalle.socio_2 || itemDetalle.nombre_socio_2) && (itemDetalle.socio_2 || itemDetalle.nombre_socio_2) !== 'GENERAL' && (itemDetalle.socio_2 || itemDetalle.nombre_socio_2) !== 'NO DEFINIDO'">
           <h4>Socio 2</h4>
           <p><span>Nombre</span><strong x-text="itemDetalle?.socio_2 || itemDetalle?.nombre_socio_2"></strong></p>
-          <p><span>Tasa</span><strong x-text="formatTasa(obtenerTasaSocioCalculada(itemDetalle || {}, 2))"></strong></p>
+          <p><span>Tasa</span><strong x-text="formatTasa(resolverTasaComprobante(itemDetalle || {}, 2), (itemDetalle || {}).moneda, resolverTipoComprobante(itemDetalle || {}))"></strong></p>
           <p><span>ME2</span><strong x-text="formatMonto(Math.abs(parseFloat(obtenerME2(itemDetalle || {}) || 0)))"></strong></p>
         </div>
       </div>

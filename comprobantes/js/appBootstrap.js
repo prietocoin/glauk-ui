@@ -51,6 +51,10 @@ function registrarApp() {
         this.cargarComprobantes ? this.cargarComprobantes() : Promise.resolve()
       ]);
 
+      // Catálogo de compra/venta oficial por socio y lote. No bloquea el primer
+      // render: las tarjetas se actualizan cuando termina la carga.
+      if (this.cargarCatalogoTasas) this.cargarCatalogoTasas();
+
       this.$nextTick(() => {
         if (this.escucharActualizacionesGlobales) this.escucharActualizacionesGlobales();
         if (this.iniciarEscuchadoresScroll) this.iniciarEscuchadoresScroll();

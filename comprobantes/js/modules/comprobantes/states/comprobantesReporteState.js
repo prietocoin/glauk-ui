@@ -5,13 +5,25 @@
  */
 
 import { cargarComprobantesFiltrados } from '../services/comprobantesCargaService.js';
-import { aplicarRangoHash, resolverIndiceHash } from '../services/comprobantesFilterService.js';
 import {
-  calcularMovimientoFiltradoTotal,
-  obtenerMovimientoSocio
-} from '../services/saldosCalculatorService.js';
+  aplicarRangoHash,
+  coincideSocioEstricto,
+  resolverIndiceHash
+} from '../services/comprobantesFilterService.js';
 import { obtenerSaldoAnteriorSocio } from '../services/comprobantesSaldosService.js';
+import {
+  catalogoTasasComercialActual,
+  obtenerCatalogoTasasComerciales,
+  resolverTasaComercialItem
+} from '../services/comprobantesTasasComercialesService.js';
 import { normalizarSocio, obtenerPosicionSocio } from '../utils/comprobantesSocioUtils.js';
+import {
+  resolverMonedaSocio,
+  resolverMonedaTasa,
+  resolverSubtotalSocio,
+  resolverTasaSocio,
+  resolverTipoComprobante
+} from '../utils/comprobantesTasasUtils.js';
 import { formatearFechaLatina, obtenerRangoMesActualCaracas } from '../utils/comprobantesFechaUtils.js';
 
 function numero(valor, fallback = 0) {
@@ -53,6 +65,7 @@ export function createComprobantesReporteState() {
     reporteHastaHash: '',
     reporteOrden: 'fecha_asc',
     reporteItemsBase: [],
+    reporteCatalogoTasasListo: 0,
     reporteSaldoAnterior: 0,
     reporteCargando: false,
     reporteSolicitudActual: 0,
@@ -76,7 +89,12 @@ export function createComprobantesReporteState() {
     },
 
     get reporteMovimientoTotal() {
-      return calcularMovimientoFiltradoTotal(this.reporteItems, this.reporteSocio);
+      // Suma directa de los subtotales de las filas listadas. No se recalcula
+      // ningún importe ni se divide el monto del recibo entre la tasa.
+      return this.reporteItems.reduce(
+        (sum, item) => sum + this.reporteMovimientoItem(item),
+        0
+      );
     },
 
     get reporteIndicesRango() {
@@ -111,7 +129,7 @@ export function createComprobantesReporteState() {
         : items.slice(0, inicio);
 
       return base + anteriores.reduce(
-        (sum, item) => sum + obtenerMovimientoSocio(item, this.reporteSocio),
+        (sum, item) => sum + this.reporteMovimientoItem(item),
         0
       );
     },
@@ -141,12 +159,12 @@ export function createComprobantesReporteState() {
       const fin = (this.reportePaginaSegura - 1) * this.reporteItemsPorPagina;
       return this.reporteItems
         .slice(0, fin)
-        .reduce((sum, item) => sum + obtenerMovimientoSocio(item, this.reporteSocio), 0);
+        .reduce((sum, item) => sum + this.reporteMovimientoItem(item), 0);
     },
 
     get reporteMovimientoPagina() {
       return this.reporteItemsPagina
-        .reduce((sum, item) => sum + obtenerMovimientoSocio(item, this.reporteSocio), 0);
+        .reduce((sum, item) => sum + this.reporteMovimientoItem(item), 0);
     },
 
     get reporteSaldoAnteriorPagina() {
@@ -225,19 +243,32 @@ export function createComprobantesReporteState() {
       this.reporteItemsBase = [];
 
       try {
+        // El catálogo comercial se carga en paralelo. Es la fuente de la tasa
+        // oficial (compra/venta) que pinta la cartelera; si falla, la columna
+        // TASA cae a tasa_1/tasa_2 sin bloquear el reporte.
+        const catalogoPromesa = obtenerCatalogoTasasComerciales().catch(() => ({}));
+
         const items = await cargarComprobantesFiltrados({
           socio,
           fechaInicio: this.reporteFechaInicio,
           fechaFin: this.reporteFechaFin,
           orden: this.reporteOrden === 'fecha_desc' ? 'fecha_desc' : 'fecha_asc'
         }, {
-          maximo: Number(this.capMaximoDOM) || 500,
-          loteActivo: this.loteActivo
+          // Se consulta sin el filtro de socio del backend y se resuelve en el
+          // cliente para incluir ambos lados del comprobante (abonos 'A').
+          maximo: 2000,
+          loteActivo: this.loteActivo,
+          filtroSocioEnApi: false
         });
 
+        await catalogoPromesa;
         if (token !== this.reporteSolicitudActual) return;
+        this.reporteCatalogoTasasListo += 1;
 
-        this.reporteItemsBase = Array.isArray(items) ? items : [];
+        this.reporteItemsBase = (Array.isArray(items) ? items : [])
+          // Filtro explícito por ambos lados: un abono 'A' puede tener al socio
+          // auditado como socio_1 o como socio_2 y nunca debe quedar fuera.
+          .filter(item => coincideSocioEstricto(item, socio));
         this.normalizarRangoHashReporte();
         this.reporteSaldoAnterior = obtenerSaldoAnteriorSocio(this.directorio, socio);
         this.reportePaginaActual = Math.min(
@@ -289,7 +320,9 @@ export function createComprobantesReporteState() {
     },
 
     reporteMovimientoItem(item) {
-      return obtenerMovimientoSocio(item, this.reporteSocio);
+      // Subtotal ya computado por el Core (m1_socio/m2_socio + polaridad).
+      // No se divide el monto del recibo entre la tasa ni se recalculan spreads.
+      return resolverSubtotalSocio(item, this.reportePosicionItem(item));
     },
 
     reporteMontoItem(item) {
@@ -313,23 +346,36 @@ export function createComprobantesReporteState() {
     },
 
     reporteTasaItem(item) {
+      // La tasa oficial de la cartelera (compra para D, venta para P, 1.00 para
+      // A) manda. Se lee de un catálogo ya computado, no se recalcula aquí.
+      // Si el lote no está en el catálogo, se usa la tasa del lado del socio.
+      void this.reporteCatalogoTasasListo;
       const posicion = this.reportePosicionItem(item);
-      const tasa = posicion === 2
-        ? numero(item?.tasa_2, 1)
-        : numero(item?.tasa_1, 1);
-      return tasa > 0 ? tasa : 1;
+      const oficial = resolverTasaComercialItem(
+        item,
+        posicion,
+        catalogoTasasComercialActual()
+      );
+      return (oficial !== null && oficial > 0)
+        ? oficial
+        : resolverTasaSocio(item, posicion);
+    },
+
+    /**
+     * Divisa con la que se cotiza la tasa (la del comprobante). Para NELSY en
+     * ARS permite imprimir 1,664 / 1,600 sin truncar a 1,599.
+     */
+    reporteMonedaTasaItem(item) {
+      return resolverMonedaTasa(item) || this.reporteMoneda;
     },
 
     reporteMonedaItem(item) {
-      const posicion = this.reportePosicionItem(item);
-      const moneda = posicion === 2
-        ? (item?.moneda_socio_2 || item?.moneda)
-        : (item?.moneda_socio_1 || item?.moneda);
-      return String(moneda || this.reporteMoneda).toUpperCase();
+      return resolverMonedaSocio(item, this.reportePosicionItem(item)) || this.reporteMoneda;
     },
 
     reporteTipoItem(item) {
-      return String(item?.tipo_op || item?.tipo_manual || 'D').split('-')[0].toUpperCase();
+      // Exactamente el mismo tipo resuelto que pinta la tarjeta.
+      return resolverTipoComprobante(item);
     },
 
     reporteHashItem(item) {

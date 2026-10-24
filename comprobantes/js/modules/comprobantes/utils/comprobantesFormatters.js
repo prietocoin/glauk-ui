@@ -3,14 +3,34 @@
  * @description Funciones puras atómicas para formateo visual e insignias de comprobantes.
  */
 
+import {
+  formatearTasaComercial,
+  resolverTasaSocio,
+  resolverTipoComprobante
+} from './comprobantesTasasUtils.js';
+
+export {
+  formatearTasaComercial,
+  resolverTasaSocio,
+  resolverTipoComprobante,
+  resolverMonedaTasa,
+  resolverMonedaSocio,
+  resolverSubtotalSocio,
+  normalizarTasaComercial
+} from './comprobantesTasasUtils.js';
+
 export function formatMonto(val) {
   const num = parseFloat(val) || 0;
   return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-export function formatTasa(val) {
-  const num = parseFloat(val) || 0;
-  return num > 99.99 ? Math.trunc(num).toLocaleString('en-US') : num.toFixed(2);
+/**
+ * Formatea una tasa sin truncarla. En magnitud de cartelera, ARS/CLP/COP/PYG
+ * se publican enteras (1,600); el resto (y las paridades pequeñas) conserva
+ * dos decimales comerciales.
+ */
+export function formatTasa(val, moneda = '', tipo = '') {
+  return formatearTasaComercial(val, moneda, tipo);
 }
 
 export function obtenerME1(item) {
@@ -28,12 +48,11 @@ export function obtenerME2(item) {
 }
 
 export function obtenerTasaSocioCalculada(item, numSocio) {
-  if (!item) return 1.0;
-  return numSocio === 1 ? (item.tasa_1 || 1.0) : (item.tasa_2 || 1.0);
+  return resolverTasaSocio(item, numSocio);
 }
 
 export function claseInsignia(tipoOp) {
-  const t = String(tipoOp || 'D').toUpperCase().trim();
+  const t = resolverTipoComprobante({ tipo_manual: tipoOp });
   if (t === 'D') return 'bg-emerald-950 text-emerald-300 border-emerald-500/40';
   if (t === 'P') return 'bg-rose-950 text-rose-300 border-rose-500/40';
   if (t === 'A') return 'bg-cyan-950 text-cyan-300 border-cyan-500/40';

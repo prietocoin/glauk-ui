@@ -28,8 +28,8 @@ export function obtenerMovimientoSocio(item = {}, socioTarget = '') {
 
   const posicion = obtenerPosicionSocio(item, target);
   const valor = posicion === 2
-    ? parseFloat(item.m2_socio ?? item.monto_2 ?? item.monto ?? 0) || 0
-    : parseFloat(item.m1_socio ?? item.monto_1 ?? item.monto ?? 0) || 0;
+    ? parseFloat(item.m2_socio ?? item.monto_2 ?? item.monto2 ?? item.me2 ?? item.monto ?? 0) || 0
+    : parseFloat(item.m1_socio ?? item.monto_1 ?? item.monto1 ?? item.me1 ?? item.monto ?? 0) || 0;
   const polaridad = posicion === 2
     ? (item.polaridad_2 || item.grupo_2?.polaridad || '-')
     : (item.polaridad_1 || item.grupo_1?.polaridad || '+');

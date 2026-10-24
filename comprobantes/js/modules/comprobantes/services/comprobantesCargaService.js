@@ -94,13 +94,18 @@ export async function cargarComprobantesFiltrados(params = {}, opciones = {}) {
   const orden = params.orden || 'fecha_desc';
   const { desdeHash = '', hastaHash = '' } = params;
   const paramsBase = { ...params, socio };
+  // El reporte de estado de cuenta necesita ver ambos lados del comprobante
+  // (socio_1 y socio_2) para no omitir abonos. En ese caso el filtro de socio
+  // se resuelve 100% en el cliente con `filtrarPorSocioEstricto`.
+  const filtroSocioEnApi = opciones.filtroSocioEnApi !== false;
+  const paramsConsulta = filtroSocioEnApi ? paramsBase : { ...paramsBase, socio: '' };
 
-  const rawPrincipal = await fetchComprobantesHasta(paramsBase, maximo);
+  const rawPrincipal = await fetchComprobantesHasta(paramsConsulta, maximo);
   let resultado = mapearFiltrarYOrdenar(
     rawPrincipal, socio, loteActivo, orden, maximo, desdeHash, hastaHash
   );
 
-  if (esFiltroSocioActivo(socio) && resultado.length === 0) {
+  if (filtroSocioEnApi && esFiltroSocioActivo(socio) && resultado.length === 0) {
     const topeRecuperacion = Math.max(maximo, MAXIMO_RECUPERACION);
     const rawRespaldo = await fetchComprobantesHasta(
       { ...paramsBase, socio: '' },

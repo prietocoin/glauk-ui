@@ -6,8 +6,14 @@
 
 import {
   formatMonto, formatTasa, obtenerME1, obtenerME2,
-  obtenerTasaSocioCalculada, claseInsignia, formatDiaHora
+  obtenerTasaSocioCalculada, claseInsignia, formatDiaHora,
+  resolverTipoComprobante, resolverTasaSocio
 } from '../utils/comprobantesFormatters.js';
+import {
+  catalogoTasasComercialActual,
+  obtenerCatalogoTasasComerciales,
+  resolverTasaComercialItem
+} from '../services/comprobantesTasasComercialesService.js';
 
 import { apiUrl } from '../../../../../shared/js/api-base.js';
 import { notify } from '../../../../../shared/js/toast.js';
@@ -60,6 +66,7 @@ export function comprobantesState() {
     modalAbierto: false,
     itemEdicion: null,
     loteActivo: 'T070',
+    catalogoTasasListo: 0,
 
     // BottomSheet de filtros y detalle táctil de tarjeta.
     filtrosSheetAbierto: false,
@@ -540,6 +547,33 @@ export function comprobantesState() {
       });
     },
 
+    /**
+     * Descarga el catálogo comercial una sola vez. Mientras llega, las tarjetas
+     * siguen mostrando tasa_1/tasa_2; al incrementar el contador, Alpine vuelve
+     * a evaluar las tasas y pinta la compra/venta oficial de la cartelera.
+     */
+    async cargarCatalogoTasas() {
+      try {
+        await obtenerCatalogoTasasComerciales();
+      } catch (err) {
+        console.warn('[comprobantesState ⚠️ Catálogo de tasas no disponible]:', err?.message || err);
+      }
+      this.catalogoTasasListo += 1;
+    },
+
+    resolverTasaComprobante(item, posicion = 1) {
+      // Dependencia reactiva: al cargar el catálogo se recalcula la tarjeta.
+      void this.catalogoTasasListo;
+      const oficial = resolverTasaComercialItem(
+        item,
+        posicion,
+        catalogoTasasComercialActual()
+      );
+      return (oficial !== null && oficial > 0)
+        ? oficial
+        : resolverTasaSocio(item, posicion);
+    },
+
     async enviarReporteViaEvolution(socio = '') {
       const documento = document.getElementById('reporte-html-documento');
       if (!documento) {
@@ -616,7 +650,8 @@ export function comprobantesState() {
       }
     },
 
-    formatMonto, formatTasa, obtenerME1, obtenerME2, obtenerTasaSocioCalculada, claseInsignia, formatDiaHora
+    formatMonto, formatTasa, obtenerME1, obtenerME2, obtenerTasaSocioCalculada, claseInsignia, formatDiaHora,
+    resolverTipoComprobante
   };
 
   Object.assign(state, crearAccionesModal(state));
