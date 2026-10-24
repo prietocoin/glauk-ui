@@ -11,15 +11,15 @@
   <meta name="theme-color" content="#030611">
 
   <link rel="icon" type="image/png" href="./logo-fundablock.png">
-  <link rel="stylesheet" href="/shared/vendor/glauk2/tailwind.css?v=20261024_09">
-  <link rel="stylesheet" href="/shared/css/mobile.css?v=20261024_09">
+  <link rel="stylesheet" href="/shared/vendor/glauk2/tailwind.css?v=20261024_10">
+  <link rel="stylesheet" href="/shared/css/mobile.css?v=20261024_10">
 
   <!-- CLIENTE MODULAR Y ALPINE.JS -->
-  <script src="../config.js?v=20261024_09"></script>
-  <script type="module" src="./js/appBootstrap.js?v=20261024_09"></script>
-  <script type="module" src="./js/pwa.js?v=20261024_09"></script>
-  <script src="/shared/vendor/glauk2/alpine.min.js?v=20261024_09" defer></script>
-  <script src="/shared/vendor/html2canvas.min.js?v=20261024_09"></script>
+  <script src="../config.js?v=20261024_10"></script>
+  <script type="module" src="./js/appBootstrap.js?v=20261024_10"></script>
+  <script type="module" src="./js/pwa.js?v=20261024_10"></script>
+  <script src="/shared/vendor/glauk2/alpine.min.js?v=20261024_10" defer></script>
+  <script src="/shared/vendor/html2canvas.min.js?v=20261024_10"></script>
 
   <style>
     [x-cloak] { display: none !important; }
@@ -459,7 +459,7 @@
   <!-- BUCLE VINCULADO STRICTAMENTE A ITEMS (2X VALIDADOS) -->
   <template x-for="(item, index) in items" :key="(item.hash_largo || item.id || item.referencia || 'item-') + index">
 
-    <article class="glauk-card glauk-card-horizontal flex flex-row w-full max-w-[650px] rounded-[14px] bg-[#0b1120] border border-slate-800"
+    <article class="glauk-card glauk-card-horizontal glauk-card--strip flex flex-col w-full max-w-[650px] rounded-[14px] bg-[#0b1120] border border-slate-800 overflow-hidden"
              x-data="{
                get s2Visible() {
                  const s = item.socio_2 || item.nombre_socio_2 || '';
@@ -510,7 +510,29 @@
              role="button"
              :aria-label="'Abrir detalle del comprobante ' + (item.hash_corto || item.hash_largo || '')">
 
-      <div class="glauk-card-media min-w-[140px]">
+      <!-- CINTILLO SUPERIOR: KPIs del comprobante a todo el ancho -->
+      <header class="glauk-card-strip">
+        <div class="glauk-card-strip__meta">
+          <span x-text="item.fecha_fmt || 'S/F'"></span>
+          <span class="glauk-card-strip__sep" aria-hidden="true">•</span>
+          <span x-text="item.hash_corto || 'HASH'"></span>
+          <span class="glauk-card-strip__sep" aria-hidden="true">•</span>
+          <span x-text="item.lote_tasa_asignado || item.lote || 'T-ND'"></span>
+          <span class="glauk-card-strip__sep" aria-hidden="true">•</span>
+          <span class="glauk-card-strip__tipo"
+                :class="'is-tipo-' + resolverTipoComprobante(item).toLowerCase()"
+                x-text="resolverTipoComprobante(item)"></span>
+        </div>
+        <div class="glauk-card-strip__flags">
+          <span x-show="esComprobante2x(item)" class="glauk-mini-badge is-x2">⚡ x2</span>
+          <span class="glauk-mini-badge"
+                :class="item.procesado_ia ? 'is-ia-ok' : 'is-ia-bad'"
+                x-text="item.procesado_ia ? 'IA ✓' : 'IA ✕'"></span>
+        </div>
+      </header>
+
+      <div class="glauk-card-body">
+        <div class="glauk-card-media">
         <span class="glauk-card-media-label">RECIBO</span>
         <template x-if="urlRecibo(item)">
           <img :src="urlRecibo(item)"
@@ -555,26 +577,9 @@
         </div>
         <div class="glauk-card-ref" x-text="'REF: ' + (item.referencia || '-')"></div>
 
-        <div class="glauk-card-badges-line flex-nowrap items-center gap-1.5">
-          <span class="glauk-mini-badge" x-text="item.fecha_fmt || 'S/F'"></span>
-          <span class="glauk-mini-badge" x-text="item.hash_corto || 'HASH'"></span>
-          <span class="glauk-mini-badge" x-text="item.lote_tasa_asignado || item.lote || 'T-ND'"></span>
-          <span class="glauk-mini-badge"
-                :class="'is-tipo-' + resolverTipoComprobante(item).toLowerCase()"
-                x-text="resolverTipoComprobante(item)"></span>
-          <span x-show="esComprobante2x(item)" class="glauk-mini-badge is-x2">⚡ x2</span>
-          <span class="glauk-mini-badge"
-                :class="item.procesado_ia ? 'is-ia-ok' : 'is-ia-bad'"
-                x-text="item.procesado_ia ? 'IA ✓' : 'IA ✕'"></span>
-        </div>
-
         <div class="glauk-socios-stack">
           <div class="glauk-socio-row is-socio1">
-            <span class="glauk-socio-shield" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true">
-                <path d="M12 2.2 20 5.4v6.2c0 4.8-3.3 8.7-8 10.2-4.7-1.5-8-5.4-8-10.2V5.4l8-3.2Zm0 2.1L6 6.7v4.9c0 3.8 2.5 6.9 6 8.1 3.5-1.2 6-4.3 6-8.1V6.7l-6-2.4Z"/>
-              </svg>
-            </span>
+            <span class="glauk-socio-dot" aria-hidden="true"></span>
             <span class="glauk-socio-name" x-text="s1Nombre"></span>
             <span class="glauk-socio-rate" x-text="'T1 ' + formatTasa(resolverTasaComprobante(item, 1), item.moneda, resolverTipoComprobante(item))"></span>
             <strong class="glauk-socio-subtotal"
@@ -583,11 +588,7 @@
           </div>
 
           <div class="glauk-socio-row is-socio2" x-show="s2Visible">
-            <span class="glauk-socio-shield" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true">
-                <path d="M12 2.2 20 5.4v6.2c0 4.8-3.3 8.7-8 10.2-4.7-1.5-8-5.4-8-10.2V5.4l8-3.2Zm0 2.1L6 6.7v4.9c0 3.8 2.5 6.9 6 8.1 3.5-1.2 6-4.3 6-8.1V6.7l-6-2.4Z"/>
-              </svg>
-            </span>
+            <span class="glauk-socio-dot" aria-hidden="true"></span>
             <span class="glauk-socio-name" x-text="s2Nombre"></span>
             <span class="glauk-socio-rate" x-text="'T2 ' + formatTasa(resolverTasaComprobante(item, 2), item.moneda, resolverTipoComprobante(item))"></span>
             <strong class="glauk-socio-subtotal"
@@ -595,6 +596,7 @@
                     x-text="(s2Polaridad === '-' ? '-' : '+') + formatMonto(Math.abs(parseFloat(obtenerME2(item) || 0))) + ' ' + s2Moneda"></strong>
           </div>
         </div>
+      </div>
       </div>
 
     </article>
@@ -1518,6 +1520,6 @@
        @click.stop>
 </div>
 
-<script type="module" src="/shared/js/mobile-nav.js?v=20261024_09"></script>
+<script type="module" src="/shared/js/mobile-nav.js?v=20261024_10"></script>
 </body>
 </html>

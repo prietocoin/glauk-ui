@@ -972,11 +972,11 @@ body.glauk-sheet-open .glauk-main {
 }
 
 /* --------------------------------------------------------------------------
-   Tarjeta horizontal de comprobantes (rediseño minimalista)
+   Tarjeta de comprobantes: cintillo superior + cuerpo horizontal
    -------------------------------------------------------------------------- */
 .glauk-card.glauk-card-horizontal {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: stretch;
   gap: 0;
   width: 100%;
@@ -989,10 +989,82 @@ body.glauk-sheet-open .glauk-main {
   background: #0b1120;
 }
 
+/* Cintillo de KPIs a todo el ancho: fecha, hash, lote, tipo, x2 e IA. */
+.glauk-card-strip {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  padding: 6px 12px;
+  border-bottom: 1px solid rgba(30, 41, 59, .8);
+  background: #060b14;
+  font-size: 10px;
+}
+
+.glauk-card-strip__meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  overflow: hidden;
+  color: #94a3b8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.glauk-card-strip__meta > span {
+  flex: 0 0 auto;
+}
+
+.glauk-card-strip__sep {
+  color: #475569;
+}
+
+.glauk-card-strip__tipo {
+  color: #e2e8f0;
+  font-weight: 900;
+}
+
+.glauk-card-strip__tipo.is-tipo-d {
+  color: #34d399;
+}
+
+.glauk-card-strip__tipo.is-tipo-p {
+  color: #fda4af;
+}
+
+.glauk-card-strip__tipo.is-tipo-a {
+  color: #67e8f9;
+}
+
+.glauk-card-strip__flags {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 4px;
+}
+
+.glauk-card-strip .glauk-mini-badge {
+  padding: 1px 5px;
+  font-size: 9px;
+}
+
+.glauk-card-body {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+}
+
 .glauk-card-media {
   position: relative;
-  flex: 0 0 29%;
-  min-width: 140px;
+  flex: 0 0 28%;
+  min-width: 95px;
   align-self: stretch;
   overflow: hidden;
   background: #020617;
@@ -1053,8 +1125,8 @@ body.glauk-sheet-open .glauk-main {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 10px 12px;
+  gap: 5px;
+  padding: 8px 10px;
   overflow: hidden;
 }
 
@@ -1076,11 +1148,17 @@ body.glauk-sheet-open .glauk-main {
 
 .glauk-card-amount-main > strong {
   color: #34d399;
-  font-size: 32px;
-  font-weight: 900;
+  font-size: 20px;
+  font-weight: 800;
   line-height: 1;
-  letter-spacing: -.04em;
+  letter-spacing: -.03em;
   font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 640px) {
+  .glauk-card-amount-main > strong {
+    font-size: 24px;
+  }
 }
 
 .glauk-card-amount-main > small {
@@ -1097,18 +1175,26 @@ body.glauk-sheet-open .glauk-main {
 }
 
 .glauk-card-action-btn {
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border: 1px solid rgba(148, 163, 184, .18);
-  border-radius: 8px;
+  border-radius: 7px;
   background: rgba(148, 163, 184, .08);
   color: #cbd5e1;
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1;
   transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+
+@media (min-width: 640px) {
+  .glauk-card-action-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
+  }
 }
 
 .glauk-card-action-btn:hover {
@@ -1227,11 +1313,11 @@ body.glauk-sheet-open .glauk-main {
 .glauk-socio-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   min-width: 0;
-  padding: 4px 7px;
+  padding: 3px 6px;
   border-left: 3px solid transparent;
-  border-radius: 0 8px 8px 0;
+  border-radius: 0 7px 7px 0;
   background: rgba(15, 23, 42, .55);
 }
 
@@ -1243,25 +1329,16 @@ body.glauk-sheet-open .glauk-main {
   border-left-color: #22d3ee;
 }
 
-.glauk-socio-shield {
-  flex: 0 0 14px;
-  width: 14px;
-  height: 14px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+.glauk-socio-dot {
+  flex: 0 0 6px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f59e0b;
 }
 
-.glauk-socio-shield svg {
-  display: block;
-}
-
-.glauk-socio-row.is-socio1 .glauk-socio-shield {
-  color: #fbbf24;
-}
-
-.glauk-socio-row.is-socio2 .glauk-socio-shield {
-  color: #22d3ee;
+.glauk-socio-row.is-socio2 .glauk-socio-dot {
+  background: #22d3ee;
 }
 
 .glauk-socio-name {
@@ -1269,8 +1346,8 @@ body.glauk-sheet-open .glauk-main {
   min-width: 0;
   overflow: hidden;
   color: #f1f5f9;
-  font-size: 13px;
-  font-weight: 800;
+  font-size: 11px;
+  font-weight: 700;
   letter-spacing: .02em;
   text-overflow: ellipsis;
   text-transform: uppercase;
@@ -1279,7 +1356,7 @@ body.glauk-sheet-open .glauk-main {
 
 .glauk-socio-rate {
   flex: 0 0 auto;
-  color: #94a3b8;
+  color: #64748b;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 9px;
   font-weight: 700;
@@ -1289,8 +1366,8 @@ body.glauk-sheet-open .glauk-main {
 .glauk-socio-subtotal {
   flex: 0 0 auto;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 15px;
-  font-weight: 900;
+  font-size: 12px;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -1308,28 +1385,38 @@ body.glauk-sheet-open .glauk-main {
     border-radius: 12px;
   }
 
+  .glauk-card-strip {
+    gap: 6px;
+    padding: 5px 9px;
+  }
+
+  .glauk-card-strip__meta {
+    gap: 4px;
+    font-size: 9.5px;
+  }
+
   .glauk-card-media {
-    flex-basis: 31%;
-    min-width: 104px;
+    flex-basis: 29%;
+    min-width: 96px;
   }
 
   .glauk-card-content {
-    gap: 5px;
-    padding: 8px 9px;
+    gap: 4px;
+    padding: 7px 8px;
   }
 
   .glauk-card-amount-main > strong {
-    font-size: 24px;
+    font-size: 18px;
   }
 
   .glauk-card-amount-main > small {
-    font-size: 10px;
+    font-size: 9px;
   }
 
   .glauk-card-action-btn {
-    width: 27px;
-    height: 27px;
-    font-size: 12px;
+    width: 26px;
+    height: 26px;
+    font-size: 11px;
   }
 
   .glauk-card-bank-line {
@@ -1340,25 +1427,21 @@ body.glauk-sheet-open .glauk-main {
     font-size: 8px;
   }
 
-  .glauk-card-badges-line {
+  .glauk-socio-row {
     gap: 4px;
-  }
-
-  .glauk-card-badges-line .glauk-mini-badge {
-    padding: 2px 5px;
-    font-size: 8px;
+    padding: 3px 5px;
   }
 
   .glauk-socio-name {
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .glauk-socio-rate {
-    font-size: 8px;
+    font-size: 8.5px;
   }
 
   .glauk-socio-subtotal {
-    font-size: 13px;
+    font-size: 11px;
   }
 }
 
