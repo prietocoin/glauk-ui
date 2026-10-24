@@ -16,6 +16,10 @@ import {
   obtenerCatalogoTasasComerciales,
   resolverTasaComercialItem
 } from '../services/comprobantesTasasComercialesService.js';
+import {
+  construirCatalogoSocios,
+  establecerCatalogoSocios
+} from '../services/comprobantesNaturalezaService.js';
 import { normalizarSocio, obtenerPosicionSocio } from '../utils/comprobantesSocioUtils.js';
 import {
   resolverMonedaSocio,
@@ -240,6 +244,11 @@ export function createComprobantesReporteState() {
       this.reporteItemsBase = [];
 
       try {
+        // La naturaleza se resuelve con el catálogo del directorio antes de
+        // mapear los comprobantes; así las tarjetas y el reporte comparten la
+        // misma jerarquía (moneda natural -> IRIS -> caption A -> tabla).
+        establecerCatalogoSocios(construirCatalogoSocios(this.directorio));
+
         // El catálogo comercial se carga en paralelo. Es la fuente de la tasa
         // oficial (compra/venta) que pinta la cartelera; si falla, la columna
         // TASA cae a tasa_1/tasa_2 sin bloquear el reporte.

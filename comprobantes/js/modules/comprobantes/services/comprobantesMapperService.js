@@ -5,9 +5,9 @@
 
 import { extraerNombreSocio } from '../utils/comprobantesSocioUtils.js';
 import {
-  normalizarTasaComercial,
-  resolverTipoComprobante
+  normalizarTasaComercial
 } from '../utils/comprobantesTasasUtils.js';
+import { resolverNaturalezaComprobante } from './comprobantesNaturalezaService.js';
 
 function fechaDesdeItem(c, item) {
   const raw = c.fecha_hora_comprobante || item.fecha_hora_comprobante ||
@@ -136,15 +136,24 @@ export function prepararEdicionComprobante(item = {}, loteActivo = 'T070') {
   const tieneSocio2Valido = !['', 'GENERAL', 'NO DEFINIDO', 'S/D', 'N/A', 'NULL', 'UNDEFINED', '-'].includes(s2Upper);
   const esX2 = (item.es_x2 !== undefined) ? Boolean(item.es_x2) : tieneSocio2Valido;
 
-  // El tipo corregido en la tarjeta (tipo_manual) manda sobre cualquier valor
-  // heredado del extractor. Se resuelve una sola vez para tarjeta y reporte.
-  const tipoResuelto = resolverTipoComprobante({
+  // Naturaleza centralizada: moneda natural -> IRIS -> caption A -> tabla.
+  // La tarjeta, el reporte y los totales consumen este mismo resultado.
+  const tipoResuelto = resolverNaturalezaComprobante({
+    socio_1: socio1Real,
+    moneda: monedaFinal,
+    caption: c.caption ?? item.caption ?? '',
+    tipo: c.tipo || item.tipo,
     tipo_manual: c.tipo_manual || item.tipo_manual,
     tipo_op: c.tipo_op || item.tipo_op,
     tipo_op1: c.tipo_op1 || item.tipo_op1,
-    t1_tipo: c.t1_tipo || item.t1_tipo,
-    tipo: c.tipo || item.tipo
+    t1_tipo: c.t1_tipo || item.t1_tipo
   });
+
+  // Un abono es siempre positivo para el socio 1 y negativo para el socio 2.
+  // Así la tarjeta, el reporte y los KPIs conservan el signo de la naturaleza
+  // resuelta, incluso si la proyección del backend venía con otro tipo.
+  const polaridad1Final = tipoResuelto === 'A' ? '+' : pol1;
+  const polaridad2Final = tipoResuelto === 'A' ? '-' : pol2;
 
   return {
     ...item,
@@ -182,7 +191,7 @@ export function prepararEdicionComprobante(item = {}, loteActivo = 'T070') {
     m1_socio: calcM1,
     monto_1: calcM1,
     me1: calcM1,
-    polaridad_1: pol1,
+    polaridad_1: polaridad1Final,
 
     // SOCIO 2
     nombre_socio_2: socio2Real,
@@ -195,7 +204,7 @@ export function prepararEdicionComprobante(item = {}, loteActivo = 'T070') {
     m2_socio: calcM2,
     monto_2: calcM2,
     me2: calcM2,
-    polaridad_2: pol2,
+    polaridad_2: polaridad2Final,
 
     // REGLAS GENERALES Y LOTES
     es_x2: esX2,
@@ -212,7 +221,7 @@ export function prepararEdicionComprobante(item = {}, loteActivo = 'T070') {
       grupo: socio1Real,
       rol: rol1,
       tasa: t1,
-      polaridad: pol1,
+      polaridad: polaridad1Final,
       monto: calcM1,
       moneda_base: c.moneda_base_socio1 || c.moneda_socio_1 || item.moneda_base_socio1 || item.moneda_socio_1 || 'USDT',
       me: calcM1
@@ -221,7 +230,7 @@ export function prepararEdicionComprobante(item = {}, loteActivo = 'T070') {
       grupo: socio2Real,
       rol: rol2,
       tasa: t2,
-      polaridad: pol2,
+      polaridad: polaridad2Final,
       monto: calcM2,
       moneda_base: c.moneda_base_socio2 || c.moneda_socio_2 || item.moneda_base_socio2 || item.moneda_socio_2 || 'USDT',
       me: calcM2

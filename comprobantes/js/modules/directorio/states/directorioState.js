@@ -15,6 +15,10 @@ import {
 } from '../services/directorioAccionesService.js';
 import { LISTA_MONEDAS_ACTIVAS, obtenerInfoMonedasMaestra } from '../../../shared/constants/listaMonedasActivas.js';
 import { notificarSociosActualizados } from '../../../../../shared/js/sync.js';
+import {
+  construirCatalogoSocios,
+  establecerCatalogoSocios
+} from '../../comprobantes/services/comprobantesNaturalezaService.js';
 
 export function createDirectorioState() {
   return {
@@ -37,6 +41,9 @@ export function createDirectorioState() {
 
     async cargarDirectorio() {
       this.directorio = await obtenerDirectorioNormalizado() || [];
+      // El catálogo de naturaleza se reconstruye con cada lectura del
+      // directorio: es la fuente de moneda_natural y tabla_monedas.
+      establecerCatalogoSocios(construirCatalogoSocios(this.directorio));
     },
     async toggleEstadoSocio(socio) {
       await alternarEstadoSocioWA(socio);

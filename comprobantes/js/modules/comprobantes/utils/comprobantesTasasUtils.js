@@ -5,14 +5,14 @@
  * funciones: el reporte es un espejo pasivo y nunca recalcula importes.
  */
 
+import { resolverNaturalezaComprobante } from '../services/comprobantesNaturalezaService.js';
+
 // Divisas cuya cartelera comercial se publica sin decimales. En estas monedas
 // la tasa se redondea comercialmente (1.599,99 -> 1.600) y jamás se trunca.
 const DIVISAS_TASA_SIN_DECIMALES = new Set(['ARS', 'CLP', 'COP', 'PYG']);
 
 // Divisas que conservan sus decimales comerciales aunque la magnitud sea alta.
 const DIVISAS_TASA_CON_DECIMALES = new Set(['PEN', 'BRL', 'EUR', 'USD']);
-
-const TIPOS_VALIDOS = new Set(['D', 'P', 'A']);
 
 function numero(valor, fallback = 0) {
   if (typeof valor === 'number') return Number.isFinite(valor) ? valor : fallback;
@@ -101,14 +101,11 @@ export function resolverMonedaTasa(item = {}) {
 }
 
 /**
- * Tipo resuelto de la tarjeta. El tipo corregido manda sobre cualquier valor
- * heredado del extractor y se devuelve como una única letra D/P/A.
+ * Tipo resuelto por la jerarquía central de naturaleza.
+ * Se conserva el nombre histórico para no romper los consumidores existentes.
  */
 export function resolverTipoComprobante(item = {}) {
-  const bruto = item?.tipo_manual || item?.tipo_op || item?.tipo_op1
-    || item?.t1_tipo || item?.tipo || 'D';
-  const letra = String(bruto).trim().split('-')[0].toUpperCase();
-  return TIPOS_VALIDOS.has(letra) ? letra : 'D';
+  return resolverNaturalezaComprobante(item);
 }
 
 /**

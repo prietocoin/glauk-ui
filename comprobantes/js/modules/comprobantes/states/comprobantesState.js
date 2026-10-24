@@ -31,6 +31,10 @@ import {
 import { aplicarRangoHash } from '../services/comprobantesFilterService.js';
 import { crearAccionesModal } from '../services/comprobantesModalActions.js';
 import { prepararEdicionComprobante, obtenerInsigniaRol } from '../services/comprobantesMapperService.js';
+import {
+  construirCatalogoSocios,
+  establecerCatalogoSocios
+} from '../services/comprobantesNaturalezaService.js';
 import { capturarReporteEstadoCuenta } from '../services/comprobantesReporteService.js';
 import { obtenerSaldoAnteriorSocio, obtenerSujetoAuditado } from '../services/comprobantesSaldosService.js';
 import { obtenerRangoMesActualCaracas, formatearFechaLatina } from '../utils/comprobantesFechaUtils.js';
@@ -435,6 +439,7 @@ export function comprobantesState() {
     },
 
     async resetearYRefrescar() {
+      establecerCatalogoSocios(construirCatalogoSocios(this.directorio));
       const token = ++this.solicitudActual;
       this.items = [];
       this.todosLosItems = [];
@@ -496,6 +501,7 @@ export function comprobantesState() {
         return;
       }
 
+      establecerCatalogoSocios(construirCatalogoSocios(this.directorio));
       const token = this.solicitudActual;
       this.cargandoMas = true;
       try {
