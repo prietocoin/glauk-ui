@@ -11,15 +11,15 @@
   <meta name="theme-color" content="#030611">
 
   <link rel="icon" type="image/png" href="./logo-fundablock.png">
-  <link rel="stylesheet" href="/shared/vendor/glauk2/tailwind.css?v=20261024_06">
-  <link rel="stylesheet" href="/shared/css/mobile.css?v=20261024_06">
+  <link rel="stylesheet" href="/shared/vendor/glauk2/tailwind.css?v=20261024_07">
+  <link rel="stylesheet" href="/shared/css/mobile.css?v=20261024_07">
 
   <!-- CLIENTE MODULAR Y ALPINE.JS -->
-  <script src="../config.js?v=20261024_06"></script>
-  <script type="module" src="./js/appBootstrap.js?v=20261024_06"></script>
-  <script type="module" src="./js/pwa.js?v=20261024_06"></script>
-  <script src="/shared/vendor/glauk2/alpine.min.js?v=20261024_06" defer></script>
-  <script src="/shared/vendor/html2canvas.min.js?v=20261024_06"></script>
+  <script src="../config.js?v=20261024_07"></script>
+  <script type="module" src="./js/appBootstrap.js?v=20261024_07"></script>
+  <script type="module" src="./js/pwa.js?v=20261024_07"></script>
+  <script src="/shared/vendor/glauk2/alpine.min.js?v=20261024_07" defer></script>
+  <script src="/shared/vendor/html2canvas.min.js?v=20261024_07"></script>
 
   <style>
     [x-cloak] { display: none !important; }
@@ -1209,8 +1209,9 @@
     <!-- CABECERA FIJA -->
     <header class="glauk-modal__header">
       <div class="flex items-center gap-2 min-w-0">
-        <h3 id="glauk-reporte-title" class="shrink-0">📄 Estado de Cuenta</h3>
-        <span class="text-[10px] text-slate-400 font-mono truncate" x-text="reporteSocio || 'Sin socio'"></span>
+        <h3 id="glauk-reporte-title" class="shrink-0 font-black tracking-tight">Reporte de Estado de Cuenta</h3>
+        <span class="px-2 py-0.5 bg-purple-950/80 border border-purple-500/40 text-purple-300 rounded-lg text-[10px] font-bold font-mono truncate"
+              x-text="(reporteSocio || 'Sin socio') + ' · ' + reporteItems.length + ' ítems'"></span>
       </div>
       <button type="button" class="glauk-modal__close" @click="modalReporteAbierto = false" aria-label="Cerrar estado de cuenta">✕</button>
     </header>
@@ -1218,6 +1219,25 @@
     <!-- CUERPO SCROLLEABLE -->
     <div class="glauk-modal__content">
       <div class="glauk-modal__body">
+
+    <!-- BARRA DE MÉTRICAS: mismo componente visual que el dashboard -->
+    <div class="glauk-reporte-metricas">
+      <div class="bg-[#060c24] p-2.5 rounded-xl border border-amber-500/30 shadow-xl min-w-0">
+        <p class="text-[8px] font-extrabold text-amber-400 uppercase truncate">Saldo anterior</p>
+        <h3 class="text-xs md:text-base font-black text-amber-300 mt-0.5 truncate"
+            x-text="reporteFormatearMonto(reporteSaldoInicialRango) + ' ' + reporteMoneda"></h3>
+      </div>
+      <div class="bg-[#060c24] p-2.5 rounded-xl border border-blue-900/50 shadow-xl min-w-0">
+        <p class="text-[8px] font-extrabold text-emerald-400 uppercase truncate">Movimiento parcial</p>
+        <h3 class="text-xs md:text-base font-black text-emerald-400 mt-0.5 truncate"
+            x-text="(reporteMovimientoTotal < 0 ? '-' : '+') + reporteFormatearMonto(Math.abs(reporteMovimientoTotal)) + ' ' + reporteMoneda"></h3>
+      </div>
+      <div class="bg-[#010a14] p-2.5 rounded-xl border border-emerald-500/40 shadow-xl min-w-0">
+        <p class="text-[8px] font-extrabold text-emerald-400 uppercase truncate">Saldo final</p>
+        <h3 class="text-xs md:text-base font-black text-emerald-300 mt-0.5 truncate"
+            x-text="reporteFormatearMonto(reporteSaldoFinalRango) + ' ' + reporteMoneda"></h3>
+      </div>
+    </div>
 
     <!-- BARRA DE FILTROS DEL REPORTE -->
     <div class="flex flex-wrap items-center gap-1.5">
@@ -1262,8 +1282,8 @@
     </div>
 
     <!-- DOCUMENTO RENDERIZADO PARA CAPTURA DE IMAGEN -->
-    <div class="overflow-x-auto flex items-start bg-[#030611] rounded-xl p-4">
-      <div id="reporte-html-documento" class="bg-white text-slate-900 p-6 flex flex-col shrink-0" style="width:800px; max-width:800px; margin-left:auto; margin-right:auto">
+    <div class="glauk-reporte-scroll">
+      <div id="reporte-html-documento" class="bg-white text-slate-900 p-6 flex flex-col shrink-0 mx-auto" style="width:800px; max-width:800px">
         <div>
           <div class="border-b-2 border-slate-900 pb-3 mb-4 flex justify-between items-start gap-4">
             <div>
@@ -1454,6 +1474,6 @@
        @click.stop>
 </div>
 
-<script type="module" src="/shared/js/mobile-nav.js?v=20261024_06"></script>
+<script type="module" src="/shared/js/mobile-nav.js?v=20261024_07"></script>
 </body>
 </html>

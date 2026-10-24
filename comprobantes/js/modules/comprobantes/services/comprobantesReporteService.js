@@ -50,6 +50,13 @@ export async function capturarReporteEstadoCuenta(elemento, opciones = {}) {
     overflow: elemento.style.overflow
   };
 
+  // El lienzo vive dentro de un contenedor con scroll horizontal en móvil.
+  // Antes de rasterizar se vuelve al origen para que html2canvas no capture el
+  // documento desplazado, y se restaura la posición al terminar.
+  const contenedorScroll = elemento.closest('.glauk-reporte-scroll');
+  const scrollPrevio = contenedorScroll ? contenedorScroll.scrollLeft : 0;
+  if (contenedorScroll) contenedorScroll.scrollLeft = 0;
+
   // Desactiva header/footer fijos, handle, sombra del diálogo y velo del
   // backdrop mientras html2canvas rasteriza. Sin esta clase, el chrome oscuro
   // del modal se pinta sobre las filas inferiores del documento.
@@ -100,5 +107,6 @@ export async function capturarReporteEstadoCuenta(elemento, opciones = {}) {
   } finally {
     document.body.classList.remove(CLASE_CAPTURA);
     Object.assign(elemento.style, estilosPrevios);
+    if (contenedorScroll) contenedorScroll.scrollLeft = scrollPrevio;
   }
 }

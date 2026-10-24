@@ -6,8 +6,8 @@
 import { createRouterState } from './shared/states/routerState.js';
 import { createTasasState } from './modules/tasas/states/tasasState.js';
 import { createDirectorioState } from './modules/directorio/states/directorioState.js';
-import { comprobantesState } from './modules/comprobantes/states/comprobantesState.js?v=20261024_06';
-import { createComprobantesReporteState } from './modules/comprobantes/states/comprobantesReporteState.js?v=20261024_06';
+import { comprobantesState } from './modules/comprobantes/states/comprobantesState.js?v=20261024_07';
+import { createComprobantesReporteState } from './modules/comprobantes/states/comprobantesReporteState.js?v=20261024_07';
 import { escucharSociosActualizados } from '../../shared/js/sync.js';
 
 /**
