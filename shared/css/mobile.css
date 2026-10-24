@@ -971,6 +971,26 @@ body.glauk-sheet-open .glauk-main {
   border-color: rgba(34, 211, 238, .5);
 }
 
+/* Grilla de KPIs superiores: 2 columnas en móvil y 4 parejas en escritorio,
+   sin la tarjeta editable de Saldo Anterior. */
+.glauk-kpis-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+@media (min-width: 768px) {
+  .glauk-kpis-grid {
+    gap: 12px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .glauk-kpis-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
 /* --------------------------------------------------------------------------
    Tarjeta de comprobantes: cintillo superior + cuerpo horizontal
    -------------------------------------------------------------------------- */
@@ -1063,8 +1083,8 @@ body.glauk-sheet-open .glauk-main {
 
 .glauk-card-media {
   position: relative;
-  flex: 0 0 28%;
-  min-width: 95px;
+  flex: 0 0 23%;
+  min-width: 85px;
   align-self: stretch;
   overflow: hidden;
   background: #020617;
@@ -1396,8 +1416,8 @@ body.glauk-sheet-open .glauk-main {
   }
 
   .glauk-card-media {
-    flex-basis: 29%;
-    min-width: 96px;
+    flex-basis: 24%;
+    min-width: 85px;
   }
 
   .glauk-card-content {

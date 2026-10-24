@@ -11,15 +11,15 @@
   <meta name="theme-color" content="#030611">
 
   <link rel="icon" type="image/png" href="./logo-fundablock.png">
-  <link rel="stylesheet" href="/shared/vendor/glauk2/tailwind.css?v=20261024_10">
-  <link rel="stylesheet" href="/shared/css/mobile.css?v=20261024_10">
+  <link rel="stylesheet" href="/shared/vendor/glauk2/tailwind.css?v=20261024_11">
+  <link rel="stylesheet" href="/shared/css/mobile.css?v=20261024_11">
 
   <!-- CLIENTE MODULAR Y ALPINE.JS -->
-  <script src="../config.js?v=20261024_10"></script>
-  <script type="module" src="./js/appBootstrap.js?v=20261024_10"></script>
-  <script type="module" src="./js/pwa.js?v=20261024_10"></script>
-  <script src="/shared/vendor/glauk2/alpine.min.js?v=20261024_10" defer></script>
-  <script src="/shared/vendor/html2canvas.min.js?v=20261024_10"></script>
+  <script src="../config.js?v=20261024_11"></script>
+  <script type="module" src="./js/appBootstrap.js?v=20261024_11"></script>
+  <script type="module" src="./js/pwa.js?v=20261024_11"></script>
+  <script src="/shared/vendor/glauk2/alpine.min.js?v=20261024_11" defer></script>
+  <script src="/shared/vendor/html2canvas.min.js?v=20261024_11"></script>
 
   <style>
     [x-cloak] { display: none !important; }
@@ -296,8 +296,8 @@
   </div>
 </div>
 
-<!-- GRILLA DE KPIS SUPERIORES (5 Tarjetas de Resumen Contable) -->
-<div class="grid grid-cols-2 lg:grid-cols-5 gap-2 md:gap-3">
+<!-- GRILLA DE KPIS SUPERIORES (4 Tarjetas de Resumen Contable) -->
+<div class="glauk-kpis-grid">
 
  <!-- 1. Sujeto Auditado (Llamada explícita al servicio pasando la variable) -->
 <div class="col-span-2 sm:col-span-1 bg-[#060c24] p-2.5 md:p-3.5 rounded-xl md:rounded-2xl border border-blue-900/50 shadow-xl">
@@ -311,22 +311,13 @@
     <h3 class="text-xs md:text-base font-black text-pink-400 mt-0.5" x-text="(totalRegistros || (todosLosItems || []).length) + ' ítems'"></h3>
   </div>
 
-  <!-- 3. Saldo Anterior editable -->
-  <div class="bg-[#060c24] p-2.5 md:p-3.5 rounded-xl md:rounded-2xl border border-amber-500/30 shadow-xl flex items-center gap-1.5">
-    <div class="flex-1 min-w-0">
-      <p class="text-[8px] md:text-[9px] font-extrabold text-amber-400 uppercase truncate">SALDO ANTERIOR</p>
-      <input type="number" x-model="saldoAnterior" class="w-full bg-[#030611] border border-amber-500/40 rounded-lg px-1.5 py-0.5 text-xs md:text-sm font-bold text-amber-300 mt-0.5 outline-none">
-    </div>
-    <span class="text-[10px] font-bold text-amber-500 mt-3 shrink-0" x-text="(items[0]?.moneda_socio_1 || items[0]?.moneda || 'USDT').toUpperCase()"></span>
-  </div>
-
-  <!-- 4. Total Movimiento del Período -->
+  <!-- 3. Total Movimiento del Período -->
   <div class="bg-[#060c24] p-2.5 md:p-3.5 rounded-xl md:rounded-2xl border border-blue-900/50 shadow-xl col-span-1">
     <p class="text-[8px] md:text-[9px] font-extrabold text-emerald-400 uppercase" x-text="'MOVIMIENTO' + (hayDatosParciales ? ' (PARCIAL)' : '')">MOVIMIENTO</p>
     <h3 class="text-xs md:text-base font-black text-emerald-400 mt-0.5 truncate" x-text="formatMonto(movimientoFiltradoTotal) + ' ' + (items[0]?.moneda_socio_1 || items[0]?.moneda || 'USDT').toUpperCase()"></h3>
   </div>
 
-  <!-- 5. Saldo Actual Calculado -->
+  <!-- 4. Saldo Actual Calculado -->
   <div class="bg-[#010a14] p-2.5 md:p-3.5 rounded-xl md:rounded-2xl border border-emerald-500/40 shadow-xl col-span-2 sm:col-span-1">
     <p class="text-[8px] md:text-[9px] font-extrabold text-emerald-400 uppercase" x-text="'SALDO ACTUAL TOTAL' + (hayDatosParciales ? ' (PARCIAL)' : '')">SALDO ACTUAL TOTAL</p>
     <h3 class="text-xs md:text-base font-black text-emerald-300 mt-0.5 truncate" x-text="formatMonto(saldoActualTotal) + ' ' + (items[0]?.moneda_socio_1 || items[0]?.moneda || 'USDT').toUpperCase()"></h3>
@@ -1520,6 +1511,6 @@
        @click.stop>
 </div>
 
-<script type="module" src="/shared/js/mobile-nav.js?v=20261024_10"></script>
+<script type="module" src="/shared/js/mobile-nav.js?v=20261024_11"></script>
 </body>
 </html>
