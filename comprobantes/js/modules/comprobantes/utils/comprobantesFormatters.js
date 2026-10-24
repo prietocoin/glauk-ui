@@ -3,11 +3,13 @@
  * @description Funciones puras atómicas para formateo visual e insignias de comprobantes.
  */
 
+import { formatearMontoPlano } from './comprobantesNumerosUtils.js?v=20261024_06';
+
 import {
   formatearTasaComercial,
   resolverTasaSocio,
   resolverTipoComprobante
-} from './comprobantesTasasUtils.js';
+} from './comprobantesTasasUtils.js?v=20261024_06';
 
 export {
   formatearTasaComercial,
@@ -17,17 +19,18 @@ export {
   resolverMonedaSocio,
   resolverSubtotalSocio,
   normalizarTasaComercial
-} from './comprobantesTasasUtils.js';
+} from './comprobantesTasasUtils.js?v=20261024_06';
 
+/**
+ * Monto plano de la interfaz: 2 decimales truncados, sin comas de miles.
+ */
 export function formatMonto(val) {
-  const num = parseFloat(val) || 0;
-  return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return formatearMontoPlano(val);
 }
 
 /**
- * Formatea una tasa sin truncarla. En magnitud de cartelera, ARS/CLP/COP/PYG
- * se publican enteras (1,600); el resto (y las paridades pequeñas) conserva
- * dos decimales comerciales.
+ * Tasa plana: entera tal cual (1600, 3038) y fraccionaria truncada a 2
+ * decimales (3.52). Sin separadores de miles ni redondeo.
  */
 export function formatTasa(val, moneda = '', tipo = '') {
   return formatearTasaComercial(val, moneda, tipo);

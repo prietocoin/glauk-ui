@@ -6,7 +6,7 @@
 import { extraerNombreSocio } from '../utils/comprobantesSocioUtils.js';
 import {
   normalizarTasaComercial
-} from '../utils/comprobantesTasasUtils.js';
+} from '../utils/comprobantesTasasUtils.js?v=20261024_06';
 import { resolverNaturalezaComprobante } from './comprobantesNaturalezaService.js';
 
 function fechaDesdeItem(c, item) {

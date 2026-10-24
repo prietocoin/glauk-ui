@@ -8,7 +8,7 @@ import {
   formatMonto, formatTasa, obtenerME1, obtenerME2,
   obtenerTasaSocioCalculada, claseInsignia, formatDiaHora,
   resolverTipoComprobante, resolverTasaSocio
-} from '../utils/comprobantesFormatters.js';
+} from '../utils/comprobantesFormatters.js?v=20261024_06';
 import {
   catalogoTasasComercialActual,
   obtenerCatalogoTasasComerciales,

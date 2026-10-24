@@ -1,38 +1,13 @@
 /**
  * @file comprobantesTasasUtils.js
  * @description Fuente única de verdad para la tasa, el tipo, la moneda y el
- * subtotal de un socio. La tarjeta y el reporte consumen exactamente estas
- * funciones: el reporte es un espejo pasivo y nunca recalcula importes.
+ * subtotal de un socio. La tarjeta y el reporte comparten estas funciones de
+ * resolución; el reporte aplica además la división directa monto / tasa.
  */
 
 import { resolverNaturalezaComprobante } from '../services/comprobantesNaturalezaService.js';
+import { aNumero as numero, formatearTasaPlana } from './comprobantesNumerosUtils.js?v=20261024_06';
 
-// Divisas cuya cartelera comercial se publica sin decimales. En estas monedas
-// la tasa se redondea comercialmente (1.599,99 -> 1.600) y jamás se trunca.
-const DIVISAS_TASA_SIN_DECIMALES = new Set(['ARS', 'CLP', 'COP', 'PYG']);
-
-// Divisas que conservan sus decimales comerciales aunque la magnitud sea alta.
-const DIVISAS_TASA_CON_DECIMALES = new Set(['PEN', 'BRL', 'EUR', 'USD']);
-
-function numero(valor, fallback = 0) {
-  if (typeof valor === 'number') return Number.isFinite(valor) ? valor : fallback;
-  if (valor === null || valor === undefined) return fallback;
-
-  const texto = String(valor).trim();
-  if (!texto) return fallback;
-
-  // Acepta "1,600" (miles en-US) y "1.599,99" / "3,52" (decimal latino).
-  const limpio = /^\d{1,3}(,\d{3})+(\.\d+)?$/.test(texto)
-    ? texto.replace(/,/g, '')
-    : texto.replace(/\.(?=\d{3}\b)/g, '').replace(',', '.');
-  const num = parseFloat(limpio);
-  return Number.isFinite(num) ? num : fallback;
-}
-
-/**
- * Conserva la tasa comercial exacta y solo elimina el ruido binario del
- * transporte (1599.9999999998 -> 1600). No trunca ni recorta decimales.
- */
 export function normalizarTasaComercial(valor) {
   if (valor === 'N/A') return 1;
   const num = numero(valor, 1);
@@ -43,41 +18,19 @@ export function normalizarTasaComercial(valor) {
 }
 
 /**
- * Formatea la tasa con la política comercial de la divisa del comprobante.
+ * Formatea la tasa en formato decimal plano, sin comas de miles.
+ *
+ * - Entera: "1000", "1600", "3038".
+ * - Fraccionaria: truncada a dos decimales con punto, "3.52".
+ *
+ * La antigua política por divisa (ARS entera, PEN con decimales) se retiró:
+ * ahora la regla depende solo de si el valor es entero, y nunca se redondea.
  *
  * @param {number|string} valor Tasa ya proyectada por el Core.
- * @param {string} moneda Divisa de la operación (ARS, PEN, USD, ...).
- * @param {string} tipo Tipo resuelto ('D', 'P', 'A'). Un abono de paridad se
- *   muestra como "1.00" para que la fila no parezca sin tasa.
  */
-export function formatearTasaComercial(valor, moneda = '', tipo = '') {
-  const num = numero(valor, 0);
-  if (!Number.isFinite(num)) return '0.00';
-
-  const letra = String(tipo || '').trim().split('-')[0].toUpperCase();
-  if (letra === 'A' && Math.abs(num - 1) < 1e-9) return '1.00';
-
-  const codigo = String(moneda || '').trim().toUpperCase();
-  const sinDecimales = DIVISAS_TASA_SIN_DECIMALES.has(codigo);
-  const conDecimales = DIVISAS_TASA_CON_DECIMALES.has(codigo);
-
-  // Política comercial:
-  //  - ARS/CLP/COP/PYG: entero desde 1 (1.600), decimales solo en paridades.
-  //  - PEN/BRL/EUR/USD: siempre sus dos decimales comerciales (3.52).
-  //  - Resto (VES/MXN/...): regla histórica por magnitud; 995 se publica
-  //    entero y 18,80 conserva dos decimales.
-  let entero;
-  if (sinDecimales) {
-    entero = Math.abs(num) >= 1;
-  } else if (conDecimales) {
-    entero = false;
-  } else {
-    entero = Math.abs(num) > 99.99;
-  }
-
-  return entero
-    ? Math.round(num).toLocaleString('en-US', { maximumFractionDigits: 0 })
-    : num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+export function formatearTasaComercial(valor) {
+  const num = numero(valor, NaN);
+  return formatearTasaPlana(num);
 }
 
 /**

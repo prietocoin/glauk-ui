@@ -3,15 +3,15 @@
  * @description Utilidades de filtrado y formateo para comprobantes.
  */
 
-import { formatearTasaComercial } from './comprobantesTasasUtils.js';
+import { formatearMontoPlano } from './comprobantesNumerosUtils.js?v=20261024_06';
+import { formatearTasaComercial } from './comprobantesTasasUtils.js?v=20261024_06';
 
 export function formatMonto(val) {
-  const num = parseFloat(val) || 0;
-  return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return formatearMontoPlano(val);
 }
 
 export function formatTasa(val, moneda = '', tipo = '') {
-  // Delegado en la fuente única: redondeo comercial, nunca truncamiento.
+  // Delegado en la fuente única de tasas planas (sin comas, sin redondeo).
   return formatearTasaComercial(val, moneda, tipo);
 }
 

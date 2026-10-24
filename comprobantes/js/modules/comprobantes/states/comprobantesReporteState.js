@@ -28,7 +28,7 @@ import {
   resolverSubtotalSocio,
   resolverTasaSocio,
   resolverTipoComprobante
-} from '../utils/comprobantesTasasUtils.js';
+} from '../utils/comprobantesTasasUtils.js?v=20261024_06';
 import {
   dentroRangoCaracas,
   fechaCaracasISO,
@@ -36,11 +36,12 @@ import {
   obtenerRangoMesActualCaracas,
   sumarDiasISO
 } from '../utils/comprobantesFechaUtils.js';
-
-function numero(valor, fallback = 0) {
-  const num = parseFloat(valor);
-  return Number.isFinite(num) ? num : fallback;
-}
+import {
+  aNumero as numero,
+  formatearMontoPlano,
+  formatearTasaPlana,
+  truncar2
+} from '../utils/comprobantesNumerosUtils.js?v=20261024_06';
 
 function claveReporte(item = {}) {
   return String(item?.hash_largo || item?.id || '').trim().toLowerCase();
@@ -55,50 +56,12 @@ function formatearFechaReporte(item = {}) {
 }
 
 /**
- * Truncamiento estricto hacia cero a dos decimales, sin Math.round.
- *
- * Se desplaza el punto con una cadena exponencial (`4.29` -> `"4.29e2"` ->
- * `429`) en lugar de multiplicar por 100: la multiplicación binaria produce
- * `4.29 * 100 = 428.99999999999994` y truncaría a 4.28 en vez de 4.29.
+ * El reporte consume la misma fuente numérica que las tarjetas: truncamiento
+ * estricto a 2 decimales y sin comas de miles.
  */
-export function truncar2(valor) {
-  const num = Number(valor);
-  if (!Number.isFinite(num)) return 0;
-
-  const signo = num < 0 ? -1 : 1;
-  const abs = Math.abs(num);
-  const desplazado = Number(`${abs}e2`);
-
-  // Notación exponencial ya presente (1e+21) o valores fuera de rango: se usa
-  // la vía aritmética como respaldo para no devolver NaN.
-  if (!Number.isFinite(desplazado)) {
-    return signo * (Math.trunc(abs * 100) / 100);
-  }
-
-  const truncado = Math.trunc(desplazado);
-  const resultado = Number(`${truncado}e-2`);
-  return signo * (Number.isFinite(resultado) ? resultado : truncado / 100);
-}
-
-/**
- * Monto contable del reporte: dos decimales truncados y sin separadores de
- * miles. `toFixed` solo rellena los decimales que `truncar2` ya fijó.
- */
-export function formatearMontoReporte(valor) {
-  return truncar2(valor).toFixed(2);
-}
-
-/**
- * Tasa del reporte en formato decimal plano: sin comas de miles y sin
- * redondeo. Entera -> "1600"; con decimales -> "3.52" (truncado a 2).
- */
-export function formatearTasaReporte(valor) {
-  const num = Number(valor);
-  if (!Number.isFinite(num)) return '';
-
-  const truncada = truncar2(num);
-  return Number.isInteger(truncada) ? String(truncada) : truncada.toFixed(2);
-}
+export { truncar2 };
+export const formatearMontoReporte = formatearMontoPlano;
+export const formatearTasaReporte = formatearTasaPlana;
 
 export function createComprobantesReporteState() {
   const { fechaInicio: inicioMes, fechaFin: finMes } = obtenerRangoMesActualCaracas();
