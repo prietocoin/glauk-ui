@@ -11,15 +11,15 @@
   <meta name="theme-color" content="#030611">
 
   <link rel="icon" type="image/png" href="./logo-fundablock.png">
-  <link rel="stylesheet" href="/shared/vendor/glauk2/tailwind.css?v=20261024_02">
-  <link rel="stylesheet" href="/shared/css/mobile.css?v=20261024_02">
+  <link rel="stylesheet" href="/shared/vendor/glauk2/tailwind.css?v=20261024_05">
+  <link rel="stylesheet" href="/shared/css/mobile.css?v=20261024_05">
 
   <!-- CLIENTE MODULAR Y ALPINE.JS -->
-  <script src="../config.js?v=20261024_02"></script>
-  <script type="module" src="./js/appBootstrap.js?v=20261024_02"></script>
-  <script type="module" src="./js/pwa.js?v=20261024_02"></script>
-  <script src="/shared/vendor/glauk2/alpine.min.js?v=20261024_02" defer></script>
-  <script src="/shared/vendor/html2canvas.min.js?v=20261024_02"></script>
+  <script src="../config.js?v=20261024_05"></script>
+  <script type="module" src="./js/appBootstrap.js?v=20261024_05"></script>
+  <script type="module" src="./js/pwa.js?v=20261024_05"></script>
+  <script src="/shared/vendor/glauk2/alpine.min.js?v=20261024_05" defer></script>
+  <script src="/shared/vendor/html2canvas.min.js?v=20261024_05"></script>
 
   <style>
     [x-cloak] { display: none !important; }
@@ -39,6 +39,11 @@
       border-radius: 0 !important;
       box-shadow: none !important;
       filter: none !important;
+      /* Nitidez tipográfica al rasterizar a 2x (Retina): sin suavizado de
+         subpíxeles ni ligaduras ópticas que emborronen cifras pequeñas. */
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
       -webkit-mask-image: none !important;
       mask-image: none !important;
       text-shadow: none !important;
@@ -142,6 +147,20 @@
     body.glauk-capturando-reporte .glauk-modal__content,
     body.glauk-capturando-reporte .glauk-modal__body {
       overflow: visible !important;
+    }
+
+    /* Sin transformaciones ni animaciones en la cadena del documento durante
+       la captura: un scale/translate heredado vuelve borroso el texto aunque
+       el canvas se genere a 2x. */
+    body.glauk-capturando-reporte .glauk-modal__dialog,
+    body.glauk-capturando-reporte .glauk-modal__content,
+    body.glauk-capturando-reporte .glauk-modal__body,
+    body.glauk-capturando-reporte #reporte-html-documento,
+    body.glauk-capturando-reporte #reporte-html-documento * {
+      transform: none !important;
+      animation: none !important;
+      transition: none !important;
+      will-change: auto !important;
     }
 
     @media print {
@@ -1262,11 +1281,11 @@
               <span class="block text-[9px] font-black text-slate-400 uppercase">Socio auditado</span>
               <span class="block text-xl font-black uppercase text-slate-900" x-text="reporteSocio || 'TODOS'"></span>
               <span class="block text-[10px] text-slate-500 font-mono" x-text="reporteItems.length + ' comprobante(s) cargado(s)'"></span>
-              <span class="block text-[10px] text-slate-500 font-mono" x-text="'Movimiento total del rango: ' + (reporteMovimientoTotal < 0 ? '-' : '+') + formatMonto(Math.abs(reporteMovimientoTotal)) + ' ' + reporteMoneda"></span>
+              <span class="block text-[10px] text-slate-500 font-mono" x-text="'Movimiento total del rango: ' + (reporteMovimientoTotal < 0 ? '-' : '+') + reporteFormatearMonto(Math.abs(reporteMovimientoTotal)) + ' ' + reporteMoneda"></span>
             </div>
             <div class="bg-slate-50 border border-slate-200 rounded-lg px-5 py-3 text-right" style="min-width:190px">
               <span class="block text-[9px] font-black text-slate-500 uppercase" x-text="reporteEsDescendente ? 'Saldo final de página' : 'Saldo anterior de página'"></span>
-              <span class="block text-xl font-mono font-black text-amber-700" x-text="formatMonto(reporteSaldoAnteriorPagina) + ' ' + reporteMoneda"></span>
+              <span class="block text-xl font-mono font-black text-amber-700" x-text="reporteFormatearMonto(reporteSaldoAnteriorPagina) + ' ' + reporteMoneda"></span>
             </div>
           </div>
 
@@ -1288,16 +1307,16 @@
                   <td class="px-2 py-1.5 font-mono text-slate-500" x-text="reporteFechaItem(item)"></td>
                   <td class="px-2 py-1.5"><span class="font-black text-slate-900" x-text="reporteTipoItem(item)"></span></td>
                   <td class="px-2 py-1.5 font-mono text-slate-500" x-text="reporteHashItem(item)"></td>
-                  <td class="px-2 py-1.5 text-right font-mono text-slate-900" x-text="formatMonto(reporteMontoOriginalItem(item)) + ' ' + reporteMonedaOriginalItem(item)"></td>
+                  <td class="px-2 py-1.5 text-right font-mono text-slate-900" x-text="reporteFormatearMonto(reporteMontoOriginalItem(item)) + ' ' + reporteMonedaOriginalItem(item)"></td>
                   <td class="px-2 py-1.5 text-center font-mono">
-                    <span class="block font-bold text-slate-900" x-text="formatTasa(reporteTasaItem(item), reporteMonedaTasaItem(item), reporteTipoItem(item))"></span>
+                    <span class="block font-bold text-slate-900" x-text="reporteFormatearTasa(reporteTasaItem(item))"></span>
                     <span class="block text-[9px] text-slate-400" x-show="reporteLoteItem(item)" x-text="reporteLoteItem(item)"></span>
                   </td>
                   <td class="px-2 py-1.5 text-slate-500">
                     <span class="block font-bold text-slate-900" x-text="reporteTitularItem(item)"></span>
                     <span class="block text-[9px] text-slate-400" x-text="reporteBancoItem(item)"></span>
                   </td>
-                  <td class="px-2 py-1.5 text-right font-mono font-black" :style="reporteSignoItem(item) === '-' ? 'color:#e11d48' : 'color:#047857'" x-text="reporteSignoItem(item) + formatMonto(reporteMontoItem(item)) + ' ' + reporteMonedaItem(item)"></td>
+                  <td class="px-2 py-1.5 text-right font-mono font-black" :style="reporteSignoItem(item) === '-' ? 'color:#e11d48' : 'color:#047857'" x-text="reporteSignoItem(item) + reporteFormatearMonto(reporteMontoItem(item)) + ' ' + reporteMonedaItem(item)"></td>
                 </tr>
               </template>
               <template x-if="reporteItemsPagina.length === 0">
@@ -1315,11 +1334,11 @@
           <div class="flex items-center justify-end gap-3 mb-4">
             <div class="text-right">
               <span class="block text-[9px] font-black text-slate-400 uppercase">Movimiento de página</span>
-              <span class="block text-sm font-mono font-black" :style="reporteMovimientoPagina < 0 ? 'color:#e11d48' : 'color:#0f172a'" x-text="(reporteMovimientoPagina < 0 ? '-' : '+') + formatMonto(Math.abs(reporteMovimientoPagina)) + ' ' + reporteMoneda"></span>
+              <span class="block text-sm font-mono font-black" :style="reporteMovimientoPagina < 0 ? 'color:#e11d48' : 'color:#0f172a'" x-text="(reporteMovimientoPagina < 0 ? '-' : '+') + reporteFormatearMonto(Math.abs(reporteMovimientoPagina)) + ' ' + reporteMoneda"></span>
             </div>
             <div class="bg-emerald-50 border border-emerald-200 rounded-lg px-5 py-3 text-right" style="min-width:190px">
               <span class="block text-[9px] font-black text-emerald-700 uppercase" x-text="reporteEsDescendente ? 'Saldo inicial de página' : 'Nuevo saldo de página'"></span>
-              <span class="block text-xl font-mono font-black text-emerald-800" x-text="formatMonto(reporteSaldoFinalPagina) + ' ' + reporteMoneda"></span>
+              <span class="block text-xl font-mono font-black text-emerald-800" x-text="reporteFormatearMonto(reporteSaldoFinalPagina) + ' ' + reporteMoneda"></span>
             </div>
           </div>
           <div class="border-t-2 border-slate-900 pt-2 text-[9px] text-slate-500 flex justify-between font-mono gap-4">
@@ -1435,6 +1454,6 @@
        @click.stop>
 </div>
 
-<script type="module" src="/shared/js/mobile-nav.js?v=20261024_02"></script>
+<script type="module" src="/shared/js/mobile-nav.js?v=20261024_05"></script>
 </body>
 </html>

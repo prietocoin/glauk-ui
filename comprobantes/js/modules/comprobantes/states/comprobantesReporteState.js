@@ -54,6 +54,52 @@ function formatearFechaReporte(item = {}) {
   return `${dia}/${mes}/${anio}`;
 }
 
+/**
+ * Truncamiento estricto hacia cero a dos decimales, sin Math.round.
+ *
+ * Se desplaza el punto con una cadena exponencial (`4.29` -> `"4.29e2"` ->
+ * `429`) en lugar de multiplicar por 100: la multiplicación binaria produce
+ * `4.29 * 100 = 428.99999999999994` y truncaría a 4.28 en vez de 4.29.
+ */
+export function truncar2(valor) {
+  const num = Number(valor);
+  if (!Number.isFinite(num)) return 0;
+
+  const signo = num < 0 ? -1 : 1;
+  const abs = Math.abs(num);
+  const desplazado = Number(`${abs}e2`);
+
+  // Notación exponencial ya presente (1e+21) o valores fuera de rango: se usa
+  // la vía aritmética como respaldo para no devolver NaN.
+  if (!Number.isFinite(desplazado)) {
+    return signo * (Math.trunc(abs * 100) / 100);
+  }
+
+  const truncado = Math.trunc(desplazado);
+  const resultado = Number(`${truncado}e-2`);
+  return signo * (Number.isFinite(resultado) ? resultado : truncado / 100);
+}
+
+/**
+ * Monto contable del reporte: dos decimales truncados y sin separadores de
+ * miles. `toFixed` solo rellena los decimales que `truncar2` ya fijó.
+ */
+export function formatearMontoReporte(valor) {
+  return truncar2(valor).toFixed(2);
+}
+
+/**
+ * Tasa del reporte en formato decimal plano: sin comas de miles y sin
+ * redondeo. Entera -> "1600"; con decimales -> "3.52" (truncado a 2).
+ */
+export function formatearTasaReporte(valor) {
+  const num = Number(valor);
+  if (!Number.isFinite(num)) return '';
+
+  const truncada = truncar2(num);
+  return Number.isInteger(truncada) ? String(truncada) : truncada.toFixed(2);
+}
+
 export function createComprobantesReporteState() {
   const { fechaInicio: inicioMes, fechaFin: finMes } = obtenerRangoMesActualCaracas();
 
@@ -340,9 +386,42 @@ export function createComprobantesReporteState() {
     },
 
     reporteMovimientoItem(item) {
-      // Subtotal ya computado por el Core (m1_socio/m2_socio + polaridad).
-      // No se divide el monto del recibo entre la tasa ni se recalculan spreads.
-      return resolverSubtotalSocio(item, this.reportePosicionItem(item));
+      // Regla contable unificada y directa:
+      //   USDT o tasa 1  -> subtotal = monto del recibo
+      //   divisa extranjera -> subtotal = monto del recibo / tasa
+      // Sin spreads (1 - s) / (1 + s), sin promedios y sin reutilizar el
+      // subtotal proyectado por el Core.
+      const tasa = numero(this.reporteTasaItem(item), 0);
+      const moneda = String(this.reporteMonedaTasaItem(item) || '').toUpperCase();
+      const monto = Math.abs(numero(item?.monto ?? item?.monto_local, 0));
+
+      let convertido;
+      if (moneda === 'USDT' || Math.abs(tasa - 1) < 1e-9) {
+        convertido = truncar2(monto);
+      } else if (tasa > 0) {
+        convertido = truncar2(monto / tasa);
+      } else {
+        return 0;
+      }
+
+      return this.reporteSignoMovimiento(item) * convertido;
+    },
+
+    /**
+     * Signo del movimiento. La polaridad del Core manda; si el subtotal viene en
+     * cero se lee la polaridad explícita del lado y, en último caso, se asume
+     * positivo.
+     */
+    reporteSignoMovimiento(item) {
+      const posicion = this.reportePosicionItem(item);
+      const core = resolverSubtotalSocio(item, posicion);
+      if (core < 0) return -1;
+      if (core > 0) return 1;
+
+      const polaridad = Number(posicion) === 2
+        ? (item?.polaridad_2 ?? item?.polaridad_socio_2 ?? item?.t2_polaridad ?? item?.grupo_2?.polaridad)
+        : (item?.polaridad_1 ?? item?.polaridad_socio_1 ?? item?.t1_polaridad ?? item?.grupo_1?.polaridad);
+      return String(polaridad || '').trim().startsWith('-') ? -1 : 1;
     },
 
     reporteMontoItem(item) {
@@ -416,6 +495,16 @@ export function createComprobantesReporteState() {
         || item?.lote_tasa_id
         || '';
       return String(lote).trim().toUpperCase();
+    },
+
+    /** Monto del reporte: 2 decimales truncados, sin comas de miles. */
+    reporteFormatearMonto(valor) {
+      return formatearMontoReporte(valor);
+    },
+
+    /** Tasa del reporte: entera sin decimales, fraccionaria truncada a 2, sin comas. */
+    reporteFormatearTasa(valor) {
+      return formatearTasaReporte(valor);
     },
 
     reporteTitularItem(item) {

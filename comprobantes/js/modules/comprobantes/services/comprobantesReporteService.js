@@ -7,11 +7,29 @@
 const ANCHO_REPORTE = 800;
 const ALTO_MAXIMO = 6000;
 const CLASE_CAPTURA = 'glauk-capturando-reporte';
+// Densidad de render: 2x sobre los 800 px lógicos entrega 1600 px físicos de
+// ancho, el rango que WhatsApp conserva nítido al abrir la imagen.
+const ESCALA_OBJETIVO = 2;
+// Techo de píxeles del canvas. Safari/iOS invalida canvas por encima de ~16.7
+// millones de píxeles (4096×4096); en reportes muy largos se reduce la escala
+// en vez de producir una imagen en blanco.
+const PIXELES_MAXIMOS = 16000000;
+const CALIDAD_JPEG = 0.95;
 
 function esperarLayout() {
   return new Promise(resolve => {
     requestAnimationFrame(() => requestAnimationFrame(resolve));
   });
+}
+
+/**
+ * Escala efectiva: usa la densidad objetivo salvo que el área del canvas supere
+ * el techo del navegador. Nunca baja de 1 para no degradar bajo el tamaño lógico.
+ */
+function escalaSegura(ancho, alto, deseada) {
+  const objetivo = Math.max(1, Number(deseada) || ESCALA_OBJETIVO);
+  const limite = Math.sqrt(PIXELES_MAXIMOS / Math.max(1, ancho * alto));
+  return Math.max(1, Math.min(objetivo, limite));
 }
 
 export async function capturarReporteEstadoCuenta(elemento, opciones = {}) {
@@ -59,10 +77,16 @@ export async function capturarReporteEstadoCuenta(elemento, opciones = {}) {
     elemento.style.overflow = 'hidden';
     await esperarLayout();
 
+    const escala = escalaSegura(ancho, alto, opciones.escala);
+
     const canvas = await globalThis.html2canvas(elemento, {
       backgroundColor: '#ffffff',
-      scale: 1,
+      scale: escala,
       useCORS: true,
+      // Los recursos del reporte son locales; allowTaint evita que un logo
+      // remoto con CORS incompleto se descarte silenciosamente.
+      allowTaint: true,
+      imageTimeout: 0,
       logging: false,
       width: ancho,
       height: alto,
@@ -70,7 +94,9 @@ export async function capturarReporteEstadoCuenta(elemento, opciones = {}) {
       windowHeight: alto
     });
 
-    return canvas.toDataURL('image/jpeg', 0.92);
+    // JPEG de alta calidad: a 1600 px de ancho el texto de tasas y montos se
+    // mantiene legible al hacer zoom.
+    return canvas.toDataURL('image/jpeg', CALIDAD_JPEG);
   } finally {
     document.body.classList.remove(CLASE_CAPTURA);
     Object.assign(elemento.style, estilosPrevios);

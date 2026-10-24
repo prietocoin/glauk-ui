@@ -36,7 +36,7 @@ import {
   establecerCatalogoSocios
 } from '../services/comprobantesNaturalezaService.js';
 import { esComprobante2x } from '../utils/comprobantes2xUtils.js';
-import { capturarReporteEstadoCuenta } from '../services/comprobantesReporteService.js';
+import { capturarReporteEstadoCuenta } from '../services/comprobantesReporteService.js?v=20261024_03';
 import { obtenerSaldoAnteriorSocio, obtenerSujetoAuditado } from '../services/comprobantesSaldosService.js';
 import { obtenerRangoMesActualCaracas, formatearFechaLatina } from '../utils/comprobantesFechaUtils.js';
 
