@@ -11,15 +11,15 @@
   <meta name="theme-color" content="#030611">
 
   <link rel="icon" type="image/png" href="./logo-fundablock.png">
-  <link rel="stylesheet" href="/shared/vendor/glauk2/tailwind.css">
-  <link rel="stylesheet" href="/shared/css/mobile.css">
+  <link rel="stylesheet" href="/shared/vendor/glauk2/tailwind.css?v=20261024.1">
+  <link rel="stylesheet" href="/shared/css/mobile.css?v=20261024.1">
 
   <!-- CLIENTE MODULAR Y ALPINE.JS -->
-  <script src="../config.js"></script>
-  <script type="module" src="./js/appBootstrap.js"></script>
-  <script type="module" src="./js/pwa.js"></script>
-  <script src="/shared/vendor/glauk2/alpine.min.js" defer></script>
-  <script src="/shared/vendor/html2canvas.min.js"></script>
+  <script src="../config.js?v=20261024.1"></script>
+  <script type="module" src="./js/appBootstrap.js?v=20261024.1"></script>
+  <script type="module" src="./js/pwa.js?v=20261024.1"></script>
+  <script src="/shared/vendor/glauk2/alpine.min.js?v=20261024.1" defer></script>
+  <script src="/shared/vendor/html2canvas.min.js?v=20261024.1"></script>
 
   <style>
     [x-cloak] { display: none !important; }
@@ -440,57 +440,12 @@
   <!-- BUCLE VINCULADO STRICTAMENTE A ITEMS (2X VALIDADOS) -->
   <template x-for="(item, index) in items" :key="(item.hash_largo || item.id || item.referencia || 'item-') + index">
 
-    <article class="glauk-card"
+    <article class="glauk-card glauk-card-horizontal flex flex-row w-full max-w-[650px] rounded-[14px] bg-[#0b1120] border border-slate-800"
              x-data="{
                get s2Visible() {
                  const s = item.socio_2 || item.nombre_socio_2 || '';
                  return !!s && s !== 'GENERAL' && s !== 'NO DEFINIDO';
-               }
-             }"
-             @click="abrirDetalle(item)"
-             @keydown.enter.self.prevent="abrirDetalle(item)"
-             tabindex="0"
-             role="button"
-             :aria-label="'Abrir detalle del comprobante ' + (item.hash_corto || item.hash_largo || '')">
-
-      <div class="glauk-card-main">
-        <div class="glauk-card-thumb">
-          <template x-if="urlRecibo(item)">
-            <img :src="urlRecibo(item)"
-                 alt="Recibo del comprobante"
-                 loading="lazy"
-                 decoding="async"
-                 @click.stop.prevent="abrirLightbox(item, $event)"
-                 @error="$el.style.display='none'; $el.nextElementSibling?.classList.remove('hidden')">
-          </template>
-          <div class="glauk-thumb-empty" :class="{ 'hidden': urlRecibo(item) }" aria-hidden="true">📷</div>
-        </div>
-
-        <div class="glauk-card-head">
-          <div class="glauk-card-amount">
-            <span x-text="formatMonto(item.monto)"></span>
-            <small x-text="item.moneda || '---'"></small>
-          </div>
-        </div>
-      </div>
-
-      <div class="glauk-card-meta">
-        <span x-text="item.titular || '-'"></span>
-        <span x-text="item.banco || '-'"></span>
-        <span x-text="'Ref: ' + (item.referencia || '-')"></span>
-      </div>
-
-      <div class="glauk-card-badges">
-        <span class="glauk-mini-badge">📅 <span x-text="item.fecha_fmt || 'S/F'"></span></span>
-        <span class="glauk-mini-badge">🔑 <span x-text="item.hash_corto || 'HASH'"></span></span>
-        <span class="glauk-mini-badge">📊 <span x-text="item.lote_tasa_asignado || item.lote || 'T-ND'"></span></span>
-        <span class="glauk-mini-badge" :class="claseInsignia(resolverTipoComprobante(item))">🏷️ <span x-text="resolverTipoComprobante(item)"></span></span>
-        <span x-show="esComprobante2x(item)" class="glauk-mini-badge is-x2">⚡ x2</span>
-      </div>
-
-      <div class="glauk-finance-grid">
-        <div class="glauk-finance-cell"
-             x-data="{
+               },
                get s1Nombre() {
                  return item.socio_1 || item.nombre_socio_1 || item.socio || item.titular || 'GENERAL';
                },
@@ -509,24 +464,9 @@
                },
                get s1Polaridad() {
                  return item.polaridad_1 || item.grupo_1?.polaridad || '+';
-               }
-             }">
-          <div class="glauk-finance-title">
-            <span x-text="s1Badge"></span>
-            <span x-text="'Socio 1 · ' + s1Nombre"></span>
-          </div>
-          <div class="glauk-finance-values">
-            <span x-text="'T1 ' + formatTasa(resolverTasaComprobante(item, 1), item.moneda, resolverTipoComprobante(item))"></span>
-            <strong :class="s1Polaridad === '-' ? 'text-pink-400' : 'text-emerald-400'"
-                    x-text="(s1Polaridad === '-' ? '- ' : '') + formatMonto(Math.abs(parseFloat(obtenerME1(item) || 0))) + ' ' + s1Moneda"></strong>
-          </div>
-        </div>
-
-        <div class="glauk-finance-cell"
-             x-show="s2Visible"
-             x-data="{
+               },
                get s2Nombre() {
-                 return item.socio_2 || item.nombre_socio_2;
+                 return item.socio_2 || item.nombre_socio_2 || 'GENERAL';
                },
                get s2Badge() {
                  if (item.badge_2) return item.badge_2;
@@ -544,36 +484,97 @@
                get s2Polaridad() {
                  return item.polaridad_2 || item.grupo_2?.polaridad || '-';
                }
-             }">
-          <div class="glauk-finance-title">
-            <span x-text="s2Badge"></span>
-            <span x-text="'Socio 2 · ' + s2Nombre"></span>
-          </div>
-          <div class="glauk-finance-values">
-            <span x-text="'T2 ' + formatTasa(resolverTasaComprobante(item, 2), item.moneda, resolverTipoComprobante(item))"></span>
-            <strong :class="s2Polaridad === '-' ? 'text-pink-400' : 'text-emerald-400'"
-                    x-text="(s2Polaridad === '-' ? '- ' : '') + formatMonto(Math.abs(parseFloat(obtenerME2(item) || 0))) + ' ' + s2Moneda"></strong>
-          </div>
-        </div>
+             }"
+             @click="abrirDetalle(item)"
+             @keydown.enter.self.prevent="abrirDetalle(item)"
+             tabindex="0"
+             role="button"
+             :aria-label="'Abrir detalle del comprobante ' + (item.hash_corto || item.hash_largo || '')">
 
-        <div class="glauk-finance-cell is-empty" x-show="!s2Visible">
-          Socio 2 · GENERAL
-        </div>
+      <div class="glauk-card-media min-w-[140px]">
+        <span class="glauk-card-media-label">RECIBO</span>
+        <template x-if="urlRecibo(item)">
+          <img :src="urlRecibo(item)"
+               alt="Recibo del comprobante"
+               loading="lazy"
+               decoding="async"
+               @click.stop.prevent="abrirLightbox(item, $event)"
+               @error="$el.style.display='none'; $el.nextElementSibling?.classList.remove('hidden')">
+        </template>
+        <div class="glauk-card-media-empty" :class="{ 'hidden': urlRecibo(item) }" aria-hidden="true">📷</div>
       </div>
 
-      <div class="glauk-card-foot">
-        <span class="glauk-card-hint">Toca para ver detalle</span>
-        <div class="glauk-card-actions">
-          <button type="button"
-                  class="glauk-icon-btn"
-                  @click.stop="eliminarComprobante(item.id || item.hash_largo)"
-                  title="Eliminar Comprobante"
-                  aria-label="Eliminar comprobante">🗑️</button>
-          <button type="button"
-                  class="glauk-icon-btn"
-                  @click.stop="$dispatch('abrir-modal-edicion', item)"
-                  title="Editar comprobante"
-                  aria-label="Editar comprobante">✏️</button>
+      <div class="glauk-card-content">
+        <div class="glauk-card-topline">
+          <div class="glauk-card-amount-main">
+            <strong x-text="formatMonto(item.monto)"></strong>
+            <small x-text="item.moneda || '---'"></small>
+          </div>
+          <div class="glauk-card-actions-row">
+            <button type="button"
+                    class="glauk-card-action-btn"
+                    @click.stop="abrirDetalle(item)"
+                    title="Ver detalle"
+                    aria-label="Ver detalle">👁</button>
+            <button type="button"
+                    class="glauk-card-action-btn"
+                    @click.stop="$dispatch('abrir-modal-edicion', item)"
+                    title="Editar comprobante"
+                    aria-label="Editar comprobante">✏️</button>
+            <button type="button"
+                    class="glauk-card-action-btn"
+                    @click.stop="eliminarComprobante(item.id || item.hash_largo)"
+                    title="Eliminar comprobante"
+                    aria-label="Eliminar comprobante">🗑️</button>
+          </div>
+        </div>
+
+        <div class="glauk-card-bank-line" :title="(item.titular || '-') + ' • ' + (item.banco || '-')">
+          <strong x-text="item.titular || '-'"></strong>
+          <span class="glauk-card-bullet">•</span>
+          <span class="glauk-card-bank" x-text="item.banco || '-'"></span>
+        </div>
+        <div class="glauk-card-ref" x-text="'REF: ' + (item.referencia || '-')"></div>
+
+        <div class="glauk-card-badges-line flex-nowrap items-center gap-1.5">
+          <span class="glauk-mini-badge" x-text="item.fecha_fmt || 'S/F'"></span>
+          <span class="glauk-mini-badge" x-text="item.hash_corto || 'HASH'"></span>
+          <span class="glauk-mini-badge" x-text="item.lote_tasa_asignado || item.lote || 'T-ND'"></span>
+          <span class="glauk-mini-badge"
+                :class="'is-tipo-' + resolverTipoComprobante(item).toLowerCase()"
+                x-text="resolverTipoComprobante(item)"></span>
+          <span x-show="esComprobante2x(item)" class="glauk-mini-badge is-x2">⚡ x2</span>
+          <span class="glauk-mini-badge"
+                :class="item.procesado_ia ? 'is-ia-ok' : 'is-ia-bad'"
+                x-text="item.procesado_ia ? 'IA ✓' : 'IA ✕'"></span>
+        </div>
+
+        <div class="glauk-socios-stack">
+          <div class="glauk-socio-row is-socio1">
+            <span class="glauk-socio-shield" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true">
+                <path d="M12 2.2 20 5.4v6.2c0 4.8-3.3 8.7-8 10.2-4.7-1.5-8-5.4-8-10.2V5.4l8-3.2Zm0 2.1L6 6.7v4.9c0 3.8 2.5 6.9 6 8.1 3.5-1.2 6-4.3 6-8.1V6.7l-6-2.4Z"/>
+              </svg>
+            </span>
+            <span class="glauk-socio-name" x-text="s1Nombre"></span>
+            <span class="glauk-socio-rate" x-text="'T1 ' + formatTasa(resolverTasaComprobante(item, 1), item.moneda, resolverTipoComprobante(item))"></span>
+            <strong class="glauk-socio-subtotal"
+                    :class="s1Polaridad === '-' ? 'is-negative' : 'is-positive'"
+                    x-text="(s1Polaridad === '-' ? '-' : '+') + formatMonto(Math.abs(parseFloat(obtenerME1(item) || 0))) + ' ' + s1Moneda"></strong>
+          </div>
+
+          <div class="glauk-socio-row is-socio2" x-show="s2Visible">
+            <span class="glauk-socio-shield" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true">
+                <path d="M12 2.2 20 5.4v6.2c0 4.8-3.3 8.7-8 10.2-4.7-1.5-8-5.4-8-10.2V5.4l8-3.2Zm0 2.1L6 6.7v4.9c0 3.8 2.5 6.9 6 8.1 3.5-1.2 6-4.3 6-8.1V6.7l-6-2.4Z"/>
+              </svg>
+            </span>
+            <span class="glauk-socio-name" x-text="s2Nombre"></span>
+            <span class="glauk-socio-rate" x-text="'T2 ' + formatTasa(resolverTasaComprobante(item, 2), item.moneda, resolverTipoComprobante(item))"></span>
+            <strong class="glauk-socio-subtotal"
+                    :class="s2Polaridad === '-' ? 'is-negative' : 'is-positive'"
+                    x-text="(s2Polaridad === '-' ? '-' : '+') + formatMonto(Math.abs(parseFloat(obtenerME2(item) || 0))) + ' ' + s2Moneda"></strong>
+          </div>
         </div>
       </div>
 
@@ -1431,6 +1432,6 @@
        @click.stop>
 </div>
 
-<script type="module" src="/shared/js/mobile-nav.js"></script>
+<script type="module" src="/shared/js/mobile-nav.js?v=20261024.1"></script>
 </body>
 </html>
