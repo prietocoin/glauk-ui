@@ -5,7 +5,7 @@
  * CACHE_VERSION se incrementa en cada despliegue para invalidar cachés previas.
  */
 
-const CACHE_VERSION = 'glauk2-comprobantes-20261024_12';
+const CACHE_VERSION = 'glauk2-comprobantes-20261024_13';
 
 self.addEventListener('install', () => {
   // Toma el control sin esperar a que se cierren las pestañas abiertas.

@@ -33,7 +33,8 @@ import { crearAccionesModal } from '../services/comprobantesModalActions.js';
 import { prepararEdicionComprobante, obtenerInsigniaRol } from '../services/comprobantesMapperService.js';
 import {
   construirCatalogoSocios,
-  establecerCatalogoSocios
+  establecerCatalogoSocios,
+  obtenerCatalogoSocios
 } from '../services/comprobantesNaturalezaService.js';
 import { esComprobante2x } from '../utils/comprobantes2xUtils.js';
 import { capturarReporteEstadoCuenta } from '../services/comprobantesReporteService.js?v=20261024_07';
@@ -603,6 +604,47 @@ export function comprobantesState() {
       return (oficial !== null && oficial > 0)
         ? oficial
         : resolverTasaSocio(item, posicion);
+    },
+
+    /**
+     * DEF configurado en Perfiles para la moneda del socio (JSONB `monedas`).
+     * Respeta la herencia: el catálogo ya resolvió la tabla de FUNDDA.
+     * Devuelve 'D'/'P' o '' cuando la moneda no tiene regla propia.
+     */
+    naturalezaDefSocio(nombreSocio, moneda) {
+      const catalogo = obtenerCatalogoSocios();
+      const nombre = String(nombreSocio || '').trim();
+      const config = catalogo[nombre] || catalogo[normalizarSocio(nombre)] || null;
+      const codigo = String(moneda || '').trim().toUpperCase();
+      const letra = config?.tabla_monedas?.[codigo];
+      return letra === 'D' || letra === 'P' ? letra : '';
+    },
+
+    /**
+     * Tasas oficiales de la cartelera para el editor: compra en D, venta en P,
+     * paridad 1.00 en USDT y abonos. El spread comercial ya viene incorporado
+     * en el catálogo por socio/lote/divisa.
+     */
+    resolverTasasEdicion(moneda, naturaleza, lote, socio1, socio2) {
+      const letra = String(naturaleza || '').trim().toUpperCase();
+      const codigo = String(moneda || '').trim().toUpperCase();
+      if (codigo === 'USDT' || letra === 'A') return { tasa1: 1, tasa2: 1 };
+
+      const item = {
+        socio_1: socio1,
+        socio_2: socio2,
+        lote_tasa_asignado: lote,
+        lote,
+        moneda: codigo,
+        tipo_manual: letra
+      };
+      const catalogo = catalogoTasasComercialActual();
+      const t1 = resolverTasaComercialItem(item, 1, catalogo);
+      const t2 = resolverTasaComercialItem(item, 2, catalogo);
+      return {
+        tasa1: (t1 !== null && t1 > 0) ? t1 : 0,
+        tasa2: (t2 !== null && t2 > 0) ? t2 : 0
+      };
     },
 
     async enviarReporteViaEvolution(socio = '') {
