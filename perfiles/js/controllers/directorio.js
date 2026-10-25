@@ -1,8 +1,8 @@
 import { qs } from '../../../shared/js/dom.js';
 import { api } from '../api.js';
 import { state } from '../store.js';
-import { esEntidadProtegida, sociosFiltrados } from '../domain.js';
-import { renderListaSocios } from '../components/lista-socios.js';
+import { esEntidadProtegida, esHerencia, payloadGuardar, reglasSegunModo, sociosFiltrados } from '../domain.js';
+import { renderListaSocios } from '../components/lista-socios.js?v=20261024_18';
 
 export function crearDirectorio({
   recargar = async () => {},
@@ -31,6 +31,19 @@ export function crearDirectorio({
     }
   }
 
+  async function toggleHerencia(socio) {
+    const actual = esHerencia(socio.herencia);
+    const objetivo = { ...socio, herencia: !actual };
+    const reglas = reglasSegunModo(state.socios, socio);
+    try {
+      await api.guardar(payloadGuardar(objetivo, reglas));
+      socio.herencia = !actual;
+      render();
+    } catch {
+      alertar('Error actualizando herencia');
+    }
+  }
+
   async function eliminarSocio(socio) {
     if (esEntidadProtegida(socio.nombre)) {
       alertar('No se puede eliminar la entidad matriz FUNDDA');
@@ -56,6 +69,7 @@ export function crearDirectorio({
     switch (boton.dataset.accion) {
       case 'configurar': editar(socio); break;
       case 'toggle': await toggleSocio(socio); break;
+      case 'herencia': await toggleHerencia(socio); break;
       case 'eliminar': await eliminarSocio(socio); break;
       default: break;
     }

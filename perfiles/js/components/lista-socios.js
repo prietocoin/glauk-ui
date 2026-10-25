@@ -1,4 +1,4 @@
-import { renderSocioCard } from './socio-card.js';
+import { renderSocioCard } from './socio-card.js?v=20261024_18';
 
 // Lista completa o empty state. El contenedor conserva `space-y-2.5`, por lo
 // que las tarjetas mantienen el mismo ritmo vertical que el original.

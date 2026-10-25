@@ -1,7 +1,7 @@
 import { api } from './api.js';
 import { state } from './store.js';
 import { crearEditor } from './controllers/editor.js';
-import { crearDirectorio } from './controllers/directorio.js';
+import { crearDirectorio } from './controllers/directorio.js?v=20261024_18';
 import { crearAcciones } from './controllers/acciones.js';
 
 async function recargarSocios() {
