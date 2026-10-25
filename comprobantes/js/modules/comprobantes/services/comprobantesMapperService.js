@@ -1,13 +1,11 @@
 /**
  * @file comprobantesMapperService.js
- * @description Mapeador atómico del frontend para la API v2 y la tabla comprobantes_final.
+ * @description Mapea la fila canónica de /api/v1/comprobantes al modelo de
+ * presentación. No recalcula importes, tasas, naturaleza ni polaridad: conserva
+ * los valores firmados que ya proyectó el backend.
  */
 
-import { extraerNombreSocio } from '../utils/comprobantesSocioUtils.js';
-import {
-  normalizarTasaComercial
-} from '../utils/comprobantesTasasUtils.js?v=20261024_24';
-import { resolverNaturalezaComprobante } from './comprobantesNaturalezaService.js';
+import { extraerNombreSocio } from '../utils/comprobantesSocioUtils.js?v=20261025_01';
 
 function fechaDesdeItem(c, item) {
   const raw = c.fecha_hora_comprobante || item.fecha_hora_comprobante ||
@@ -52,6 +50,36 @@ function formatearFechaItem(fecha) {
   };
 }
 
+function numero(valor, fallback = 0) {
+  if (typeof valor === 'number') return Number.isFinite(valor) ? valor : fallback;
+  if (valor === null || valor === undefined || valor === '') return fallback;
+  const limpio = String(valor).trim().replace(/,/g, '');
+  const num = Number(limpio);
+  return Number.isFinite(num) ? num : fallback;
+}
+
+function signo(valor) {
+  return numero(valor, 0) < 0 ? '-' : '+';
+}
+
+const PLACEHOLDERS_SOCIO = new Set([
+  '', 'GENERAL', 'NO DEFINIDO', 'S/D', 'N/A', 'NULL', 'UNDEFINED', '-'
+]);
+
+function tieneSocio2(nombre) {
+  return !PLACEHOLDERS_SOCIO.has(String(nombre || '').trim().toUpperCase());
+}
+
+function tipoCrudo(c, item) {
+  return c.tipo_op1 || item.tipo_op1 || c.tipo_op || item.tipo_op ||
+    c.tipo_manual || item.tipo_manual || c.tipo || item.tipo || 'D';
+}
+
+function letraTipo(valor) {
+  const letra = String(valor || '').trim().split('-')[0].toUpperCase();
+  return letra === 'A' || letra === 'P' || letra === 'D' ? letra : 'D';
+}
+
 /**
  * Devuelve la micro-insignia visual según el ROL de la entidad.
  */
@@ -66,19 +94,20 @@ export function obtenerInsigniaRol(rol) {
 }
 
 /**
- * Normaliza y enriquece el objeto recibido de la API v2 (comprobantes_final)
- * para consumo seguro en Alpine.js y renderizado instantáneo de cards 2x.
+ * Normaliza y enriquece la fila canónica para Alpine.js. Los campos financieros
+ * se copian tal cual llegan del backend; el único trabajo local es de identidad,
+ * fecha, presentación y compatibilidad de nombres.
  */
 export function prepararEdicionComprobante(item = {}, loteActivo = 'T070') {
   if (!item) return {};
 
   const c = item.comprobante || item;
 
-  // 1. IDENTIFICADORES Y HASH LARGO
+  // 1. IDENTIFICADORES
   const idReal = String(c.hash_largo || item.hash_largo || c.id || item.id || c.referencia || '').trim();
   const hashCortoFinal = c.hash_corto || item.hash_corto || (idReal ? idReal.slice(0, 8).toUpperCase() : 'HASH');
 
-  // 2. FECHAS Y HORAS: el backend canónico entrega fecha_hora_comprobante.
+  // 2. FECHAS
   const fechaItem = formatearFechaItem(fechaDesdeItem(c, item));
   const rawTs = c.timestamp_msg || item.timestamp_msg || c.fecha_hora_comprobante || item.fecha_hora_comprobante || '';
   const fechaFmt = c.fecha_fmt || item.fecha_fmt || fechaItem.fecha;
@@ -86,95 +115,47 @@ export function prepararEdicionComprobante(item = {}, loteActivo = 'T070') {
   const diaHoraHumano = c.dia_hora_humano || item.dia_hora_humano || fechaItem.humano;
   const dateInput = c.fecha_hora_input || item.fecha_hora_input || fechaItem.input;
 
-  // 3. MONTOS Y MONEDAS (Búsqueda exhaustiva sin caer en 0)
-  const rawMonto = c.monto ?? item.monto ?? c.monto_local ?? item.monto_local ?? 0;
-  const fallbackMonto = Math.abs(parseFloat(String(rawMonto).replace(/,/g, '')) || 0);
+  // 3. IMPORTES Y DIVISA: se conservan firmados y sin renormalizar.
+  const monto = numero(c.monto ?? item.monto ?? c.monto_local ?? item.monto_local, 0);
   const monedaFinal = String(c.moneda || item.moneda || 'USDT').toUpperCase().trim();
 
-  // 4. ENTIDADES Y ROLES
+  // 4. SOCIOS Y ROLES
   const socio1Real = extraerNombreSocio(item, 1);
   const socio2Real = extraerNombreSocio(item, 2);
+  const rol1 = c.rol_1 || item.rol_1 || 'SOCIO';
+  const rol2 = c.rol_2 || item.rol_2 || 'SOCIO';
 
-  const rol1 = c.rol_1 || item.rol_1 || c.grupo_1?.rol || c.perfil_1?.rol || 'SOCIO';
-  const rol2 = c.rol_2 || item.rol_2 || c.grupo_2?.rol || c.perfil_2?.rol || 'SOCIO';
+  // 5. TASAS E IMPORTES CONGELADOS
+  const tasa1 = numero(c.tasa_1 ?? item.tasa_1 ?? c.tasa1 ?? item.tasa1, 0);
+  const tasa2 = numero(c.tasa_2 ?? item.tasa_2 ?? c.tasa2 ?? item.tasa2, 0);
+  const monto1 = numero(c.monto_1 ?? item.monto_1 ?? c.monto1 ?? item.monto1, 0);
+  const monto2 = numero(c.monto_2 ?? item.monto_2 ?? c.monto2 ?? item.monto2, 0);
+  const me1 = numero(c.me1 ?? item.me1 ?? c.m1_socio ?? item.m1_socio ?? monto1, 0);
+  const me2 = numero(c.me2 ?? item.me2 ?? c.m2_socio ?? item.m2_socio ?? monto2, 0);
 
-  const t1 = normalizarTasaComercial(
-    c.tasa_1 ?? item.tasa_1 ?? c.tasa_socio_1 ?? item.tasa_socio_1 ?? c.t1_tasa ?? item.t1_tasa ?? c.grupo_1?.tasa
-  );
-  const t2 = normalizarTasaComercial(
-    c.tasa_2 ?? item.tasa_2 ?? c.tasa_socio_2 ?? item.tasa_socio_2 ?? c.t2_tasa ?? item.t2_tasa ?? c.grupo_2?.tasa
-  );
+  // 6. NATURALEZA: la etiqueta del backend manda. No se reconstruye la jerarquía.
+  const tipo1 = String(tipoCrudo(c, item)).trim();
+  const tipo2 = String(c.tipo_op2 || item.tipo_op2 || tipo1).trim();
+  const letra = letraTipo(tipo1);
 
-  // PRESERVACIÓN FIEL DE MONTOS INDIVIDUALES DE SOCIO
-  const rawM1 = c.m1_socio ?? item.m1_socio ?? c.monto_1 ?? item.monto_1 ??
-    c.monto1 ?? item.monto1 ??
-    c.monto_socio_1 ?? item.monto_socio_1 ?? c.monto_socio1 ?? item.monto_socio1 ??
-    c.t1_monto ?? item.t1_monto ?? c.me1 ?? item.me1 ?? fallbackMonto;
-  const rawM2 = c.m2_socio ?? item.m2_socio ?? c.monto_2 ?? item.monto_2 ??
-    c.monto2 ?? item.monto2 ??
-    c.monto_socio_2 ?? item.monto_socio_2 ?? c.monto_socio2 ?? item.monto_socio2 ??
-    c.t2_monto ?? item.t2_monto ?? c.me2 ?? item.me2 ?? fallbackMonto;
+  // 7. IMAGEN
+  const rawImg = c.url_r2_comprobante || item.url_r2_comprobante ||
+    c.link_img || item.link_img || c.url_imagen || item.url_imagen || '';
 
-  const calcM1 = Math.abs(parseFloat(String(rawM1).replace(/,/g, '')) || 0).toFixed(2);
-  const calcM2 = Math.abs(parseFloat(String(rawM2).replace(/,/g, '')) || 0).toFixed(2);
+  // 8. BADGE 2x: solo cuando existe una contraparte real.
+  const esX2 = tieneSocio2(socio2Real);
 
-  // 4.1 POLARIDADES: el contrato canónico la expresa en el signo de me1/me2.
-  const signo1 = parseFloat(String(rawM1).replace(/,/g, '')) || 0;
-  const signo2 = parseFloat(String(rawM2).replace(/,/g, '')) || 0;
-  const pol1 = c.polaridad_1 || item.polaridad_1 || c.polaridad_socio_1 || item.polaridad_socio_1 ||
-    c.t1_polaridad || item.t1_polaridad || c.grupo_1?.polaridad || item.grupo_1?.polaridad ||
-    (signo1 < 0 ? '-' : '+');
-  const pol2 = c.polaridad_2 || item.polaridad_2 || c.polaridad_socio_2 || item.polaridad_socio_2 ||
-    c.t2_polaridad || item.t2_polaridad || c.grupo_2?.polaridad || item.grupo_2?.polaridad ||
-    (signo2 < 0 ? '-' : (signo2 > 0 ? '+' : '-'));
-
-  // 5. IMAGEN CLOUDFLARE R2
-  const rawImg = c.url_r2_comprobante || item.url_r2_comprobante || c.link_img || item.link_img || c.url_imagen || item.url_imagen || '';
-
-  // 6. DETECCIÓN ROBUSTA DE BANDERAS SOCIO 2x
-  const s2Upper = String(socio2Real || '').trim().toUpperCase();
-  const tieneSocio2Valido = !['', 'GENERAL', 'NO DEFINIDO', 'S/D', 'N/A', 'NULL', 'UNDEFINED', '-'].includes(s2Upper);
-
-  // El badge x2 se activa con cualquier flag explícito del backend o cuando
-  // existe un socio 2 real. Es la misma condición que consume el guardián 2x.
-  const tieneFlag2x = Boolean(
-    item.es_x2 || item.es_2x || item.is_2x || item.pareado
-    || c.es_x2 || c.es_2x || c.is_2x || c.pareado
-  );
-  const esX2 = tieneFlag2x || tieneSocio2Valido;
-
-  // Naturaleza centralizada: moneda natural -> IRIS -> caption A -> tabla.
-  // La tarjeta, el reporte y los totales consumen este mismo resultado.
-  const tipoResuelto = resolverNaturalezaComprobante({
-    socio_1: socio1Real,
-    moneda: monedaFinal,
-    caption: c.caption ?? item.caption ?? '',
-    tipo: c.tipo || item.tipo,
-    tipo_manual: c.tipo_manual || item.tipo_manual,
-    tipo_op: c.tipo_op || item.tipo_op,
-    tipo_op1: c.tipo_op1 || item.tipo_op1,
-    t1_tipo: c.t1_tipo || item.t1_tipo
-  });
-
-  // Polaridad del abono: manda el signo real de la proyección (quién entrega
-  // resta y quién recibe suma). Antes se forzaba +/-, lo que hacía que ambos
-  // socios aparecieran en verde cuando el Core traía otra dirección.
-  const polaridad1Final = tipoResuelto === 'A'
-    ? (signo1 < 0 ? '-' : '+')
-    : pol1;
-  const polaridad2Final = tipoResuelto === 'A'
-    ? (signo2 < 0 ? '-' : (signo2 > 0 ? '+' : '-'))
-    : pol2;
+  const monedaBase1 = c.moneda_base_socio1 || c.moneda_socio_1 || item.moneda_base_socio1 || item.moneda_socio_1 || 'USDT';
+  const monedaBase2 = c.moneda_base_socio2 || c.moneda_socio_2 || item.moneda_base_socio2 || item.moneda_socio_2 || 'USDT';
 
   return {
     ...item,
     ...c,
-    // CLAVES PRIMARIAS E IDENTIFICADORES
+
     id: idReal,
     hash_largo: idReal,
     hash_corto: hashCortoFinal,
 
-    // CAMPOS DE FECHA Y TIEMPO
     timestamp_msg: rawTs,
     fecha_fmt: fechaFmt,
     hora_fmt: horaFmt,
@@ -182,71 +163,68 @@ export function prepararEdicionComprobante(item = {}, loteActivo = 'T070') {
     fecha_hora_input: dateInput,
     fecha_hora_comprobante: dateInput,
 
-    // METADATOS BANCARIOS
     banco: (c.banco && c.banco !== '-') ? String(c.banco).toUpperCase() : (item.banco ? String(item.banco).toUpperCase() : 'BANCO'),
     referencia: (c.referencia && c.referencia !== '-') ? String(c.referencia) : (item.referencia || 'N/A'),
     titular: (c.titular && c.titular !== '-') ? String(c.titular).toUpperCase() : (item.titular ? String(item.titular).toUpperCase() : 'TITULAR NO DEFINIDO'),
 
-    // IMAGEN
     link_img: rawImg,
     url_r2_comprobante: rawImg,
 
-    // SOCIO 1
     nombre_socio_1: socio1Real,
     socio_1: socio1Real,
     rol_1: rol1,
     badge_1: obtenerInsigniaRol(rol1),
-    moneda_base_socio1: c.moneda_base_socio1 || c.moneda_socio_1 || item.moneda_base_socio1 || item.moneda_socio_1 || 'USDT',
-    moneda_socio_1: c.moneda_socio_1 || item.moneda_socio_1 || c.moneda_base_socio1 || item.moneda_base_socio1 || 'USDT',
-    tasa_1: t1,
-    m1_socio: calcM1,
-    me1_firmado: signo1,
-    monto_1: calcM1,
-    me1: calcM1,
-    polaridad_1: polaridad1Final,
+    moneda_base_socio1: monedaBase1,
+    moneda_socio_1: monedaBase1,
+    tasa_1: tasa1,
+    monto_1: monto1,
+    me1: me1,
+    m1_socio: me1,
+    me1_firmado: me1,
+    polaridad_1: signo(me1 !== 0 ? me1 : monto1),
 
-    // SOCIO 2
     nombre_socio_2: socio2Real,
     socio_2: socio2Real,
     rol_2: rol2,
     badge_2: obtenerInsigniaRol(rol2),
-    moneda_base_socio2: c.moneda_base_socio2 || c.moneda_socio_2 || item.moneda_base_socio2 || item.moneda_socio_2 || 'USDT',
-    moneda_socio_2: c.moneda_socio_2 || item.moneda_socio_2 || c.moneda_base_socio2 || item.moneda_base_socio2 || 'USDT',
-    tasa_2: t2,
-    m2_socio: calcM2,
-    me2_firmado: signo2,
-    monto_2: calcM2,
-    me2: calcM2,
-    polaridad_2: polaridad2Final,
+    moneda_base_socio2: monedaBase2,
+    moneda_socio_2: monedaBase2,
+    tasa_2: tasa2,
+    monto_2: monto2,
+    me2: me2,
+    m2_socio: me2,
+    me2_firmado: me2,
+    polaridad_2: signo(me2 !== 0 ? me2 : monto2),
 
-    // REGLAS GENERALES Y LOTES
     es_x2: esX2,
-    tipo_op: tipoResuelto,
-    tipo_manual: tipoResuelto,
+    tipo_op1: tipo1,
+    tipo_op2: tipo2,
+    tipo_op: letra,
+    tipo_manual: letra,
+
     moneda: monedaFinal,
-    monto: fallbackMonto,
-    monto_local: fallbackMonto,
+    monto: monto,
+    monto_local: monto,
     lote: c.lote || item.lote || c.lote_tasa_asignado || item.lote_tasa_asignado || c.lote_tasa || item.lote_tasa || loteActivo,
     lote_tasa_asignado: c.lote_tasa_asignado || item.lote_tasa_asignado || c.lote || item.lote || c.lote_tasa || item.lote_tasa || loteActivo,
 
-    // GRUPOS COMPATIBILIDAD ANIDADA
     grupo_1: {
       grupo: socio1Real,
       rol: rol1,
-      tasa: t1,
-      polaridad: polaridad1Final,
-      monto: calcM1,
-      moneda_base: c.moneda_base_socio1 || c.moneda_socio_1 || item.moneda_base_socio1 || item.moneda_socio_1 || 'USDT',
-      me: calcM1
+      tasa: tasa1,
+      polaridad: signo(me1 !== 0 ? me1 : monto1),
+      monto: me1,
+      moneda_base: monedaBase1,
+      me: me1
     },
     grupo_2: {
       grupo: socio2Real,
       rol: rol2,
-      tasa: t2,
-      polaridad: polaridad2Final,
-      monto: calcM2,
-      moneda_base: c.moneda_base_socio2 || c.moneda_socio_2 || item.moneda_base_socio2 || item.moneda_socio_2 || 'USDT',
-      me: calcM2
+      tasa: tasa2,
+      polaridad: signo(me2 !== 0 ? me2 : monto2),
+      monto: me2,
+      moneda_base: monedaBase2,
+      me: me2
     }
   };
 }

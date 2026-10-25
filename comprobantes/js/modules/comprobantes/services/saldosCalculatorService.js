@@ -2,12 +2,13 @@
  * @file saldosCalculatorService.js
  * @description Servicio matemático puro para cálculo algebraico de saldos y movimientos desde comprobantes_final.
  */
-import { filtrarComprobantesPorRango } from '../utils/saldosFilterUtils.js';
+import { filtrarComprobantesPorRango } from '../utils/saldosFilterUtils.js?v=20261025_01';
+import { truncar2 } from '../utils/comprobantesNumerosUtils.js?v=20261025_01';
 import {
   normalizarSocio,
   obtenerNombresSocio,
   obtenerPosicionSocio
-} from '../utils/comprobantesSocioUtils.js';
+} from '../utils/comprobantesSocioUtils.js?v=20261025_01';
 
 /**
  * Movimiento firmado de un socio en un comprobante. Devuelve 0 si el socio no
@@ -28,13 +29,12 @@ export function obtenerMovimientoSocio(item = {}, socioTarget = '') {
 
   const posicion = obtenerPosicionSocio(item, target);
   const valor = posicion === 2
-    ? parseFloat(item.m2_socio ?? item.monto_2 ?? item.monto2 ?? item.me2 ?? item.monto ?? 0) || 0
-    : parseFloat(item.m1_socio ?? item.monto_1 ?? item.monto1 ?? item.me1 ?? item.monto ?? 0) || 0;
-  const polaridad = posicion === 2
-    ? (item.polaridad_2 || item.grupo_2?.polaridad || '-')
-    : (item.polaridad_1 || item.grupo_1?.polaridad || '+');
+    ? parseFloat(item.me2 ?? item.m2_socio ?? item.monto_2 ?? item.monto2 ?? item.monto ?? 0) || 0
+    : parseFloat(item.me1 ?? item.m1_socio ?? item.monto_1 ?? item.monto1 ?? item.monto ?? 0) || 0;
 
-  return valor * (polaridad === '-' ? -1 : 1);
+  // El signo ya viene en el importe congelado. No se multiplica otra vez por
+  // polaridad_1/2: eso invertiría los abonos y los pagos.
+  return valor;
 }
 
 /**
@@ -70,7 +70,7 @@ export function calcularSociosPendientesConsolidado(directorio = [], comprobante
           0
         )
         : 0;
-      const saldoFinal = Math.trunc((saldoBase + movimientoHistorico + 0.0000001) * 100) / 100;
+      const saldoFinal = truncar2(saldoBase + movimientoHistorico);
 
       return {
         nombre: socio.nombre,

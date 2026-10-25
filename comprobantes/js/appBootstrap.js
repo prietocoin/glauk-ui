@@ -6,8 +6,8 @@
 import { createRouterState } from './shared/states/routerState.js';
 import { createTasasState } from './modules/tasas/states/tasasState.js';
 import { createDirectorioState } from './modules/directorio/states/directorioState.js';
-import { comprobantesState } from './modules/comprobantes/states/comprobantesState.js?v=20261024_24';
-import { createComprobantesReporteState } from './modules/comprobantes/states/comprobantesReporteState.js?v=20261024_24';
+import { comprobantesState } from './modules/comprobantes/states/comprobantesState.js?v=20261025_01';
+import { createComprobantesReporteState } from './modules/comprobantes/states/comprobantesReporteState.js?v=20261025_01';
 import { escucharSociosActualizados } from '../../shared/js/sync.js';
 
 /**
@@ -57,10 +57,6 @@ function registrarApp() {
         this.cargarTasasMercado ? this.cargarTasasMercado() : Promise.resolve(),
         this.cargarComprobantes ? this.cargarComprobantes() : Promise.resolve()
       ]);
-
-      // Catálogo de compra/venta oficial por socio y lote. No bloquea el primer
-      // render: las tarjetas se actualizan cuando termina la carga.
-      if (this.cargarCatalogoTasas) this.cargarCatalogoTasas();
 
       this.$nextTick(() => {
         if (this.escucharActualizacionesGlobales) this.escucharActualizacionesGlobales();

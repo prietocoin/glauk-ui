@@ -4,44 +4,31 @@
  * el filtro ni el listado principal del Dashboard.
  */
 
-import { cargarComprobantesFiltrados } from '../services/comprobantesCargaService.js?v=20261024_24';
+import { cargarComprobantesFiltrados } from '../services/comprobantesCargaService.js?v=20261025_01';
 import {
   aplicarRangoHash,
-  coincideSocioEstricto,
   resolverIndiceHash
-} from '../services/comprobantesFilterService.js';
-import { obtenerSaldoAnteriorSocio } from '../services/comprobantesSaldosService.js';
-import {
-  catalogoTasasComercialActual,
-  obtenerCatalogoTasasComerciales,
-  resolverTasaComercialItem
-} from '../services/comprobantesTasasComercialesService.js';
-import {
-  construirCatalogoSocios,
-  establecerCatalogoSocios
-} from '../services/comprobantesNaturalezaService.js';
-import { esComprobante2x } from '../utils/comprobantes2xUtils.js';
-import { normalizarSocio, obtenerPosicionSocio } from '../utils/comprobantesSocioUtils.js';
+} from '../services/comprobantesFilterService.js?v=20261025_01';
+import { obtenerSaldoAnteriorSocio } from '../services/comprobantesSaldosService.js?v=20261025_01';
+import { normalizarSocio, obtenerPosicionSocio } from '../utils/comprobantesSocioUtils.js?v=20261025_01';
 import {
   resolverMonedaSocio,
-  resolverMonedaTasa,
   resolverSubtotalSocio,
   resolverTasaSocio,
   resolverTipoComprobante
-} from '../utils/comprobantesTasasUtils.js?v=20261024_24';
+} from '../utils/comprobantesTasasUtils.js?v=20261025_01';
 import {
   dentroRangoCaracas,
   fechaCaracasISO,
   formatearFechaLatina,
   obtenerRangoMesActualCaracas,
   sumarDiasISO
-} from '../utils/comprobantesFechaUtils.js';
+} from '../utils/comprobantesFechaUtils.js?v=20261025_01';
 import {
   aNumero as numero,
   formatearMontoPlano,
-  formatearTasaPlana,
-  truncar2
-} from '../utils/comprobantesNumerosUtils.js?v=20261024_24';
+  formatearTasaPlana
+} from '../utils/comprobantesNumerosUtils.js?v=20261025_01';
 
 function claveReporte(item = {}) {
   return String(item?.hash_largo || item?.id || '').trim().toLowerCase();
@@ -56,10 +43,9 @@ function formatearFechaReporte(item = {}) {
 }
 
 /**
- * El reporte consume la misma fuente numérica que las tarjetas: truncamiento
- * estricto a 2 decimales y sin comas de miles.
+ * El reporte consume la misma fuente numérica que las tarjetas: formato plano
+ * de dos decimales, sin comas de miles.
  */
-export { truncar2 };
 export const formatearMontoReporte = formatearMontoPlano;
 export const formatearTasaReporte = formatearTasaPlana;
 
@@ -76,7 +62,6 @@ export function createComprobantesReporteState() {
     reporteHastaHash: '',
     reporteOrden: 'fecha_asc',
     reporteItemsBase: [],
-    reporteCatalogoTasasListo: 0,
     reporteSaldoAnterior: 0,
     reporteCargando: false,
     reporteSolicitudActual: 0,
@@ -257,16 +242,6 @@ export function createComprobantesReporteState() {
       this.reporteItemsBase = [];
 
       try {
-        // La naturaleza se resuelve con el catálogo del directorio antes de
-        // mapear los comprobantes; así las tarjetas y el reporte comparten la
-        // misma jerarquía (moneda natural -> IRIS -> caption A -> tabla).
-        establecerCatalogoSocios(construirCatalogoSocios(this.directorio));
-
-        // El catálogo comercial se carga en paralelo. Es la fuente de la tasa
-        // oficial (compra/venta) que pinta la cartelera; si falla, la columna
-        // TASA cae a tasa_1/tasa_2 sin bloquear el reporte.
-        const catalogoPromesa = obtenerCatalogoTasasComerciales().catch(() => ({}));
-
         // El backend filtra por fecha UTC (creado_en). Un abono de las 20:36 de
         // Caracas se guarda como 00:36Z del día siguiente, así que se consulta
         // hasta fechaFin + 1 día y luego se recorta por el día real de Caracas.
@@ -278,26 +253,16 @@ export function createComprobantesReporteState() {
           fechaFin: finConsulta,
           orden: this.reporteOrden === 'fecha_desc' ? 'fecha_desc' : 'fecha_asc'
         }, {
-          // Se consulta sin el filtro de socio del backend y se resuelve en el
-          // cliente para incluir ambos lados del comprobante (abonos 'A').
           maximo: 2000,
-          loteActivo: this.loteActivo,
-          filtroSocioEnApi: false
+          loteActivo: this.loteActivo
         });
 
-        await catalogoPromesa;
         if (token !== this.reporteSolicitudActual) return;
-        this.reporteCatalogoTasasListo += 1;
 
         this.reporteItemsBase = (Array.isArray(items) ? items : [])
-          // Un abono 'A' puede tener al socio auditado como socio_1 o socio_2
-          // (y con alias distintos): nunca debe quedar fuera.
-          .filter(item => coincideSocioEstricto(item, socio))
           // La ventana UTC ampliada puede traer filas del día siguiente en
           // Caracas. Solo se listan las que pertenecen al rango auditado.
-          .filter(item => dentroRangoCaracas(item, this.reporteFechaInicio, this.reporteFechaFin))
-          // Guardián 2x: el reporte tampoco consume huérfanos ni filas 1x.
-          .filter(esComprobante2x);
+          .filter(item => dentroRangoCaracas(item, this.reporteFechaInicio, this.reporteFechaFin));
         this.normalizarRangoHashReporte();
         this.reporteSaldoAnterior = obtenerSaldoAnteriorSocio(this.directorio, socio);
         this.reportePaginaActual = Math.min(
@@ -349,42 +314,9 @@ export function createComprobantesReporteState() {
     },
 
     reporteMovimientoItem(item) {
-      // Regla contable unificada y directa:
-      //   USDT o tasa 1  -> subtotal = monto del recibo
-      //   divisa extranjera -> subtotal = monto del recibo / tasa
-      // Sin spreads (1 - s) / (1 + s), sin promedios y sin reutilizar el
-      // subtotal proyectado por el Core.
-      const tasa = numero(this.reporteTasaItem(item), 0);
-      const moneda = String(this.reporteMonedaTasaItem(item) || '').toUpperCase();
-      const monto = Math.abs(numero(item?.monto ?? item?.monto_local, 0));
-
-      let convertido;
-      if (moneda === 'USDT' || Math.abs(tasa - 1) < 1e-9) {
-        convertido = truncar2(monto);
-      } else if (tasa > 0) {
-        convertido = truncar2(monto / tasa);
-      } else {
-        return 0;
-      }
-
-      return this.reporteSignoMovimiento(item) * convertido;
-    },
-
-    /**
-     * Signo del movimiento. La polaridad del Core manda; si el subtotal viene en
-     * cero se lee la polaridad explícita del lado y, en último caso, se asume
-     * positivo.
-     */
-    reporteSignoMovimiento(item) {
-      const posicion = this.reportePosicionItem(item);
-      const core = resolverSubtotalSocio(item, posicion);
-      if (core < 0) return -1;
-      if (core > 0) return 1;
-
-      const polaridad = Number(posicion) === 2
-        ? (item?.polaridad_2 ?? item?.polaridad_socio_2 ?? item?.t2_polaridad ?? item?.grupo_2?.polaridad)
-        : (item?.polaridad_1 ?? item?.polaridad_socio_1 ?? item?.t1_polaridad ?? item?.grupo_1?.polaridad);
-      return String(polaridad || '').trim().startsWith('-') ? -1 : 1;
+      // Subtotal firmado del socio auditado, tal como lo congeló el backend.
+      // No se divide monto / tasa ni se vuelve a truncar en el cliente.
+      return resolverSubtotalSocio(item, this.reportePosicionItem(item));
     },
 
     reporteMontoItem(item) {
@@ -408,27 +340,9 @@ export function createComprobantesReporteState() {
     },
 
     reporteTasaItem(item) {
-      // La tasa oficial de la cartelera (compra para D, venta para P, 1.00 para
-      // A) manda. Se lee de un catálogo ya computado, no se recalcula aquí.
-      // Si el lote no está en el catálogo, se usa la tasa del lado del socio.
-      void this.reporteCatalogoTasasListo;
+      // Tasa congelada del lado del socio. No hay catálogo comercial paralelo.
       const posicion = this.reportePosicionItem(item);
-      const oficial = resolverTasaComercialItem(
-        item,
-        posicion,
-        catalogoTasasComercialActual()
-      );
-      return (oficial !== null && oficial > 0)
-        ? oficial
-        : resolverTasaSocio(item, posicion);
-    },
-
-    /**
-     * Divisa con la que se cotiza la tasa (la del comprobante). Para NELSY en
-     * ARS permite imprimir 1,664 / 1,600 sin truncar a 1,599.
-     */
-    reporteMonedaTasaItem(item) {
-      return resolverMonedaTasa(item) || this.reporteMoneda;
+      return resolverTasaSocio(item, posicion);
     },
 
     reporteMonedaItem(item) {
@@ -436,8 +350,8 @@ export function createComprobantesReporteState() {
     },
 
     reporteTipoItem(item) {
-      // Exactamente el mismo tipo resuelto que pinta la tarjeta.
-      return resolverTipoComprobante(item);
+      // El tipo del lado auditado, congelado por el backend.
+      return resolverTipoComprobante(item, this.reportePosicionItem(item));
     },
 
     reporteHashItem(item) {
@@ -446,9 +360,8 @@ export function createComprobantesReporteState() {
 
     /**
      * Código del lote de tasa con el que se cotizó la fila (T084, T085, ...).
-     * Se lee de las mismas claves que usa el catálogo comercial para resolver
-     * la tasa, de modo que el valor y su lote siempre correspondan al mismo
-     * lote. Devuelve '' cuando la fila no trae lote.
+     * Se lee de las mismas claves que usa la tasa congelada del backend.
+     * Devuelve '' cuando la fila no trae lote.
      */
     reporteLoteItem(item) {
       const lote = item?.lote_tasa_asignado

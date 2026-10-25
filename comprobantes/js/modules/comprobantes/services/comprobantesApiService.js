@@ -5,10 +5,10 @@
  * glauk2 sobre el contrato /api/v1/comprobantes.
  */
 
-import { apiUrl } from '../../../../../shared/js/api-base.js';
-import { aplicarRangoHash } from './comprobantesFilterService.js';
+import { apiUrl } from '../../../../../shared/js/api-base.js?v=20261025_01';
+import { aplicarRangoHash } from './comprobantesFilterService.js?v=20261025_01';
 
-const API_RUTA = '/api/comprobantes';
+const API_RUTA = '/api/v1/comprobantes';
 
 function obtenerIdentificadorValido(identificador, fallbackPayload = {}) {
   let target = '';
@@ -211,6 +211,18 @@ export async function fetchComprobantesPagina(params = {}, opciones = {}) {
     console.error('[comprobantesApiService ❌ Fetch Error]:', err.message);
     return { lista: [], total: offset, hasMore: false, paginado: true, limit, offset, recibidos: 0 };
   }
+}
+
+/**
+ * Recupera una sola fila canónica por hash. Se usa después del PUT para
+ * actualizar la UI con la entidad que proyecta el backend, no con el payload
+ * local del formulario.
+ */
+export async function fetchComprobantePorHash(hashLargo) {
+  const target = String(hashLargo || '').trim();
+  if (!target) return null;
+  const pagina = await fetchComprobantesPagina({ hash: target }, { limit: 1, offset: 0 });
+  return pagina.lista[0] || null;
 }
 
 /**

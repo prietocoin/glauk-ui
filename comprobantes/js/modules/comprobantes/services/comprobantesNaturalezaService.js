@@ -13,7 +13,7 @@
  * un caption explícito A sigue siendo evidencia suficiente de abono.
  */
 
-import { normalizarSocio } from '../utils/comprobantesSocioUtils.js';
+import { normalizarSocio } from '../utils/comprobantesSocioUtils.js?v=20261025_01';
 
 let catalogoSociosActual = {};
 

@@ -8,39 +8,26 @@ import {
   formatMonto, formatTasa, obtenerME1, obtenerME2,
   obtenerTasaSocioCalculada, claseInsignia, formatDiaHora,
   resolverTipoComprobante, resolverTasaSocio
-} from '../utils/comprobantesFormatters.js?v=20261024_24';
-import {
-  catalogoTasasComercialActual,
-  obtenerCatalogoTasasComerciales,
-  resolverTasaComercialItem
-} from '../services/comprobantesTasasComercialesService.js';
+} from '../utils/comprobantesFormatters.js?v=20261025_01';
 
-import { apiUrl } from '../../../../../shared/js/api-base.js';
-import { notify } from '../../../../../shared/js/toast.js';
+import { apiUrl } from '../../../../../shared/js/api-base.js?v=20261025_01';
+import { notify } from '../../../../../shared/js/toast.js?v=20261025_01';
 
 import {
   calcularSociosPendientesConsolidado,
   calcularMovimientoFiltradoTotal
-} from '../services/saldosCalculatorService.js';
+} from '../services/saldosCalculatorService.js?v=20261025_01';
 
-import { eliminarComprobantePorHash } from '../services/comprobantesApiService.js';
 import {
-  cargarPaginaComprobantes,
-  cargarComprobantesFiltrados
-} from '../services/comprobantesCargaService.js?v=20261024_24';
-import { aplicarRangoHash } from '../services/comprobantesFilterService.js';
-import { crearAccionesModal } from '../services/comprobantesModalActions.js';
-import { prepararEdicionComprobante, obtenerInsigniaRol } from '../services/comprobantesMapperService.js?v=20261024_24';
-import {
-  construirCatalogoSocios,
-  establecerCatalogoSocios,
-  obtenerCatalogoSocios
-} from '../services/comprobantesNaturalezaService.js';
-import { esComprobante2x } from '../utils/comprobantes2xUtils.js';
-import { resolverSignoSocio } from '../utils/comprobantesPolaridadUtils.js?v=20261024_24';
-import { capturarReporteEstadoCuenta } from '../services/comprobantesReporteService.js?v=20261024_24';
-import { obtenerSaldoAnteriorSocio, obtenerSujetoAuditado } from '../services/comprobantesSaldosService.js';
-import { obtenerRangoMesActualCaracas, formatearFechaLatina } from '../utils/comprobantesFechaUtils.js';
+  eliminarComprobantePorHash,
+  fetchComprobantePorHash
+} from '../services/comprobantesApiService.js?v=20261025_01';
+import { cargarPaginaComprobantes } from '../services/comprobantesCargaService.js?v=20261025_01';
+import { aplicarRangoHash } from '../services/comprobantesFilterService.js?v=20261025_01';
+import { prepararEdicionComprobante, obtenerInsigniaRol } from '../services/comprobantesMapperService.js?v=20261025_01';
+import { capturarReporteEstadoCuenta } from '../services/comprobantesReporteService.js?v=20261025_01';
+import { obtenerSaldoAnteriorSocio, obtenerSujetoAuditado } from '../services/comprobantesSaldosService.js?v=20261025_01';
+import { obtenerRangoMesActualCaracas, formatearFechaLatina } from '../utils/comprobantesFechaUtils.js?v=20261025_01';
 
 function claveComprobante(item) {
   const c = item?.comprobante || item || {};
@@ -63,8 +50,6 @@ export function comprobantesState() {
 
     // Paginación por red
     totalRegistros: 0,
-    totalRegistrosBackend: 0,
-    descartadosNo2x: 0,
     siguienteOffset: 0,
     modoPaginacion: 'red',
     visibleLocal: 0,
@@ -75,7 +60,6 @@ export function comprobantesState() {
     modalAbierto: false,
     itemEdicion: null,
     loteActivo: 'T070',
-    catalogoTasasListo: 0,
 
     // BottomSheet de filtros y detalle táctil de tarjeta.
     filtrosSheetAbierto: false,
@@ -159,48 +143,40 @@ export function comprobantesState() {
     },
 
     escucharActualizacionesGlobales() {
-      window.addEventListener('comprobante-actualizado', (evt) => {
-        const payload = evt.detail;
-        if (!payload || !payload.hash_largo) return;
+      window.addEventListener('comprobante-actualizado', async (evt) => {
+        const payload = evt.detail || {};
+        const hash = String(payload.hash_largo || payload.id || '').trim();
+        if (!hash) return;
 
-        const targetHash = String(payload.hash_largo).trim().toLowerCase();
-        const idxTodos = this.todosLosItems.findIndex(
-          i => String(i.hash_largo || i.id).trim().toLowerCase() === targetHash
-        );
-
-        if (idxTodos !== -1) {
-          const actualizado = prepararEdicionComprobante({
-            ...this.todosLosItems[idxTodos],
-            ...payload
-          }, this.loteActivo);
-
-          if (esComprobante2x(actualizado)) {
-            this.todosLosItems[idxTodos] = actualizado;
-          } else {
-            this.todosLosItems.splice(idxTodos, 1);
-            this.totalRegistros = Math.max(0, (Number(this.totalRegistros) || 0) - 1);
+        try {
+          const raw = await fetchComprobantePorHash(hash);
+          if (!raw) {
+            await this.resetearYRefrescar();
+            return;
           }
+
+          const actualizado = prepararEdicionComprobante(raw, this.loteActivo);
+          const target = hash.toLowerCase();
+          const reemplazar = (lista) => {
+            const idx = lista.findIndex(
+              i => String(i.hash_largo || i.id).trim().toLowerCase() === target
+            );
+            if (idx === -1) return false;
+            lista[idx] = actualizado;
+            return true;
+          };
+
+          const enUniverso = reemplazar(this.todosLosItems);
+          reemplazar(this.items);
           this.todosLosItems = [...this.todosLosItems];
-          this.actualizarVisibles();
-          return;
-        }
-
-        const idxVisibles = this.items.findIndex(
-          i => String(i.hash_largo || i.id).trim().toLowerCase() === targetHash
-        );
-        if (idxVisibles !== -1) {
-          const actualizado = prepararEdicionComprobante({
-            ...this.items[idxVisibles],
-            ...payload
-          }, this.loteActivo);
-
-          if (esComprobante2x(actualizado)) this.items[idxVisibles] = actualizado;
-          else this.items.splice(idxVisibles, 1);
           this.items = [...this.items];
-          return;
-        }
 
-        this.resetearYRefrescar();
+          if (enUniverso) this.actualizarVisibles();
+          else await this.resetearYRefrescar();
+        } catch (err) {
+          console.error('[comprobantesState ❌ Error al refrescar comprobante]:', err);
+          await this.resetearYRefrescar();
+        }
       });
     },
 
@@ -381,7 +357,7 @@ export function comprobantesState() {
     /** Recalcula las tarjetas visibles aplicando el rango posicional de hash. */
     actualizarVisibles() {
       const universo = aplicarRangoHash(
-        (this.todosLosItems || []).filter(esComprobante2x),
+        this.todosLosItems || [],
         this.filtroDesdeHash,
         this.filtroHastaHash
       );
@@ -402,12 +378,7 @@ export function comprobantesState() {
 
     /** Incorpora una página recién llegada sin volver a renderizar las previas. */
     procesarPagina(pagina) {
-      const entrantesBrutos = Array.isArray(pagina?.items) ? pagina.items : [];
-      // Defensa adicional: el servicio ya filtra, pero el estado nunca acepta
-      // un ítem que no supere el guardián 2x.
-      const entrantes = entrantesBrutos.filter(esComprobante2x);
-      const descartadosLocales = entrantesBrutos.length - entrantes.length;
-      const descartadosServicio = Math.max(0, Number(pagina?.descartados2x) || 0);
+      const entrantes = Array.isArray(pagina?.items) ? pagina.items : [];
 
       // Backend sin limit/offset: se usa el bloque recibido como buffer local
       // y se revela de 20 en 20 sin repetir peticiones.
@@ -423,15 +394,13 @@ export function comprobantesState() {
         }
         this.modoPaginacion = 'local';
         this.todosLosItems = buffer;
-        this.descartadosNo2x = 0;
-        this.totalRegistrosBackend = 0;
         this.visibleLocal = Math.min(this.tamanoLote, this.capMaximoDOM);
+        this.totalRegistros = buffer.length;
         this.actualizarVisibles();
         return;
       }
 
       this.modoPaginacion = 'red';
-      this.descartadosNo2x += descartadosServicio + descartadosLocales;
       const existentes = new Set(this.todosLosItems.map(claveComprobante));
       let agregados = 0;
 
@@ -448,13 +417,8 @@ export function comprobantesState() {
         this.siguienteOffset,
         Number(pagina.offset || 0) + Number(pagina.recibidos || 0)
       );
-      this.totalRegistrosBackend = Math.max(
-        Number(this.totalRegistrosBackend) || 0,
-        Number(pagina.total) || 0,
-        this.siguienteOffset
-      );
-      // OPERADOS y el contador superior reflejan solo los ítems 2x.
-      this.totalRegistros = Math.max(0, this.totalRegistrosBackend - this.descartadosNo2x);
+      // El total es exactamente el universo que reporta la API.
+      this.totalRegistros = Math.max(0, Number(pagina.total) || 0);
 
       this.actualizarVisibles();
 
@@ -464,13 +428,10 @@ export function comprobantesState() {
     },
 
     async resetearYRefrescar() {
-      establecerCatalogoSocios(construirCatalogoSocios(this.directorio));
       const token = ++this.solicitudActual;
       this.items = [];
       this.todosLosItems = [];
       this.totalRegistros = 0;
-      this.totalRegistrosBackend = 0;
-      this.descartadosNo2x = 0;
       this.siguienteOffset = 0;
       this.visibleLocal = 0;
       this.modoPaginacion = 'red';
@@ -479,31 +440,6 @@ export function comprobantesState() {
       this.cargandoMas = false;
 
       try {
-        // El backend solo ordena por fecha (fecha_asc/fecha_desc). Para los
-        // criterios por monto se carga el universo acotado y se ordena de forma
-        // global en el cliente, revelándolo luego de 20 en 20. Así el filtro
-        // "Ordenar" conserva sus cuatro opciones en modo paginado.
-        if (String(this.filtroOrden || '').startsWith('monto')) {
-          const lista = await cargarComprobantesFiltrados(
-            {
-              ...this.paramsConsulta(),
-              desdeHash: this.filtroDesdeHash,
-              hastaHash: this.filtroHastaHash
-            },
-            { maximo: this.capMaximoDOM, loteActivo: this.loteActivo }
-          );
-          if (token !== this.solicitudActual) return;
-          this.procesarPagina({
-            items: lista,
-            total: lista.length,
-            hasMore: false,
-            paginado: false,
-            offset: 0,
-            recibidos: lista.length
-          });
-          return;
-        }
-
         // La primera pantalla solo descarga el primer bloque de 20.
         const pagina = await cargarPaginaComprobantes(this.paramsConsulta(), {
           limit: this.tamanoLote,
@@ -528,7 +464,6 @@ export function comprobantesState() {
         return;
       }
 
-      establecerCatalogoSocios(construirCatalogoSocios(this.directorio));
       const token = this.solicitudActual;
       this.cargandoMas = true;
       try {
@@ -580,80 +515,19 @@ export function comprobantesState() {
       });
     },
 
-    /**
-     * Descarga el catálogo comercial una sola vez. Mientras llega, las tarjetas
-     * siguen mostrando tasa_1/tasa_2; al incrementar el contador, Alpine vuelve
-     * a evaluar las tasas y pinta la compra/venta oficial de la cartelera.
-     */
-    async cargarCatalogoTasas() {
-      try {
-        await obtenerCatalogoTasasComerciales();
-      } catch (err) {
-        console.warn('[comprobantesState ⚠️ Catálogo de tasas no disponible]:', err?.message || err);
-      }
-      this.catalogoTasasListo += 1;
-    },
-
     resolverTasaComprobante(item, posicion = 1) {
-      // Dependencia reactiva: al cargar el catálogo se recalcula la tarjeta.
-      void this.catalogoTasasListo;
-      const oficial = resolverTasaComercialItem(
-        item,
-        posicion,
-        catalogoTasasComercialActual()
-      );
-      return (oficial !== null && oficial > 0)
-        ? oficial
-        : resolverTasaSocio(item, posicion);
+      return resolverTasaSocio(item, posicion);
     },
 
     /**
-     * Signo del socio según la regla +Suma / -Resta de su moneda en Perfiles.
-     * Socio 2 hereda el inverso exacto cuando no tiene regla propia.
+     * Signo del subtotal congelado. No consulta Perfiles: el signo ya viene en
+     * me1/me2 (o en monto_1/monto_2) desde el backend.
      */
     signoSocio(item, posicion = 1) {
-      return resolverSignoSocio(this.directorio, item, posicion);
-    },
-
-    /**
-     * DEF configurado en Perfiles para la moneda del socio (JSONB `monedas`).
-     * Respeta la herencia: el catálogo ya resolvió la tabla de FUNDDA.
-     * Devuelve 'D'/'P' o '' cuando la moneda no tiene regla propia.
-     */
-    naturalezaDefSocio(nombreSocio, moneda) {
-      const catalogo = obtenerCatalogoSocios();
-      const nombre = String(nombreSocio || '').trim();
-      const config = catalogo[nombre] || catalogo[normalizarSocio(nombre)] || null;
-      const codigo = String(moneda || '').trim().toUpperCase();
-      const letra = config?.tabla_monedas?.[codigo];
-      return letra === 'D' || letra === 'P' ? letra : '';
-    },
-
-    /**
-     * Tasas oficiales de la cartelera para el editor: compra en D, venta en P,
-     * paridad 1.00 en USDT y abonos. El spread comercial ya viene incorporado
-     * en el catálogo por socio/lote/divisa.
-     */
-    resolverTasasEdicion(moneda, naturaleza, lote, socio1, socio2) {
-      const letra = String(naturaleza || '').trim().toUpperCase();
-      const codigo = String(moneda || '').trim().toUpperCase();
-      if (codigo === 'USDT' || letra === 'A') return { tasa1: 1, tasa2: 1 };
-
-      const item = {
-        socio_1: socio1,
-        socio_2: socio2,
-        lote_tasa_asignado: lote,
-        lote,
-        moneda: codigo,
-        tipo_manual: letra
-      };
-      const catalogo = catalogoTasasComercialActual();
-      const t1 = resolverTasaComercialItem(item, 1, catalogo);
-      const t2 = resolverTasaComercialItem(item, 2, catalogo);
-      return {
-        tasa1: (t1 !== null && t1 > 0) ? t1 : 0,
-        tasa2: (t2 !== null && t2 > 0) ? t2 : 0
-      };
+      const valor = Number(posicion) === 2
+        ? (item?.me2 ?? item?.monto_2 ?? 0)
+        : (item?.me1 ?? item?.monto_1 ?? 0);
+      return Number(valor) < 0 ? -1 : 1;
     },
 
     async enviarReporteViaEvolution(socio = '') {
@@ -733,10 +607,8 @@ export function comprobantesState() {
     },
 
     formatMonto, formatTasa, obtenerME1, obtenerME2, obtenerTasaSocioCalculada, claseInsignia, formatDiaHora,
-    resolverTipoComprobante, esComprobante2x
+    resolverTipoComprobante
   };
-
-  Object.assign(state, crearAccionesModal(state));
 
   return state;
 }

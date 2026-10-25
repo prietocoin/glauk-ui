@@ -3,13 +3,13 @@
  * @description Funciones puras atómicas para formateo visual e insignias de comprobantes.
  */
 
-import { formatearMontoPlano } from './comprobantesNumerosUtils.js?v=20261024_24';
+import { formatearMontoPlano } from './comprobantesNumerosUtils.js?v=20261025_01';
 
 import {
   formatearTasaComercial,
   resolverTasaSocio,
   resolverTipoComprobante
-} from './comprobantesTasasUtils.js?v=20261024_24';
+} from './comprobantesTasasUtils.js?v=20261025_01';
 
 export {
   formatearTasaComercial,
@@ -19,7 +19,7 @@ export {
   resolverMonedaSocio,
   resolverSubtotalSocio,
   normalizarTasaComercial
-} from './comprobantesTasasUtils.js?v=20261024_24';
+} from './comprobantesTasasUtils.js?v=20261025_01';
 
 /**
  * Monto plano de la interfaz: 2 decimales truncados, sin comas de miles.

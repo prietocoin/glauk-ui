@@ -1,68 +1,62 @@
 /**
  * @file comprobantesTasasUtils.js
- * @description Fuente única de verdad para la tasa, el tipo, la moneda y el
- * subtotal de un socio. La tarjeta y el reporte comparten estas funciones de
- * resolución; el reporte aplica además la división directa monto / tasa.
+ * @description Lectura de las tasas, el tipo y el subtotal que ya proyectó el
+ * backend. No aplica spreads, no redondea y no reconstruye la polaridad.
  */
 
-import { resolverNaturalezaComprobante } from '../services/comprobantesNaturalezaService.js';
-import { aNumero as numero, formatearTasaPlana } from './comprobantesNumerosUtils.js?v=20261024_24';
+import { aNumero as numero, formatearTasaPlana } from './comprobantesNumerosUtils.js?v=20261025_01';
 
+/**
+ * La tasa del backend ya está truncada por el snapshot. Solo se valida que sea
+ * numérica; no se redondea ni se sustituye por 1.
+ */
 export function normalizarTasaComercial(valor) {
-  if (valor === 'N/A') return 1;
-  const num = numero(valor, 1);
-  if (!(num > 0)) return 1;
-
-  const redondeada = Math.round(num * 1e6) / 1e6;
-  return redondeada > 0 ? redondeada : 1;
+  const num = numero(valor, 0);
+  return Number.isFinite(num) && num > 0 ? num : 0;
 }
 
 /**
  * Formatea la tasa en formato decimal plano, sin comas de miles.
- *
- * - Entera: "1000", "1600", "3038".
- * - Fraccionaria: truncada a dos decimales con punto, "3.52".
- *
- * La antigua política por divisa (ARS entera, PEN con decimales) se retiró:
- * ahora la regla depende solo de si el valor es entero, y nunca se redondea.
- *
- * @param {number|string} valor Tasa ya proyectada por el Core.
+ * Es presentación: el valor viene del backend.
  */
 export function formatearTasaComercial(valor) {
-  const num = numero(valor, NaN);
-  return formatearTasaPlana(num);
+  return formatearTasaPlana(numero(valor, NaN));
 }
 
 /**
- * Tasa del lado del socio auditado, tal como la proyecta la tarjeta.
- * Orden de claves: tasa_1/tasa_2 del contrato canónico y alias tolerados.
+ * Tasa del lado del socio tal como la proyecta el backend.
  */
 export function resolverTasaSocio(item = {}, posicion = 1) {
   const esSocio2 = Number(posicion) === 2;
   const bruta = esSocio2
-    ? (item?.tasa_2 ?? item?.tasa2 ?? item?.tasa)
-    : (item?.tasa_1 ?? item?.tasa1 ?? item?.tasa);
+    ? (item?.tasa_2 ?? item?.tasa2)
+    : (item?.tasa_1 ?? item?.tasa1);
   return normalizarTasaComercial(bruta);
 }
 
 /**
- * Divisa con la que se cotiza la tasa: la del comprobante, no la moneda base
- * del socio. Para NELSY en ARS la tasa se publica como 1,664 / 1,600.
+ * Divisa con la que se cotiza la tasa: la del comprobante.
  */
 export function resolverMonedaTasa(item = {}) {
   return String(item?.moneda || item?.moneda_local || '').trim().toUpperCase();
 }
 
 /**
- * Tipo resuelto por la jerarquía central de naturaleza.
- * Se conserva el nombre histórico para no romper los consumidores existentes.
+ * Tipo de operación congelado por el backend. Se acepta el alias histórico
+ * `tipo_manual`, pero nunca se consulta la tabla de perfiles. Para el socio 2
+ * se prefiere `tipo_op2` cuando existe.
  */
-export function resolverTipoComprobante(item = {}) {
-  return resolverNaturalezaComprobante(item);
+export function resolverTipoComprobante(item = {}, posicion = 1) {
+  const esSocio2 = Number(posicion) === 2;
+  const bruto = esSocio2
+    ? (item?.tipo_op2 || item?.tipo_op1 || item?.tipo_op || item?.tipo_manual || item?.tipo || 'D')
+    : (item?.tipo_op1 || item?.tipo_op2 || item?.tipo_op || item?.tipo_manual || item?.tipo || 'D');
+  const letra = String(bruto).trim().split('-')[0].toUpperCase();
+  return letra === 'A' || letra === 'P' || letra === 'D' ? letra : 'D';
 }
 
 /**
- * Moneda base del socio (la del subtotal). No se usa para formatear la tasa.
+ * Moneda base del socio (la del subtotal).
  */
 export function resolverMonedaSocio(item = {}, posicion = 1) {
   const esSocio2 = Number(posicion) === 2;
@@ -73,29 +67,13 @@ export function resolverMonedaSocio(item = {}, posicion = 1) {
 }
 
 /**
- * Subtotal firmado del socio, copiado directamente del Core/tarjeta.
- *
- * - `m1_socio`/`m2_socio` ya vienen computados por el mapeador.
- * - La polaridad se aplica solo cuando existe de forma explícita; si no, el
- *   importe del backend ya incorpora el signo y se respeta tal cual.
- * - Prohibido dividir el monto del recibo entre la tasa.
+ * Subtotal firmado del socio, copiado directamente del snapshot del backend.
+ * No se multiplica por `polaridad_1/2`: el signo ya está en `me1`/`me2`.
  */
 export function resolverSubtotalSocio(item = {}, posicion = 1) {
   const esSocio2 = Number(posicion) === 2;
   const bruto = esSocio2
-    ? (item?.m2_socio ?? item?.monto_2 ?? item?.monto2 ?? item?.me2)
-    : (item?.m1_socio ?? item?.monto_1 ?? item?.monto1 ?? item?.me1);
-  if (bruto === null || bruto === undefined || bruto === '') return 0;
-
-  const valor = numero(bruto, 0);
-  const polaridad = esSocio2
-    ? (item?.polaridad_2 ?? item?.polaridad_socio_2 ?? item?.t2_polaridad ?? item?.grupo_2?.polaridad)
-    : (item?.polaridad_1 ?? item?.polaridad_socio_1 ?? item?.t1_polaridad ?? item?.grupo_1?.polaridad);
-
-  if (polaridad === null || polaridad === undefined || String(polaridad).trim() === '') {
-    return valor;
-  }
-
-  const signo = String(polaridad).trim().startsWith('-') ? -1 : 1;
-  return Math.abs(valor) * signo;
+    ? (item?.me2 ?? item?.m2_socio ?? item?.monto_2 ?? item?.monto2)
+    : (item?.me1 ?? item?.m1_socio ?? item?.monto_1 ?? item?.monto1);
+  return numero(bruto, 0);
 }

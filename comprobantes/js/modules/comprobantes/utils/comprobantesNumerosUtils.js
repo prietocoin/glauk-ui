@@ -8,7 +8,7 @@
 import {
   formatMontoContable,
   formatTasa as formatTasaUniversal
-} from '../../../../../shared/js/formatters.js?v=20261024_24';
+} from '../../../../../shared/js/formatters.js?v=20261025_01';
 
 /**
  * Parseo tolerante de importes que llegan como número o texto formateado.

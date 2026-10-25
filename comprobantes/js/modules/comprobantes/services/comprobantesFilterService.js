@@ -1,34 +1,12 @@
 /**
- * =================================================================
  * @file comprobantesFilterService.js
- * @path public/js/modules/comprobantes/services/comprobantesFilterService.js
- * @description Servicio atómico de cortafuegos (Filtro x2 estricto) y ordenamiento para comprobantes_final.
- * =================================================================
+ * @description Utilidades de presentación sobre la lista que ya entregó el
+ * backend: orden visual y rango posicional por hash. No filtra por dominio.
  */
 
-import {
-  normalizarSocio,
-  coincideSocioEstricto
-} from '../utils/comprobantesSocioUtils.js';
-import { esComprobante2x } from '../utils/comprobantes2xUtils.js';
-
-export { normalizarSocio, coincideSocioEstricto } from '../utils/comprobantesSocioUtils.js';
-export { esComprobante2x, esValido2x } from '../utils/comprobantes2xUtils.js';
-
-export function limpiarFiltro(val) {
-  if (!val) return '';
-  const str = normalizarSocio(val);
-  return (str === 'TODOS' || str === 'TODOS LOS SOCIOS' || str === 'GENERAL') ? '' : val;
-}
-
-export function filtrarPorSocioEstricto(lista = [], socio = '') {
-  if (!Array.isArray(lista)) return [];
-  return lista.filter(item => coincideSocioEstricto(item, socio));
-}
-
 /**
- * Ordenamiento único para la lista ya mapeada. Se aplica después de fusionar
- * los bloques de consulta para que la fecha/monto sean globales y no por lote.
+ * Ordenamiento único para la lista ya mapeada. El backend entrega el orden por
+ * fecha; esta función conserva la posibilidad de ordenar el bloque cargado.
  */
 export function ordenarComprobantes(lista = [], orden = 'fecha_desc') {
   if (!Array.isArray(lista)) return [];
@@ -38,7 +16,7 @@ export function ordenarComprobantes(lista = [], orden = 'fecha_desc') {
     const ms = new Date(raw).getTime();
     return isNaN(ms) ? 0 : ms;
   };
-  const monto = item => parseFloat(item.monto ?? item.m1_socio ?? item.me1 ?? 0) || 0;
+  const monto = item => parseFloat(item.monto ?? item.me1 ?? 0) || 0;
 
   return [...lista].sort((a, b) => {
     if (criterio === 'monto_desc') return monto(b) - monto(a);
@@ -101,77 +79,4 @@ export function aplicarRangoHash(lista = [], desdeHash = '', hastaHash = '') {
   const hasta = Math.max(inicio, fin);
 
   return lista.slice(desde, hasta + 1);
-}
-
-export function filtrarComprobantesAtómico(listaBase = [], directorio = [], filtros = {}) {
-  if (!Array.isArray(listaBase) || listaBase.length === 0) return [];
-
-  let resultado = [...listaBase];
-
-  // 🟢 0. CORTAFUEGOS OBLIGATORIO 2x: descarta huérfanos, borradores,
-  // montos en cero y filas GENERAL. Es la misma condición del badge ⚡ x2.
-  resultado = resultado.filter(esComprobante2x);
-
-  const socioBuscado = normalizarSocio(filtros.filtroSocio);
-
-  // 1. CORTAFUEGOS DE SOCIO (coincidencia exacta en Socio 1 o Socio 2)
-  if (socioBuscado && socioBuscado !== 'TODOS' && socioBuscado !== 'TODOS LOS SOCIOS') {
-    resultado = resultado.filter(item => coincideSocioEstricto(item, socioBuscado));
-  }
-
-  // 2. FILTRADO POR FECHA INICIO
-  if (filtros.filtroFechaInicio) {
-    const startObj = new Date(String(filtros.filtroFechaInicio).trim() + 'T00:00:00');
-    if (!isNaN(startObj.getTime())) {
-      const startMs = startObj.getTime();
-
-      resultado = resultado.filter(item => {
-        const rawDate = item.fecha_hora_iso || item.fecha_fmt || item.fecha_hora_comprobante || item.fecha_hora_input || item.created_at;
-        if (!rawDate) return true;
-        const itemMs = new Date(rawDate).getTime();
-        return !isNaN(itemMs) ? itemMs >= startMs : true;
-      });
-    }
-  }
-
-  // 3. FILTRADO POR FECHA FIN
-  if (filtros.filtroFechaFin) {
-    const endObj = new Date(String(filtros.filtroFechaFin).trim() + 'T23:59:59');
-    if (!isNaN(endObj.getTime())) {
-      const endMs = endObj.getTime();
-
-      resultado = resultado.filter(item => {
-        const rawDate = item.fecha_hora_iso || item.fecha_fmt || item.fecha_hora_comprobante || item.fecha_hora_input || item.created_at;
-        if (!rawDate) return true;
-        const itemMs = new Date(rawDate).getTime();
-        return !isNaN(itemMs) ? itemMs <= endMs : true;
-      });
-    }
-  }
-
-  // 4. ORDENAMIENTO COMPLETO
-  const criterioOrden = String(filtros.filtroOrden || 'fecha_desc').toLowerCase();
-
-  return [...resultado].sort((a, b) => {
-    // A) Orden por Monto
-    if (criterioOrden === 'monto_desc') {
-      return (parseFloat(b.monto) || 0) - (parseFloat(a.monto) || 0);
-    }
-    if (criterioOrden === 'monto_asc') {
-      return (parseFloat(a.monto) || 0) - (parseFloat(b.monto) || 0);
-    }
-
-    // B) Orden por Fecha
-    const dateA = a.fecha_hora_iso || a.fecha_fmt || a.fecha_hora_comprobante || a.fecha_hora_input || 0;
-    const dateB = b.fecha_hora_iso || b.fecha_fmt || b.fecha_hora_comprobante || b.fecha_hora_input || 0;
-
-    const msA = new Date(dateA).getTime() || 0;
-    const msB = new Date(dateB).getTime() || 0;
-
-    if (criterioOrden === 'fecha_asc') {
-      return msA - msB; // Antiguos primero
-    } else {
-      return msB - msA; // Recientes primero (Default)
-    }
-  });
 }
