@@ -5,7 +5,7 @@
  * del service worker sin requerir Ctrl+F5 en los navegadores de los clientes.
  */
 
-const SW_VERSION = '20261024_13';
+const SW_VERSION = '20261024_14';
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

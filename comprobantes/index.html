@@ -11,15 +11,15 @@
   <meta name="theme-color" content="#030611">
 
   <link rel="icon" type="image/png" href="./logo-fundablock.png">
-  <link rel="stylesheet" href="/shared/vendor/glauk2/tailwind.css?v=20261024_13">
-  <link rel="stylesheet" href="/shared/css/mobile.css?v=20261024_13">
+  <link rel="stylesheet" href="/shared/vendor/glauk2/tailwind.css?v=20261024_14">
+  <link rel="stylesheet" href="/shared/css/mobile.css?v=20261024_14">
 
   <!-- CLIENTE MODULAR Y ALPINE.JS -->
-  <script src="../config.js?v=20261024_13"></script>
-  <script type="module" src="./js/appBootstrap.js?v=20261024_13"></script>
-  <script type="module" src="./js/pwa.js?v=20261024_13"></script>
-  <script src="/shared/vendor/glauk2/alpine.min.js?v=20261024_13" defer></script>
-  <script src="/shared/vendor/html2canvas.min.js?v=20261024_13"></script>
+  <script src="../config.js?v=20261024_14"></script>
+  <script type="module" src="./js/appBootstrap.js?v=20261024_14"></script>
+  <script type="module" src="./js/pwa.js?v=20261024_14"></script>
+  <script src="/shared/vendor/glauk2/alpine.min.js?v=20261024_14" defer></script>
+  <script src="/shared/vendor/html2canvas.min.js?v=20261024_14"></script>
 
   <style>
     [x-cloak] { display: none !important; }
@@ -951,6 +951,18 @@
     return Math.trunc(num * 100) / 100;
   },
 
+  numeroPuro(valor) {
+    if (typeof valor === 'number') return Number.isFinite(valor) ? valor : 0;
+    if (valor === null || valor === undefined) return 0;
+    const texto = String(valor).trim().replace(/[^\d.,+-]/g, '');
+    if (!texto) return 0;
+    const limpio = /^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(texto)
+      ? texto.replace(/,/g, '')
+      : texto.replace(/\.(?=\d{3}\b)/g, '').replace(',', '.');
+    const num = Number(limpio);
+    return Number.isFinite(num) ? num : 0;
+  },
+
   normalizarTasaEdicion(valor) {
     const num = Number(valor);
     return Number.isFinite(num) && num > 0 ? num : 0;
@@ -1033,42 +1045,65 @@
     if (!this.itemEdicion || this.cargando) return;
     this.cargando = true;
 
-    const hashTarget = this.itemEdicion.hash_largo || this.itemEdicion.id;
+    const hashTarget = String(this.itemEdicion.hash_largo || this.itemEdicion.id || '').trim();
+    if (!hashTarget) {
+      alert('⚠️ El comprobante no tiene hash largo; no se puede guardar.');
+      this.cargando = false;
+      return;
+    }
+
+    // Tipos nativos puros: Go recibe float64 y strings, nunca etiquetas como
+    // "-22.51 USDT" ni comas de miles.
+    const montoPuro = Math.abs(this.numeroPuro(this.itemEdicion.monto));
+    const monto1 = this.numeroPuro(this.itemEdicion.m1_socio);
+    const monto2 = this.numeroPuro(this.itemEdicion.m2_socio);
+    const tasa1 = this.numeroPuro(this.itemEdicion.tasa_1);
+    const tasa2 = this.numeroPuro(this.itemEdicion.tasa_2);
+    const lote = String(this.itemEdicion.lote_tasa_asignado || 'T070').trim().toUpperCase();
+    const moneda = String(this.itemEdicion.moneda || 'USDT').trim().toUpperCase();
+    const naturaleza = String(this.itemEdicion.tipo_manual || 'D').trim().toUpperCase();
 
     const payload = {
       hash_largo: hashTarget,
-      banco: this.itemEdicion.banco,
-      referencia: this.itemEdicion.referencia,
-      titular: this.itemEdicion.titular,
-      socio_1: this.itemEdicion.nombre_socio_1,
-      socio_2: this.itemEdicion.nombre_socio_2,
-      nombre_socio_1: this.itemEdicion.nombre_socio_1,
-      nombre_socio_2: this.itemEdicion.nombre_socio_2,
-      tipo_manual: this.itemEdicion.tipo_manual || 'D',
-      moneda: this.itemEdicion.moneda,
-      monto: parseFloat(this.itemEdicion.monto || 0),
-      m1_socio: parseFloat(this.itemEdicion.m1_socio || 0),
-      m2_socio: parseFloat(this.itemEdicion.m2_socio || 0),
-      monto_1: parseFloat(this.itemEdicion.m1_socio || 0),
-      monto_2: parseFloat(this.itemEdicion.m2_socio || 0),
-      tasa_1: Number(this.itemEdicion.tasa_1) || 0,
-      tasa_2: Number(this.itemEdicion.tasa_2) || 0,
-      polaridad_1: this.itemEdicion.polaridad_1,
-      polaridad_2: this.itemEdicion.polaridad_2,
-      lote_tasa_asignado: this.itemEdicion.lote_tasa_asignado || 'T070',
-      lote_tasa: this.itemEdicion.lote_tasa_asignado || 'T070',
-      loteActivo: this.itemEdicion.lote_tasa_asignado || 'T070'
+      banco: String(this.itemEdicion.banco || '').trim(),
+      referencia: String(this.itemEdicion.referencia || '').trim(),
+      titular: String(this.itemEdicion.titular || '').trim(),
+      socio_1: String(this.itemEdicion.nombre_socio_1 || 'GENERAL').trim(),
+      socio_2: String(this.itemEdicion.nombre_socio_2 || 'GENERAL').trim(),
+      nombre_socio_1: String(this.itemEdicion.nombre_socio_1 || 'GENERAL').trim(),
+      nombre_socio_2: String(this.itemEdicion.nombre_socio_2 || 'GENERAL').trim(),
+      tipo_manual: naturaleza,
+      moneda,
+      monto: montoPuro,
+      m1_socio: monto1,
+      m2_socio: monto2,
+      monto_1: monto1,
+      monto_2: monto2,
+      tasa_1: tasa1,
+      tasa_2: tasa2,
+      lote_tasa_asignado: lote,
+      lote_tasa: lote
     };
+
+    console.log('PAYLOAD ENVIADO:', payload);
 
     try {
       const resolverApi = window.GlaukAPI?.url || ((ruta) => ruta);
-      const res = await fetch(resolverApi('/api/v2/comprobantes/' + encodeURIComponent(hashTarget)), {
+      const res = await fetch(resolverApi('/api/comprobantes/' + encodeURIComponent(hashTarget)), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
-      if (!res.ok) throw new Error('Error al guardar en el servidor');
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
+        console.error('ERROR BACKEND DETALLADO:', res.status, errorData);
+        const detalle = errorData?.error || errorData?.message || ('HTTP ' + res.status);
+        throw new Error('Error del servidor (' + res.status + '): ' + detalle);
+      }
+
+      const okData = await res.json().catch(() => null);
+      console.log('RESPUESTA BACKEND:', res.status, okData);
 
       window.dispatchEvent(new CustomEvent('comprobante-actualizado', { detail: payload }));
       this.modalAbierto = false;
@@ -1614,6 +1649,6 @@
        @click.stop>
 </div>
 
-<script type="module" src="/shared/js/mobile-nav.js?v=20261024_13"></script>
+<script type="module" src="/shared/js/mobile-nav.js?v=20261024_14"></script>
 </body>
 </html>
