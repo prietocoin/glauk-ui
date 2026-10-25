@@ -2,7 +2,7 @@ import { MONEDAS_BASE } from '../catalog.js';
 import { esHerencia } from '../domain.js';
 import { escapeHTML } from '../../../shared/js/dom.js';
 import { renderReglasHerencia } from './reglas-herencia.js';
-import { renderReglasEditor } from './reglas-editor.js';
+import { renderReglasEditor } from './reglas-editor.js?v=20261024_23';
 
 function opcionesBase(seleccionada) {
   return MONEDAS_BASE.map((opcion) => {
@@ -30,10 +30,10 @@ function campoJid(herencia) {
     : 'bg-slate-900 text-cyan-300 border-slate-700';
 }
 
-function reglasDelModo(herencia, reglas, monedaParaAgregar) {
+function reglasDelModo(herencia, reglas, monedaParaAgregar, tasasBase) {
   return herencia
     ? renderReglasHerencia(reglas)
-    : renderReglasEditor(reglas, monedaParaAgregar);
+    : renderReglasEditor(reglas, monedaParaAgregar, tasasBase);
 }
 
 // Footer fijo del modal: siempre visible, con objetivos táctiles de 44px.
@@ -55,7 +55,7 @@ function footer(herencia) {
 // Anatomía mobile-first obligatoria: handle + header fijo + body scrolleable +
 // footer fijo. El diálogo nunca scrollea completo, así "Guardar Cambios" queda
 // siempre accesible con el pulgar.
-export function renderModalSocio({ socio = {}, reglas = [], monedaParaAgregar = '' }) {
+export function renderModalSocio({ socio = {}, reglas = [], monedaParaAgregar = '', tasasBase = null }) {
   const herencia = esHerencia(socio.herencia);
   const deshabilitado = herencia ? ' disabled' : '';
   const nombre = escapeHTML(socio.nombre || '');
@@ -108,7 +108,7 @@ export function renderModalSocio({ socio = {}, reglas = [], monedaParaAgregar = 
           </div>
 
           <div class="border-t border-slate-800 pt-4" id="perfiles-reglas">
-            ${reglasDelModo(herencia, reglas, monedaParaAgregar)}
+            ${reglasDelModo(herencia, reglas, monedaParaAgregar, tasasBase)}
           </div>
 
         </div>

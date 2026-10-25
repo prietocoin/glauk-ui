@@ -14,10 +14,14 @@ export const toggle = (nombre, activo) =>
 
 export const eliminar = (nombre) => del(`${BASE}/${encodeURIComponent(nombre)}`);
 
+// Lote activo de tasas: alimenta la píldora "base" y el cálculo en vivo del
+// spread en las tarjetas de moneda del modal.
+export const tasasUltimas = () => get('/api/tasas/ultimas');
+
 export const apagarTodos = () => post(`${BASE}/apagar-todos`);
 export const memorizar = () => post(`${BASE}/plantilla/memorizar`);
 export const restaurar = () => post(`${BASE}/plantilla/restaurar`);
 
 export const api = {
-  listar, guardar, toggle, eliminar, apagarTodos, memorizar, restaurar
+  listar, guardar, toggle, eliminar, apagarTodos, memorizar, restaurar, tasasUltimas
 };

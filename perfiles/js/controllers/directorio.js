@@ -1,6 +1,6 @@
 import { qs } from '../../../shared/js/dom.js';
-import { api } from '../api.js';
-import { state } from '../store.js';
+import { api } from '../api.js?v=20261024_23';
+import { state } from '../store.js?v=20261024_23';
 import { esEntidadProtegida, esHerencia, payloadGuardar, reglasSegunModo, sociosFiltrados } from '../domain.js';
 import { renderListaSocios } from '../components/lista-socios.js?v=20261024_18';
 

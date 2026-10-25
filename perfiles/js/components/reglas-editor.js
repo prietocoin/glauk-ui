@@ -1,8 +1,42 @@
 import { CATALOGO_MONEDAS } from '../catalog.js';
 import { escapeHTML } from '../../../shared/js/dom.js';
 
-function etiquetaBase(base) {
-  return base ? Number(base).toLocaleString() : '-';
+/** Truncamiento estricto a 2 decimales (sin Math.round). */
+export function truncar2(valor) {
+  const num = Number(valor);
+  if (!Number.isFinite(num)) return 0;
+  return Math.trunc(num * 100) / 100;
+}
+
+/** Tasa base de la divisa en el lote activo; cae al catálogo si no existe. */
+export function baseMoneda(regla, tasasBase) {
+  const delLote = Number(tasasBase?.tasas?.[regla?.codigo]);
+  if (Number.isFinite(delLote) && delLote > 0) return delLote;
+  const delCatalogo = Number(regla?.base ?? CATALOGO_MONEDAS[regla?.codigo]?.base);
+  return Number.isFinite(delCatalogo) && delCatalogo > 0 ? delCatalogo : 0;
+}
+
+/**
+ * Tasa resultante del spread. Réplica exacta del Core:
+ *   D -> base * (1 + deposito/100)
+ *   P -> base * (1 - pago/100)
+ * con truncamiento atómico a 2 decimales.
+ */
+export function tasaResultante(base, porcentaje, tipo) {
+  const pct = Math.abs(Number(porcentaje) || 0) / 100;
+  const factor = String(tipo).toUpperCase() === 'P' ? 1 - pct : 1 + pct;
+  return truncar2((Number(base) || 0) * factor);
+}
+
+/** Formato plano: entero sin decimales, fraccionario con dos. */
+export function formatearTasa(valor) {
+  const num = truncar2(valor);
+  return Number.isInteger(num) ? String(num) : num.toFixed(2);
+}
+
+function urlBandera(regla) {
+  const iso = String(regla?.iso || '').trim().toLowerCase();
+  return iso ? `/tasas/flags/${iso}.png` : '';
 }
 
 function opcionesCatalogo(seleccionada, reglas) {
@@ -14,63 +48,82 @@ function opcionesCatalogo(seleccionada, reglas) {
   }).join('');
 }
 
-function renderRegla(regla, index) {
-  const claseDep = regla.polar_D === '+' ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400' : 'border-rose-500/40 bg-rose-500/10 text-rose-400';
-  const clasePago = regla.polar_P === '-' ? 'border-rose-500/40 bg-rose-500/10 text-rose-400' : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400';
-  const textoDep = regla.polar_D === '+' ? '+ Suma' : '- Resta';
-  const textoPago = regla.polar_P === '-' ? '- Resta' : '+ Suma';
-  const base = escapeHTML(etiquetaBase(regla.base));
+function renderDef(regla, index) {
+  const esD = regla.tipo !== 'P';
   return `
-    <div class="bg-[#050a1e] border border-purple-500/30 hover:border-purple-500/50 rounded-xl p-3.5 space-y-3 shadow-md transition">
-      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 pb-2">
-        <div class="flex items-center gap-2 min-w-0">
-          <span class="text-xs font-mono font-bold text-cyan-400">${escapeHTML(regla.iso)}</span>
-          <span class="text-sm font-bold text-white tracking-wide truncate">${escapeHTML(regla.nombre)} (${escapeHTML(regla.codigo)})</span>
+    <div class="regla-def" role="group" aria-label="Naturaleza por defecto de ${escapeHTML(regla.codigo)}">
+      <span class="regla-def-label">DEF</span>
+      <button type="button" data-accion="tipo" data-indice="${index}" data-tipo="D"
+              class="${esD ? 'is-active' : ''}" aria-pressed="${esD}" title="Defecto Depósito">D</button>
+      <button type="button" data-accion="tipo" data-indice="${index}" data-tipo="P"
+              class="${esD ? '' : 'is-active'}" aria-pressed="${!esD}" title="Defecto Pago">P</button>
+    </div>`;
+}
+
+function renderOperacion({ regla, index, campo, tipo, base, flecha }) {
+  const esDeposito = tipo === 'D';
+  const polar = esDeposito ? regla.polar_D : regla.polar_P;
+  const positivo = polar === '+';
+  const porcentaje = esDeposito ? regla.deposito : regla.pago;
+  const resultado = tasaResultante(base, porcentaje, tipo);
+  const titulo = positivo ? '+ Suma' : '- Resta';
+
+  return `
+    <div class="regla-op ${esDeposito ? 'is-dep' : 'is-pago'}">
+      <div class="regla-op-head">
+        <span class="regla-arrow" aria-hidden="true">${flecha}</span>
+        <span>${esDeposito ? 'DEPÓSITO (D) %' : 'PAGO (P) %'}</span>
+      </div>
+      <div class="regla-op-row">
+        <input type="number" step="0.01" inputmode="decimal"
+               aria-label="${esDeposito ? 'Spread de depósito' : 'Spread de pago'} de ${escapeHTML(regla.codigo)}"
+               data-regla="${index}" data-campo="${campo}"
+               value="${escapeHTML(porcentaje)}">
+        <span class="regla-result" data-resultado="${index}-${campo}" title="Tasa resultante">${formatearTasa(resultado)}</span>
+        <button type="button"
+                data-accion="${esDeposito ? 'toggle-dep' : 'toggle-pago'}"
+                data-indice="${index}"
+                data-signo="${escapeHTML(polar)}"
+                class="regla-sign ${positivo ? 'is-pos' : 'is-neg'}"
+                title="${titulo}"
+                aria-label="${titulo}">${positivo ? '+' : '-'}</button>
+      </div>
+    </div>`;
+}
+
+function renderRegla(regla, index, tasasBase) {
+  const base = baseMoneda(regla, tasasBase);
+  const bandera = urlBandera(regla);
+  const alt = `Bandera ${escapeHTML(regla.codigo)}`;
+
+  return `
+    <div class="regla-card">
+      <div class="regla-head">
+        <div class="regla-id">
+          ${bandera ? `<img class="regla-flag" src="${bandera}" alt="${alt}" loading="lazy" onerror="this.style.display='none'">` : ''}
+          <span class="regla-name">${escapeHTML(regla.nombre)} <span class="regla-code">(${escapeHTML(regla.codigo)})</span></span>
         </div>
 
-        <div class="flex items-center gap-2">
-          <label class="text-[10px] font-bold uppercase text-slate-400" for="perfiles-regla-${index}-tipo">DEF:</label>
-          <select id="perfiles-regla-${index}-tipo" data-regla="${index}" data-campo="tipo" class="min-h-10 bg-[#030611] border border-slate-700 text-xs text-cyan-400 rounded-lg px-2.5 py-2 font-bold focus:outline-none">
-            <option value="D"${regla.tipo === 'D' ? ' selected' : ''}>D (Depósito)</option>
-            <option value="P"${regla.tipo === 'P' ? ' selected' : ''}>P (Pago)</option>
-          </select>
-
-          <button type="button" data-accion="eliminar-moneda" data-indice="${index}" class="min-w-11 min-h-11 inline-flex items-center justify-center text-slate-400 hover:text-rose-400 text-base transition p-2 rounded-lg border border-transparent hover:border-rose-500/40" title="Quitar país" aria-label="Quitar ${escapeHTML(regla.codigo)}">🗑</button>
+        <div class="regla-head-actions">
+          <span class="regla-base" title="Tasa base del lote activo">${formatearTasa(base)}</span>
+          ${renderDef(regla, index)}
+          <button type="button" data-accion="eliminar-moneda" data-indice="${index}"
+                  class="regla-del" title="Quitar moneda" aria-label="Quitar ${escapeHTML(regla.codigo)}">🗑️</button>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div class="bg-[#030611] rounded-lg p-2.5 space-y-1.5 border border-cyan-950/80">
-          <div class="flex items-center justify-between">
-            <span class="text-[10px] font-bold text-cyan-400">DEPÓSITO (D) %</span>
-            <span class="text-[10px] font-mono text-slate-500">${base}</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <input type="number" step="0.01" inputmode="decimal" data-regla="${index}" data-campo="deposito" value="${escapeHTML(regla.deposito)}" class="w-full min-h-11 bg-[#070e23] border border-slate-800 rounded-lg px-2 py-2 text-center font-bold text-sm text-white focus:outline-none focus:border-cyan-500">
-            <button type="button" data-accion="toggle-dep" data-indice="${index}" data-signo="${regla.polar_D}" class="min-h-11 min-w-20 px-3 py-2 rounded-lg text-[11px] font-bold border shrink-0 transition ${claseDep}">${textoDep}</button>
-          </div>
-        </div>
-
-        <div class="bg-[#030611] rounded-lg p-2.5 space-y-1.5 border border-amber-950/80">
-          <div class="flex items-center justify-between">
-            <span class="text-[10px] font-bold text-amber-400">PAGO (P) %</span>
-            <span class="text-[10px] font-mono text-slate-500">${base}</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <input type="number" step="0.01" inputmode="decimal" data-regla="${index}" data-campo="pago" value="${escapeHTML(regla.pago)}" class="w-full min-h-11 bg-[#070e23] border border-slate-800 rounded-lg px-2 py-2 text-center font-bold text-sm text-white focus:outline-none focus:border-amber-500">
-            <button type="button" data-accion="toggle-pago" data-indice="${index}" data-signo="${regla.polar_P}" class="min-h-11 min-w-20 px-3 py-2 rounded-lg text-[11px] font-bold border shrink-0 transition ${clasePago}">${textoPago}</button>
-          </div>
-        </div>
+      <div class="regla-ops">
+        ${renderOperacion({ regla, index, campo: 'deposito', tipo: 'D', base, flecha: '↓' })}
+        ${renderOperacion({ regla, index, campo: 'pago', tipo: 'P', base, flecha: '↑' })}
       </div>
     </div>`;
 }
 
 // Vista editable: selector de catálogo, tarjetas por moneda y empty state.
-// Sin scroll interno: el único scroll es el body del modal, para que las
-// tarjetas no queden atrapadas en una caja de 380px en mobile.
-export function renderReglasEditor(reglas = [], monedaParaAgregar = '') {
+// Sin scroll interno: el único scroll es el body del modal.
+export function renderReglasEditor(reglas = [], monedaParaAgregar = '', tasasBase = null) {
   const tarjetas = reglas.length
-    ? `<div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">${reglas.map(renderRegla).join('')}</div>`
+    ? `<div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">${reglas.map((regla, index) => renderRegla(regla, index, tasasBase)).join('')}</div>`
     : '';
   const vacio = reglas.length === 0
     ? '<div class="text-center py-6 border border-dashed border-slate-800 rounded-xl text-slate-500 text-xs">Sin reglas configuradas.</div>'

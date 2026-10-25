@@ -6,5 +6,6 @@ export const state = {
   modalAbierto: false,
   socioEdicion: {},
   reglas: [],
-  monedaParaAgregar: ''
+  monedaParaAgregar: '',
+  tasasBase: null
 };

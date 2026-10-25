@@ -1,8 +1,8 @@
-import { api } from './api.js';
-import { state } from './store.js';
-import { crearEditor } from './controllers/editor.js';
-import { crearDirectorio } from './controllers/directorio.js?v=20261024_18';
-import { crearAcciones } from './controllers/acciones.js';
+import { api } from './api.js?v=20261024_23';
+import { state } from './store.js?v=20261024_23';
+import { crearEditor } from './controllers/editor.js?v=20261024_23';
+import { crearDirectorio } from './controllers/directorio.js?v=20261024_23';
+import { crearAcciones } from './controllers/acciones.js?v=20261024_23';
 
 async function recargarSocios() {
   try {
@@ -11,6 +11,16 @@ async function recargarSocios() {
     console.error('Error cargando socios:', err);
   }
   directorio.render();
+}
+
+// Lote activo de tasas para la píldora "base" y el cálculo en vivo del spread.
+async function cargarTasasBase() {
+  try {
+    state.tasasBase = await api.tasasUltimas();
+  } catch (err) {
+    console.warn('No se pudo cargar el lote activo de tasas:', err);
+  }
+  if (state.modalAbierto) editor.render();
 }
 
 const editor = crearEditor({ recargar: recargarSocios });
@@ -36,6 +46,7 @@ function boot() {
   acciones.mount();
   registrarServiceWorker();
   directorio.render();
+  void cargarTasasBase();
   void recargarSocios();
 }
 
