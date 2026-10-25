@@ -1333,9 +1333,9 @@ body.glauk-sheet-open .glauk-main {
 .glauk-socio-row {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 8px;
   min-width: 0;
-  padding: 3px 6px;
+  padding: 5px 6px;
   border-left: 3px solid transparent;
   border-radius: 0 7px 7px 0;
   background: rgba(15, 23, 42, .55);
@@ -1349,37 +1349,62 @@ body.glauk-sheet-open .glauk-main {
   border-left-color: #22d3ee;
 }
 
-.glauk-socio-dot {
-  flex: 0 0 6px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #f59e0b;
+/* Columna izquierda en dos líneas: nombre con emoji de rol y, debajo, la tasa. */
+.glauk-socio-main {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  padding-left: 1px;
+  padding-right: 8px;
 }
 
-.glauk-socio-row.is-socio2 .glauk-socio-dot {
-  background: #22d3ee;
+.glauk-socio-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.glauk-socio-emoji {
+  flex: 0 0 auto;
+  font-size: 12px;
+  line-height: 1;
 }
 
 .glauk-socio-name {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-width: 0;
   overflow: hidden;
-  color: #f1f5f9;
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: .02em;
+  font-weight: 800;
+  letter-spacing: .03em;
   text-overflow: ellipsis;
   text-transform: uppercase;
   white-space: nowrap;
 }
 
+.glauk-socio-row.is-socio1 .glauk-socio-name {
+  color: #fbbf24;
+}
+
+.glauk-socio-row.is-socio2 .glauk-socio-name {
+  color: #22d3ee;
+}
+
 .glauk-socio-rate {
   flex: 0 0 auto;
+  padding-left: 18px;
+  overflow: hidden;
   color: #64748b;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 9px;
   font-weight: 700;
+  line-height: 1.2;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -1448,8 +1473,16 @@ body.glauk-sheet-open .glauk-main {
   }
 
   .glauk-socio-row {
-    gap: 4px;
-    padding: 3px 5px;
+    gap: 6px;
+    padding: 4px 5px;
+  }
+
+  .glauk-socio-main {
+    padding-right: 6px;
+  }
+
+  .glauk-socio-emoji {
+    font-size: 11px;
   }
 
   .glauk-socio-name {
@@ -1457,6 +1490,7 @@ body.glauk-sheet-open .glauk-main {
   }
 
   .glauk-socio-rate {
+    padding-left: 17px;
     font-size: 8.5px;
   }
 

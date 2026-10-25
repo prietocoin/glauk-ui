@@ -11,15 +11,15 @@
   <meta name="theme-color" content="#030611">
 
   <link rel="icon" type="image/png" href="./logo-fundablock.png">
-  <link rel="stylesheet" href="/shared/vendor/glauk2/tailwind.css?v=20261024_11">
-  <link rel="stylesheet" href="/shared/css/mobile.css?v=20261024_11">
+  <link rel="stylesheet" href="/shared/vendor/glauk2/tailwind.css?v=20261024_12">
+  <link rel="stylesheet" href="/shared/css/mobile.css?v=20261024_12">
 
   <!-- CLIENTE MODULAR Y ALPINE.JS -->
-  <script src="../config.js?v=20261024_11"></script>
-  <script type="module" src="./js/appBootstrap.js?v=20261024_11"></script>
-  <script type="module" src="./js/pwa.js?v=20261024_11"></script>
-  <script src="/shared/vendor/glauk2/alpine.min.js?v=20261024_11" defer></script>
-  <script src="/shared/vendor/html2canvas.min.js?v=20261024_11"></script>
+  <script src="../config.js?v=20261024_12"></script>
+  <script type="module" src="./js/appBootstrap.js?v=20261024_12"></script>
+  <script type="module" src="./js/pwa.js?v=20261024_12"></script>
+  <script src="/shared/vendor/glauk2/alpine.min.js?v=20261024_12" defer></script>
+  <script src="/shared/vendor/html2canvas.min.js?v=20261024_12"></script>
 
   <style>
     [x-cloak] { display: none !important; }
@@ -570,18 +570,26 @@
 
         <div class="glauk-socios-stack">
           <div class="glauk-socio-row is-socio1">
-            <span class="glauk-socio-dot" aria-hidden="true"></span>
-            <span class="glauk-socio-name" x-text="s1Nombre"></span>
-            <span class="glauk-socio-rate" x-text="'T1 ' + formatTasa(resolverTasaComprobante(item, 1), item.moneda, resolverTipoComprobante(item))"></span>
+            <div class="glauk-socio-main">
+              <div class="glauk-socio-title">
+                <span class="glauk-socio-emoji" aria-hidden="true" x-text="s1Badge || '🛡️'"></span>
+                <span class="glauk-socio-name" x-text="s1Nombre"></span>
+              </div>
+              <span class="glauk-socio-rate" x-text="'T1 ' + formatTasa(resolverTasaComprobante(item, 1), item.moneda, resolverTipoComprobante(item))"></span>
+            </div>
             <strong class="glauk-socio-subtotal"
                     :class="s1Polaridad === '-' ? 'is-negative' : 'is-positive'"
                     x-text="(s1Polaridad === '-' ? '-' : '+') + formatMonto(Math.abs(parseFloat(obtenerME1(item) || 0))) + ' ' + s1Moneda"></strong>
           </div>
 
           <div class="glauk-socio-row is-socio2" x-show="s2Visible">
-            <span class="glauk-socio-dot" aria-hidden="true"></span>
-            <span class="glauk-socio-name" x-text="s2Nombre"></span>
-            <span class="glauk-socio-rate" x-text="'T2 ' + formatTasa(resolverTasaComprobante(item, 2), item.moneda, resolverTipoComprobante(item))"></span>
+            <div class="glauk-socio-main">
+              <div class="glauk-socio-title">
+                <span class="glauk-socio-emoji" aria-hidden="true" x-text="s2Badge || '🛡️'"></span>
+                <span class="glauk-socio-name" x-text="s2Nombre"></span>
+              </div>
+              <span class="glauk-socio-rate" x-text="'T2 ' + formatTasa(resolverTasaComprobante(item, 2), item.moneda, resolverTipoComprobante(item))"></span>
+            </div>
             <strong class="glauk-socio-subtotal"
                     :class="s2Polaridad === '-' ? 'is-negative' : 'is-positive'"
                     x-text="(s2Polaridad === '-' ? '-' : '+') + formatMonto(Math.abs(parseFloat(obtenerME2(item) || 0))) + ' ' + s2Moneda"></strong>
@@ -1511,6 +1519,6 @@
        @click.stop>
 </div>
 
-<script type="module" src="/shared/js/mobile-nav.js?v=20261024_11"></script>
+<script type="module" src="/shared/js/mobile-nav.js?v=20261024_12"></script>
 </body>
 </html>
