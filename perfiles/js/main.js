@@ -1,8 +1,8 @@
-import { api } from './api.js?v=20261024_24';
-import { state } from './store.js?v=20261024_24';
-import { crearEditor } from './controllers/editor.js?v=20261024_24';
-import { crearDirectorio } from './controllers/directorio.js?v=20261024_24';
-import { crearAcciones } from './controllers/acciones.js?v=20261024_24';
+import { api } from './api.js?v=20261024_99_FIX_TASAS';
+import { state } from './store.js?v=20261024_99_FIX_TASAS';
+import { crearEditor } from './controllers/editor.js?v=20261024_99_FIX_TASAS';
+import { crearDirectorio } from './controllers/directorio.js?v=20261024_99_FIX_TASAS';
+import { crearAcciones } from './controllers/acciones.js?v=20261024_99_FIX_TASAS';
 
 async function recargarSocios() {
   try {
@@ -35,9 +35,11 @@ const acciones = crearAcciones({
 
 function registrarServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
-  const script = new URL('../sw.js', import.meta.url);
+  const script = new URL('../sw.js?v=20261024_99_FIX_TASAS', import.meta.url);
   const scope = new URL('../', import.meta.url).pathname;
-  navigator.serviceWorker.register(script, { scope }).catch(() => { /* offline opcional */ });
+  navigator.serviceWorker
+    .register(script, { scope, updateViaCache: 'none' })
+    .catch(() => { /* offline opcional */ });
 }
 
 function boot() {

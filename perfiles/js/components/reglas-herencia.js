@@ -1,8 +1,8 @@
 import { escapeHTML } from '../../../shared/js/dom.js';
-import { formatTasa } from '../../../shared/js/formatters.js?v=20261024_24';
+import { formatearTasaEstricta } from '../utils/tasas.js?v=20261024_99_FIX_TASAS';
 
 function etiquetaBase(base) {
-  return base ? formatTasa(base) : '-';
+  return base ? formatearTasaEstricta(base) : '-';
 }
 
 function renderFila(regla) {

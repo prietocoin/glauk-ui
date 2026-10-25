@@ -1,5 +1,5 @@
 import { CATALOGO_MONEDAS } from '../catalog.js';
-import { formatTasa } from '../../../shared/js/formatters.js?v=20261024_24';
+import { formatearTasaEstricta } from '../utils/tasas.js?v=20261024_99_FIX_TASAS';
 import { escapeHTML } from '../../../shared/js/dom.js';
 
 /** Truncamiento estricto a 2 decimales (sin Math.round). */
@@ -29,8 +29,8 @@ export function tasaResultante(base, porcentaje, tipo) {
   return truncar2((Number(base) || 0) * factor);
 }
 
-/** Formato universal de tasa (regla compartida de toda la plataforma). */
-export const formatearTasa = formatTasa;
+/** Tasa resultante del spread, formateada con la regla estricta. */
+export { formatearTasaEstricta };
 
 function urlBandera(regla) {
   const iso = String(regla?.iso || '').trim().toLowerCase();
@@ -77,7 +77,7 @@ function renderOperacion({ regla, index, campo, tipo, base, flecha }) {
                aria-label="${esDeposito ? 'Spread de depósito' : 'Spread de pago'} de ${escapeHTML(regla.codigo)}"
                data-regla="${index}" data-campo="${campo}"
                value="${escapeHTML(porcentaje)}">
-        <span class="regla-result" data-resultado="${index}-${campo}" title="Tasa resultante">${formatearTasa(resultado)}</span>
+        <span class="regla-result" data-resultado="${index}-${campo}" title="Tasa resultante">${formatearTasaEstricta(resultado)}</span>
         <button type="button"
                 data-accion="${esDeposito ? 'toggle-dep' : 'toggle-pago'}"
                 data-indice="${index}"
@@ -103,7 +103,7 @@ function renderRegla(regla, index, tasasBase) {
         </div>
 
         <div class="regla-head-actions">
-          <span class="regla-base" title="Tasa base del lote activo">${formatearTasa(base)}</span>
+          <span class="regla-base" title="Tasa base del lote activo">${formatearTasaEstricta(base)}</span>
           ${renderDef(regla, index)}
           <button type="button" data-accion="eliminar-moneda" data-indice="${index}"
                   class="regla-del" title="Quitar moneda" aria-label="Quitar ${escapeHTML(regla.codigo)}">🗑️</button>

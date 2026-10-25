@@ -1,13 +1,14 @@
 import { qs } from '../../../shared/js/dom.js';
-import { api } from '../api.js?v=20261024_24';
-import { state } from '../store.js?v=20261024_24';
+import { api } from '../api.js?v=20261024_99_FIX_TASAS';
+import { state } from '../store.js?v=20261024_99_FIX_TASAS';
 import {
   esHerencia, nuevaRegla, payloadGuardar, reglasSegunModo
 } from '../domain.js';
-import { renderModalSocio } from '../components/modal-socio.js?v=20261024_24';
+import { renderModalSocio } from '../components/modal-socio.js?v=20261024_99_FIX_TASAS';
 import {
-  baseMoneda, formatearTasa, renderReglasEditor, tasaResultante
-} from '../components/reglas-editor.js?v=20261024_24';
+  baseMoneda, renderReglasEditor, tasaResultante
+} from '../components/reglas-editor.js?v=20261024_99_FIX_TASAS';
+import { formatearTasaEstricta } from '../utils/tasas.js?v=20261024_99_FIX_TASAS';
 import { renderReglasHerencia } from '../components/reglas-herencia.js';
 import { notificarSociosActualizados } from '../../../shared/js/sync.js';
 
@@ -198,7 +199,7 @@ export function crearEditor({ recargar = async () => {}, alertar = globalThis.al
       const tipo = campo === 'deposito' ? 'D' : 'P';
       const resultado = tasaResultante(baseMoneda(regla, state.tasasBase), target.value, tipo);
       const salida = qs(`[data-resultado="${i}-${campo}"]`, root);
-      if (salida) salida.textContent = formatearTasa(resultado);
+      if (salida) salida.textContent = formatearTasaEstricta(resultado);
       return;
     }
     if (campo === 'nombre' || campo === 'saldo_inicial' || campo === 'id_grupo') {

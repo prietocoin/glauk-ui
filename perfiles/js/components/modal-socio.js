@@ -2,7 +2,7 @@ import { MONEDAS_BASE } from '../catalog.js';
 import { esHerencia } from '../domain.js';
 import { escapeHTML } from '../../../shared/js/dom.js';
 import { renderReglasHerencia } from './reglas-herencia.js';
-import { renderReglasEditor } from './reglas-editor.js?v=20261024_24';
+import { renderReglasEditor } from './reglas-editor.js?v=20261024_99_FIX_TASAS';
 
 function opcionesBase(seleccionada) {
   return MONEDAS_BASE.map((opcion) => {

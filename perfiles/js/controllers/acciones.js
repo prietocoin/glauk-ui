@@ -1,5 +1,5 @@
 import { qs } from '../../../shared/js/dom.js';
-import { api } from '../api.js?v=20261024_24';
+import { api } from '../api.js?v=20261024_99_FIX_TASAS';
 
 export function crearAcciones({
   recargar = async () => {},

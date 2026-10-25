@@ -1,8 +1,8 @@
 import { qs } from '../../../shared/js/dom.js';
-import { api } from '../api.js?v=20261024_24';
-import { state } from '../store.js?v=20261024_24';
+import { api } from '../api.js?v=20261024_99_FIX_TASAS';
+import { state } from '../store.js?v=20261024_99_FIX_TASAS';
 import { esEntidadProtegida, esHerencia, payloadGuardar, reglasSegunModo, sociosFiltrados } from '../domain.js';
-import { renderListaSocios } from '../components/lista-socios.js?v=20261024_24';
+import { renderListaSocios } from '../components/lista-socios.js?v=20261024_99_FIX_TASAS';
 
 export function crearDirectorio({
   recargar = async () => {},
