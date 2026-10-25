@@ -156,11 +156,15 @@ export function prepararEdicionComprobante(item = {}, loteActivo = 'T070') {
     t1_tipo: c.t1_tipo || item.t1_tipo
   });
 
-  // Un abono es siempre positivo para el socio 1 y negativo para el socio 2.
-  // Así la tarjeta, el reporte y los KPIs conservan el signo de la naturaleza
-  // resuelta, incluso si la proyección del backend venía con otro tipo.
-  const polaridad1Final = tipoResuelto === 'A' ? '+' : pol1;
-  const polaridad2Final = tipoResuelto === 'A' ? '-' : pol2;
+  // Polaridad del abono: manda el signo real de la proyección (quién entrega
+  // resta y quién recibe suma). Antes se forzaba +/-, lo que hacía que ambos
+  // socios aparecieran en verde cuando el Core traía otra dirección.
+  const polaridad1Final = tipoResuelto === 'A'
+    ? (signo1 < 0 ? '-' : '+')
+    : pol1;
+  const polaridad2Final = tipoResuelto === 'A'
+    ? (signo2 < 0 ? '-' : (signo2 > 0 ? '+' : '-'))
+    : pol2;
 
   return {
     ...item,
@@ -196,6 +200,7 @@ export function prepararEdicionComprobante(item = {}, loteActivo = 'T070') {
     moneda_socio_1: c.moneda_socio_1 || item.moneda_socio_1 || c.moneda_base_socio1 || item.moneda_base_socio1 || 'USDT',
     tasa_1: t1,
     m1_socio: calcM1,
+    me1_firmado: signo1,
     monto_1: calcM1,
     me1: calcM1,
     polaridad_1: polaridad1Final,
@@ -209,6 +214,7 @@ export function prepararEdicionComprobante(item = {}, loteActivo = 'T070') {
     moneda_socio_2: c.moneda_socio_2 || item.moneda_socio_2 || c.moneda_base_socio2 || item.moneda_base_socio2 || 'USDT',
     tasa_2: t2,
     m2_socio: calcM2,
+    me2_firmado: signo2,
     monto_2: calcM2,
     me2: calcM2,
     polaridad_2: polaridad2Final,

@@ -4,7 +4,7 @@
  * el filtro ni el listado principal del Dashboard.
  */
 
-import { cargarComprobantesFiltrados } from '../services/comprobantesCargaService.js';
+import { cargarComprobantesFiltrados } from '../services/comprobantesCargaService.js?v=20261024_17';
 import {
   aplicarRangoHash,
   coincideSocioEstricto,

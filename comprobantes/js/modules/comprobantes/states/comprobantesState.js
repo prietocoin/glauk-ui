@@ -27,16 +27,17 @@ import { eliminarComprobantePorHash } from '../services/comprobantesApiService.j
 import {
   cargarPaginaComprobantes,
   cargarComprobantesFiltrados
-} from '../services/comprobantesCargaService.js';
+} from '../services/comprobantesCargaService.js?v=20261024_17';
 import { aplicarRangoHash } from '../services/comprobantesFilterService.js';
 import { crearAccionesModal } from '../services/comprobantesModalActions.js';
-import { prepararEdicionComprobante, obtenerInsigniaRol } from '../services/comprobantesMapperService.js';
+import { prepararEdicionComprobante, obtenerInsigniaRol } from '../services/comprobantesMapperService.js?v=20261024_17';
 import {
   construirCatalogoSocios,
   establecerCatalogoSocios,
   obtenerCatalogoSocios
 } from '../services/comprobantesNaturalezaService.js';
 import { esComprobante2x } from '../utils/comprobantes2xUtils.js';
+import { resolverSignoSocio } from '../utils/comprobantesPolaridadUtils.js?v=20261024_17';
 import { capturarReporteEstadoCuenta } from '../services/comprobantesReporteService.js?v=20261024_07';
 import { obtenerSaldoAnteriorSocio, obtenerSujetoAuditado } from '../services/comprobantesSaldosService.js';
 import { obtenerRangoMesActualCaracas, formatearFechaLatina } from '../utils/comprobantesFechaUtils.js';
@@ -604,6 +605,14 @@ export function comprobantesState() {
       return (oficial !== null && oficial > 0)
         ? oficial
         : resolverTasaSocio(item, posicion);
+    },
+
+    /**
+     * Signo del socio según la regla +Suma / -Resta de su moneda en Perfiles.
+     * Socio 2 hereda el inverso exacto cuando no tiene regla propia.
+     */
+    signoSocio(item, posicion = 1) {
+      return resolverSignoSocio(this.directorio, item, posicion);
     },
 
     /**
