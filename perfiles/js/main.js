@@ -1,8 +1,8 @@
-import { api } from './api.js?v=20261024_23';
-import { state } from './store.js?v=20261024_23';
-import { crearEditor } from './controllers/editor.js?v=20261024_23';
-import { crearDirectorio } from './controllers/directorio.js?v=20261024_23';
-import { crearAcciones } from './controllers/acciones.js?v=20261024_23';
+import { api } from './api.js?v=20261024_24';
+import { state } from './store.js?v=20261024_24';
+import { crearEditor } from './controllers/editor.js?v=20261024_24';
+import { crearDirectorio } from './controllers/directorio.js?v=20261024_24';
+import { crearAcciones } from './controllers/acciones.js?v=20261024_24';
 
 async function recargarSocios() {
   try {

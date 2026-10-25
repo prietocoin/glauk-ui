@@ -1,13 +1,13 @@
 import { qs } from '../../../shared/js/dom.js';
-import { api } from '../api.js?v=20261024_23';
-import { state } from '../store.js?v=20261024_23';
+import { api } from '../api.js?v=20261024_24';
+import { state } from '../store.js?v=20261024_24';
 import {
   esHerencia, nuevaRegla, payloadGuardar, reglasSegunModo
 } from '../domain.js';
-import { renderModalSocio } from '../components/modal-socio.js?v=20261024_23';
+import { renderModalSocio } from '../components/modal-socio.js?v=20261024_24';
 import {
   baseMoneda, formatearTasa, renderReglasEditor, tasaResultante
-} from '../components/reglas-editor.js?v=20261024_23';
+} from '../components/reglas-editor.js?v=20261024_24';
 import { renderReglasHerencia } from '../components/reglas-herencia.js';
 import { notificarSociosActualizados } from '../../../shared/js/sync.js';
 

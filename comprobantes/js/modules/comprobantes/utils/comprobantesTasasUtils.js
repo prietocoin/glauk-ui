@@ -6,7 +6,7 @@
  */
 
 import { resolverNaturalezaComprobante } from '../services/comprobantesNaturalezaService.js';
-import { aNumero as numero, formatearTasaPlana } from './comprobantesNumerosUtils.js?v=20261024_06';
+import { aNumero as numero, formatearTasaPlana } from './comprobantesNumerosUtils.js?v=20261024_24';
 
 export function normalizarTasaComercial(valor) {
   if (valor === 'N/A') return 1;

@@ -9,7 +9,7 @@ import {
   fetchComprobantesPagina,
   MAXIMO_RECUPERACION
 } from './comprobantesApiService.js';
-import { prepararEdicionComprobante } from './comprobantesMapperService.js?v=20261024_17';
+import { prepararEdicionComprobante } from './comprobantesMapperService.js?v=20261024_24';
 import {
   aplicarRangoHash,
   filtrarPorSocioEstricto,

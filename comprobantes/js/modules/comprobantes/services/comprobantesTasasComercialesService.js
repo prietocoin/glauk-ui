@@ -15,7 +15,7 @@ import { normalizarSocio } from '../utils/comprobantesSocioUtils.js';
 import {
   resolverMonedaTasa,
   resolverTipoComprobante
-} from '../utils/comprobantesTasasUtils.js?v=20261024_06';
+} from '../utils/comprobantesTasasUtils.js?v=20261024_24';
 
 // Divisas de referencia: valen 1 aunque el lote no las cotice.
 const DIVISAS_FIJAS = new Set(['USD', 'USDT', 'PYUSD', 'ECU', 'PAN']);

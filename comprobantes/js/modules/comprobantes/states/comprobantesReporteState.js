@@ -4,7 +4,7 @@
  * el filtro ni el listado principal del Dashboard.
  */
 
-import { cargarComprobantesFiltrados } from '../services/comprobantesCargaService.js?v=20261024_17';
+import { cargarComprobantesFiltrados } from '../services/comprobantesCargaService.js?v=20261024_24';
 import {
   aplicarRangoHash,
   coincideSocioEstricto,
@@ -28,7 +28,7 @@ import {
   resolverSubtotalSocio,
   resolverTasaSocio,
   resolverTipoComprobante
-} from '../utils/comprobantesTasasUtils.js?v=20261024_06';
+} from '../utils/comprobantesTasasUtils.js?v=20261024_24';
 import {
   dentroRangoCaracas,
   fechaCaracasISO,
@@ -41,7 +41,7 @@ import {
   formatearMontoPlano,
   formatearTasaPlana,
   truncar2
-} from '../utils/comprobantesNumerosUtils.js?v=20261024_06';
+} from '../utils/comprobantesNumerosUtils.js?v=20261024_24';
 
 function claveReporte(item = {}) {
   return String(item?.hash_largo || item?.id || '').trim().toLowerCase();

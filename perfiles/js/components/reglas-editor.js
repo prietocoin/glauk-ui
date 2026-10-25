@@ -1,4 +1,5 @@
 import { CATALOGO_MONEDAS } from '../catalog.js';
+import { formatTasa } from '../../../shared/js/formatters.js?v=20261024_24';
 import { escapeHTML } from '../../../shared/js/dom.js';
 
 /** Truncamiento estricto a 2 decimales (sin Math.round). */
@@ -28,11 +29,8 @@ export function tasaResultante(base, porcentaje, tipo) {
   return truncar2((Number(base) || 0) * factor);
 }
 
-/** Formato plano: entero sin decimales, fraccionario con dos. */
-export function formatearTasa(valor) {
-  const num = truncar2(valor);
-  return Number.isInteger(num) ? String(num) : num.toFixed(2);
-}
+/** Formato universal de tasa (regla compartida de toda la plataforma). */
+export const formatearTasa = formatTasa;
 
 function urlBandera(regla) {
   const iso = String(regla?.iso || '').trim().toLowerCase();

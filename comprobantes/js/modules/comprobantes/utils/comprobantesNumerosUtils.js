@@ -5,6 +5,11 @@
  * Es la fuente única de `formatMonto`, `formatTasa` y del reporte de socios.
  */
 
+import {
+  formatMontoContable,
+  formatTasa as formatTasaUniversal
+} from '../../../../../shared/js/formatters.js?v=20261024_24';
+
 /**
  * Parseo tolerante de importes que llegan como número o texto formateado.
  * Acepta "1,600", "155,457.00" y "155.457,00". Devuelve `fallback` si el
@@ -56,16 +61,13 @@ export function truncar2(valor) {
  * Ejemplos: "13720.00", "114600.00", "117765.86".
  */
 export function formatearMontoPlano(valor) {
-  return truncar2(valor).toFixed(2);
+  return formatMontoContable(aNumero(valor, NaN));
 }
 
 /**
- * Tasa plana: entera tal cual ("1000", "1600", "3038"); fraccionaria truncada
- * a dos decimales con punto ("3.52", "0.99"). Nunca usa comas de miles.
+ * Tasa con la regla universal: >99.99 entero, 1.00-99.99 dos decimales,
+ * <1.00 tres cifras significativas. Sin comas ni redondeo.
  */
 export function formatearTasaPlana(valor) {
-  const num = aNumero(valor, NaN);
-  if (!Number.isFinite(num)) return '';
-  if (Number.isInteger(num)) return String(num);
-  return truncar2(num).toFixed(2);
+  return formatTasaUniversal(aNumero(valor, NaN));
 }

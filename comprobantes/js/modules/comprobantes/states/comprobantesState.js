@@ -8,7 +8,7 @@ import {
   formatMonto, formatTasa, obtenerME1, obtenerME2,
   obtenerTasaSocioCalculada, claseInsignia, formatDiaHora,
   resolverTipoComprobante, resolverTasaSocio
-} from '../utils/comprobantesFormatters.js?v=20261024_06';
+} from '../utils/comprobantesFormatters.js?v=20261024_24';
 import {
   catalogoTasasComercialActual,
   obtenerCatalogoTasasComerciales,
@@ -27,18 +27,18 @@ import { eliminarComprobantePorHash } from '../services/comprobantesApiService.j
 import {
   cargarPaginaComprobantes,
   cargarComprobantesFiltrados
-} from '../services/comprobantesCargaService.js?v=20261024_17';
+} from '../services/comprobantesCargaService.js?v=20261024_24';
 import { aplicarRangoHash } from '../services/comprobantesFilterService.js';
 import { crearAccionesModal } from '../services/comprobantesModalActions.js';
-import { prepararEdicionComprobante, obtenerInsigniaRol } from '../services/comprobantesMapperService.js?v=20261024_17';
+import { prepararEdicionComprobante, obtenerInsigniaRol } from '../services/comprobantesMapperService.js?v=20261024_24';
 import {
   construirCatalogoSocios,
   establecerCatalogoSocios,
   obtenerCatalogoSocios
 } from '../services/comprobantesNaturalezaService.js';
 import { esComprobante2x } from '../utils/comprobantes2xUtils.js';
-import { resolverSignoSocio } from '../utils/comprobantesPolaridadUtils.js?v=20261024_17';
-import { capturarReporteEstadoCuenta } from '../services/comprobantesReporteService.js?v=20261024_07';
+import { resolverSignoSocio } from '../utils/comprobantesPolaridadUtils.js?v=20261024_24';
+import { capturarReporteEstadoCuenta } from '../services/comprobantesReporteService.js?v=20261024_24';
 import { obtenerSaldoAnteriorSocio, obtenerSujetoAuditado } from '../services/comprobantesSaldosService.js';
 import { obtenerRangoMesActualCaracas, formatearFechaLatina } from '../utils/comprobantesFechaUtils.js';
 

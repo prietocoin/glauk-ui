@@ -3,8 +3,8 @@
  * @description Utilidades de filtrado y formateo para comprobantes.
  */
 
-import { formatearMontoPlano } from './comprobantesNumerosUtils.js?v=20261024_06';
-import { formatearTasaComercial } from './comprobantesTasasUtils.js?v=20261024_06';
+import { formatearMontoPlano } from './comprobantesNumerosUtils.js?v=20261024_24';
+import { formatearTasaComercial } from './comprobantesTasasUtils.js?v=20261024_24';
 
 export function formatMonto(val) {
   return formatearMontoPlano(val);

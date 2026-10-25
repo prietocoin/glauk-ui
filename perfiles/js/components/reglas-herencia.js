@@ -1,7 +1,8 @@
 import { escapeHTML } from '../../../shared/js/dom.js';
+import { formatTasa } from '../../../shared/js/formatters.js?v=20261024_24';
 
 function etiquetaBase(base) {
-  return base ? Number(base).toLocaleString() : '-';
+  return base ? formatTasa(base) : '-';
 }
 
 function renderFila(regla) {
