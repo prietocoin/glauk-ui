@@ -5,7 +5,7 @@
  * los valores firmados que ya proyectó el backend.
  */
 
-import { extraerNombreSocio } from '../utils/comprobantesSocioUtils.js?v=20261025_01';
+import { extraerNombreSocio } from '../utils/comprobantesSocioUtils.js?v=20261025_02';
 
 function fechaDesdeItem(c, item) {
   const raw = c.fecha_hora_comprobante || item.fecha_hora_comprobante ||

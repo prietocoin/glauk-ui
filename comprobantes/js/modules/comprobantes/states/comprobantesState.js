@@ -8,26 +8,26 @@ import {
   formatMonto, formatTasa, obtenerME1, obtenerME2,
   obtenerTasaSocioCalculada, claseInsignia, formatDiaHora,
   resolverTipoComprobante, resolverTasaSocio
-} from '../utils/comprobantesFormatters.js?v=20261025_01';
+} from '../utils/comprobantesFormatters.js?v=20261025_02';
 
-import { apiUrl } from '../../../../../shared/js/api-base.js?v=20261025_01';
-import { notify } from '../../../../../shared/js/toast.js?v=20261025_01';
+import { apiUrl } from '../../../../../shared/js/api-base.js?v=20261025_02';
+import { notify } from '../../../../../shared/js/toast.js?v=20261025_02';
 
 import {
   calcularSociosPendientesConsolidado,
   calcularMovimientoFiltradoTotal
-} from '../services/saldosCalculatorService.js?v=20261025_01';
+} from '../services/saldosCalculatorService.js?v=20261025_02';
 
 import {
   eliminarComprobantePorHash,
   fetchComprobantePorHash
-} from '../services/comprobantesApiService.js?v=20261025_01';
-import { cargarPaginaComprobantes } from '../services/comprobantesCargaService.js?v=20261025_01';
-import { aplicarRangoHash } from '../services/comprobantesFilterService.js?v=20261025_01';
-import { prepararEdicionComprobante, obtenerInsigniaRol } from '../services/comprobantesMapperService.js?v=20261025_01';
-import { capturarReporteEstadoCuenta } from '../services/comprobantesReporteService.js?v=20261025_01';
-import { obtenerSaldoAnteriorSocio, obtenerSujetoAuditado } from '../services/comprobantesSaldosService.js?v=20261025_01';
-import { obtenerRangoMesActualCaracas, formatearFechaLatina } from '../utils/comprobantesFechaUtils.js?v=20261025_01';
+} from '../services/comprobantesApiService.js?v=20261025_02';
+import { cargarPaginaComprobantes } from '../services/comprobantesCargaService.js?v=20261025_02';
+import { aplicarRangoHash } from '../services/comprobantesFilterService.js?v=20261025_02';
+import { prepararEdicionComprobante, obtenerInsigniaRol } from '../services/comprobantesMapperService.js?v=20261025_02';
+import { capturarReporteEstadoCuenta } from '../services/comprobantesReporteService.js?v=20261025_02';
+import { obtenerSaldoAnteriorSocio, obtenerSujetoAuditado } from '../services/comprobantesSaldosService.js?v=20261025_02';
+import { obtenerRangoMesActualCaracas, formatearFechaLatina } from '../utils/comprobantesFechaUtils.js?v=20261025_02';
 
 function claveComprobante(item) {
   const c = item?.comprobante || item || {};

@@ -4,31 +4,31 @@
  * el filtro ni el listado principal del Dashboard.
  */
 
-import { cargarComprobantesFiltrados } from '../services/comprobantesCargaService.js?v=20261025_01';
+import { cargarComprobantesFiltrados } from '../services/comprobantesCargaService.js?v=20261025_02';
 import {
   aplicarRangoHash,
   resolverIndiceHash
-} from '../services/comprobantesFilterService.js?v=20261025_01';
-import { obtenerSaldoAnteriorSocio } from '../services/comprobantesSaldosService.js?v=20261025_01';
-import { normalizarSocio, obtenerPosicionSocio } from '../utils/comprobantesSocioUtils.js?v=20261025_01';
+} from '../services/comprobantesFilterService.js?v=20261025_02';
+import { obtenerSaldoAnteriorSocio } from '../services/comprobantesSaldosService.js?v=20261025_02';
+import { normalizarSocio, obtenerPosicionSocio } from '../utils/comprobantesSocioUtils.js?v=20261025_02';
 import {
   resolverMonedaSocio,
   resolverSubtotalSocio,
   resolverTasaSocio,
   resolverTipoComprobante
-} from '../utils/comprobantesTasasUtils.js?v=20261025_01';
+} from '../utils/comprobantesTasasUtils.js?v=20261025_02';
 import {
   dentroRangoCaracas,
   fechaCaracasISO,
   formatearFechaLatina,
   obtenerRangoMesActualCaracas,
   sumarDiasISO
-} from '../utils/comprobantesFechaUtils.js?v=20261025_01';
+} from '../utils/comprobantesFechaUtils.js?v=20261025_02';
 import {
   aNumero as numero,
   formatearMontoPlano,
   formatearTasaPlana
-} from '../utils/comprobantesNumerosUtils.js?v=20261025_01';
+} from '../utils/comprobantesNumerosUtils.js?v=20261025_02';
 
 function claveReporte(item = {}) {
   return String(item?.hash_largo || item?.id || '').trim().toLowerCase();

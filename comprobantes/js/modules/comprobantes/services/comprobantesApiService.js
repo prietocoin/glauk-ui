@@ -5,8 +5,8 @@
  * glauk2 sobre el contrato /api/v1/comprobantes.
  */
 
-import { apiUrl } from '../../../../../shared/js/api-base.js?v=20261025_01';
-import { aplicarRangoHash } from './comprobantesFilterService.js?v=20261025_01';
+import { apiUrl } from '../../../../../shared/js/api-base.js?v=20261025_02';
+import { aplicarRangoHash } from './comprobantesFilterService.js?v=20261025_02';
 
 const API_RUTA = '/api/v1/comprobantes';
 

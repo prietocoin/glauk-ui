@@ -2,13 +2,13 @@
  * @file saldosCalculatorService.js
  * @description Servicio matemático puro para cálculo algebraico de saldos y movimientos desde comprobantes_final.
  */
-import { filtrarComprobantesPorRango } from '../utils/saldosFilterUtils.js?v=20261025_01';
-import { truncar2 } from '../utils/comprobantesNumerosUtils.js?v=20261025_01';
+import { filtrarComprobantesPorRango } from '../utils/saldosFilterUtils.js?v=20261025_02';
+import { truncar2 } from '../utils/comprobantesNumerosUtils.js?v=20261025_02';
 import {
   normalizarSocio,
   obtenerNombresSocio,
   obtenerPosicionSocio
-} from '../utils/comprobantesSocioUtils.js?v=20261025_01';
+} from '../utils/comprobantesSocioUtils.js?v=20261025_02';
 
 /**
  * Movimiento firmado de un socio en un comprobante. Devuelve 0 si el socio no

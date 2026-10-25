@@ -6,7 +6,7 @@
  * =================================================================
  */
 
-import { normalizarSocio } from '../utils/comprobantesSocioUtils.js?v=20261025_01';
+import { normalizarSocio } from '../utils/comprobantesSocioUtils.js?v=20261025_02';
 
 export function obtenerSaldoAnteriorSocio(directorio = [], socioNombre = '') {
   const socioNom = normalizarSocio(socioNombre);

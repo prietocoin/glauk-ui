@@ -4,7 +4,7 @@
  * backend. No aplica spreads, no redondea y no reconstruye la polaridad.
  */
 
-import { aNumero as numero, formatearTasaPlana } from './comprobantesNumerosUtils.js?v=20261025_01';
+import { aNumero as numero, formatearTasaPlana } from './comprobantesNumerosUtils.js?v=20261025_02';
 
 /**
  * La tasa del backend ya está truncada por el snapshot. Solo se valida que sea
